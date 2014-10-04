@@ -1,3 +1,3 @@
-Mandelbrot - Declarative Distributed Stream Computation
-===================================================
+Mandelbrot - AskMe Search Engine
+================================
 
