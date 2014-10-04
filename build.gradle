@@ -173,10 +173,6 @@ repositories {
   maven { url "http://maven.restlet.org/" }
   maven { url "http://repo.spray.io/" }
   maven { url "http://repo.akka.io/releases/" }
-  maven { url "http://chelnexrepo001.karmalab.net/nexus/content/repositories/central/" }
-  maven { url "http://chelnexrepo001.karmalab.net/nexus/content/repositories/thirdparty/" }
-  maven { url "http://nexus.sb.karmalab.net/nexus/content/repositories/askme" }
-  maven { url "http://nexus.sb.karmalab.net/nexus/content/repositories/Expedia-Ivy-bridge-repo/" }
   maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
   //maven { url "http://tomp2p.net/dev/mvn/" }
