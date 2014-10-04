@@ -1,0 +1,85 @@
+<configuration>
+  
+  <appender name="INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${log.path.current}/${component.name}-info.log</file>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${log.path.archive}/${component.name}-info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy
+            class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <!-- or whenever the file size reaches 100MB -->
+        <maxFileSize>200MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+    
+    <encoder>
+      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] [%-5level] %msg%n</pattern>
+    </encoder>
+    
+  </appender>
+
+  <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${log.path.current}/${component.name}-error.log</file>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- rollover daily -->
+      <fileNamePattern>${log.path.archive}/${component.name}-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy
+            class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <!-- or whenever the file size reaches 100MB -->
+        <maxFileSize>200MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+    
+    <encoder>
+      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] [%-5level] %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+  <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${log.path.current}/${component.name}-debug.log</file>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>DEBUG</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>NEUTRAL</onMismatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>TRACE</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- rollover daily or when max size is reached -->
+      <fileNamePattern>${log.path.archive}/${component.name}-debug.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy
+            class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>200MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+    
+    <encoder>
+      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] [%-5level] [%thread] %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] %highlight([%-5level]) %cyan([%thread]) %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="${log.level}">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="INFO" />
+    <appender-ref ref="ERROR" />
+    <appender-ref ref="DEBUG" />
+  </root>  
+
+</configuration>
