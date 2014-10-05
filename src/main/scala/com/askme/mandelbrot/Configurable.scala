@@ -16,9 +16,9 @@ trait Configurable {
   protected[this] def confs(part: String) = config getConfigList part
   protected[this] def map[T](part: String)(implicit t: ClassTag[T]) = {
     if (classOf[Config] isAssignableFrom t.runtimeClass)
-      (config getAnyRef part).asInstanceOf[Map[String, Map[String, Any]]].map(x ⇒ (x._1, (ConfigFactory parseMap x._2).asInstanceOf[T]))
+      (config getAnyRef part).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, (ConfigFactory parseMap x._2).asInstanceOf[T]))
     else if (classOf[Configurable] isAssignableFrom t.runtimeClass)
-      (config getAnyRef part).asInstanceOf[Map[String, Map[String, Any]]].map(x ⇒ (x._1, obj(ConfigFactory parseMap x._2).asInstanceOf[T]))
+      (config getAnyRef part).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, obj(ConfigFactory parseMap x._2).asInstanceOf[T]))
     else
       mapAsScalaMap((config getAnyRef part).asInstanceOf[Map[String, T]])
   }

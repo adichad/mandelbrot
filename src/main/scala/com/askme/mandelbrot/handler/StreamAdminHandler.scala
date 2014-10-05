@@ -1,13 +1,12 @@
 package com.askme.mandelbrot.handler
 
-import spray.http.MediaTypes.{`text/html` => `text/html`}
-import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
-import spray.routing.Directive.pimpApply
-import spray.routing.HttpService
 import akka.actor.Actor
-import com.typesafe.config.Config
 import com.askme.mandelbrot.Configurable
+import com.typesafe.config.Config
 import grizzled.slf4j.Logging
+import spray.http.MediaTypes.`text/html`
+import spray.routing.HttpService
+import spray.routing.Directive.pimpApply
 
 class StreamAdminHandler(val config: Config) extends HttpService with Actor with Logging with Configurable {
   private val myRoute =
