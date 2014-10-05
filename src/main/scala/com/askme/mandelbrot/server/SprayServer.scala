@@ -1,16 +1,14 @@
 package com.askme.mandelbrot.server
 
 import scala.concurrent.duration.DurationInt
-import com.typesafe.config.Config
-import akka.actor.ActorSystem
-import akka.actor.Props
+
+import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.util.Timeout
+import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import spray.can.Http
-import akka.actor.Actor
-
 
 class SprayServer(val config: Config) extends Server with Logging {
   private implicit lazy val system = ActorSystem(string("system-name"))
