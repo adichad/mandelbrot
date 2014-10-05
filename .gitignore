@@ -4,3 +4,7 @@ third-party
 bin
 build
 /build
+data
+logs
+tmp
+temp

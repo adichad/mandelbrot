@@ -1,13 +1,11 @@
 package com.askme.mandelbrot
 
-import java.util.Map
-import java.util.List
-import scala.collection.JavaConversions.mapAsScalaMap
-import scala.collection.JavaConversions.asScalaBuffer
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import java.util.{List, Map}
+
+import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
 import scala.reflect.ClassTag
-import java.util.HashMap
+
+import com.typesafe.config.{Config, ConfigFactory}
 
 trait Configurable {
   protected[this] val config: Config
