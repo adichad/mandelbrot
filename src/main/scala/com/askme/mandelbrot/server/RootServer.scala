@@ -15,22 +15,22 @@ import grizzled.slf4j.Logging
 import spray.can.Http
 
 class RootServer(val config: Config) extends Server with Logging {
-  private implicit lazy val system = ActorSystem(string("actorSystem.name"))
-  private val esClient = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).data(true).build.client
-  private val service = system.actorOf(Props(classOf[StreamAdminHandler], conf("handler"), esClient), string("handler.name"))
+  private implicit lazy val system = ActorSystem(string("actorSystem.name"), conf("actorSystem"))
+  private val topActor = system.actorOf(Props(classOf[StreamAdminHandler], conf("handler")), string("handler.name"))
   private implicit val timeout = Timeout(int("timeout").seconds)
   private lazy val transport = IO(Http)
 
-
-  
   override def bind {
-    transport ? Http.Bind(service, interface = string("host"), port = int("port"))
+    transport ? Http.Bind(topActor, interface = string("host"), port = int("port"))
     info("server bound: " + string("host") + ":" + int("port"))
   }
 
   override def close {
     transport ? Http.Unbind
+    system.stop(topActor)
     system.shutdown
+    Thread.sleep(200)
+    info("server shutdown complete: " + string("host") + ":" + int("port"))
   }
 
 }

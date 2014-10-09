@@ -14,14 +14,21 @@ import com.typesafe.config.ConfigFactory
 import grizzled.slf4j.Logging
 
 object Launcher extends App with Logging with Configurable {
-  protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
-  // hack to make configuration parameters available in logback.xml
-  backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
-  info(string("component.name"))
-  info("Log path: " + string("log.path.current"))
-  val servers = map[Server]("server").values
 
-  daemonize(servers)
+  protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
+
+  try {
+    // hack to make configuration parameters available in logback.xml
+    backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
+    info(string("component.name"))
+    info("Log path: " + string("log.path.current"))
+    daemonize(map[Server]("server").values)
+  } catch {
+    case e: Throwable => {
+      error("fatal", e)
+      throw e
+    }
+  }
 
   private[this] def configure(resourceBases: String*) =
     ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _))
@@ -48,25 +55,32 @@ object Launcher extends App with Logging with Configurable {
       if (pidFile.createNewFile) {
         (new PrintWriter(pidFile) append pid("<Unknown-PID>")).close
         pidFile.deleteOnExit
-        debug("pid file: " + destPath)
+        info("pid file: " + destPath)
         true
+      } else {
+        error("unable to write pid file, exiting.")
+        System exit 1
+        false
       }
-      false
     }
 
     def closeOnExit(closeables: Iterable[Closeable]) = {
       Runtime.getRuntime addShutdownHook new Thread {
         override def run = {
-          closeables.foreach(_.close)
+          try {
+            closeables.foreach(_.close)
+          } catch {
+            case e: Throwable => error("shutdown hook failure", e)
+          }
         }
       }
     }
-
-    servers.foreach(_.bind)
     closeOnExit(servers)
     writePID(string("daemon.pidfile"))
     if (boolean("sysout.detach")) System.out.close
     if (boolean("syserr.detach")) System.err.close
+    servers.foreach(_.bind)
+
   }
 
 }
