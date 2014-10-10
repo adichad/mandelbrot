@@ -1,12 +1,13 @@
 package com.askme.mandelbrot.handler
 
-import akka.actor.{Kill, Actor}
+import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.admin.cluster.stats.ClusterStatsRequest
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
+import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
 import spray.http.MediaTypes.`text/html`
 import spray.routing.Directive.pimpApply
@@ -14,7 +15,10 @@ import spray.routing.HttpService
 
 class StreamAdminHandler(val config: Config) extends HttpService with Actor with Logging with Configurable {
   ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
-  private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).node
+  private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
+    ImmutableSettings.settingsBuilder()
+      .put("node.name", string("es.node.name"))
+  ).node
   private val esClient = esNode.client
   private val myRoute =
     path("") {

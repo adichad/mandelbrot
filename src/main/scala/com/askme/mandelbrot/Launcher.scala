@@ -31,7 +31,7 @@ object Launcher extends App with Logging with Configurable {
   }
 
   private[this] def configure(resourceBases: String*) =
-    ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _))
+    ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _).withFallback(ConfigFactory.systemEnvironment()))
   
   private[this] def backFillSystemProperties(propertyNames: String*) =
     for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))

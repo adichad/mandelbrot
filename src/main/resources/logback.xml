@@ -71,7 +71,8 @@
   
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] %highlight([%-5level]) %cyan([%thread]) %msg%n</pattern>
+      <!--pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] %highlight([%-5level]) %cyan([%thread]) %msg%n</pattern-->
+      <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] [%-5level] [%thread] %msg%n</pattern>
     </encoder>
   </appender>
 
