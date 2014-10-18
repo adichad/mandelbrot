@@ -8,3 +8,5 @@ data
 logs
 tmp
 temp
+src/main/resources/application.*
+src/main/resources/environment.*
