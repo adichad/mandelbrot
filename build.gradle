@@ -137,7 +137,7 @@ dependencies {
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.4.+'            // json support
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.4.+'            // json support
 
-  compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
+//  compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
 
   compile     group: 'org.openstreetmap.osmosis',  name: 'osmosis-pbf2',                     version: '0.43.1'           // openstreetmap
   compile     group: 'com.twitter',                name: 'algebird-core_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
