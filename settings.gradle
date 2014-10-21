@@ -1,1 +1,13 @@
-// include ":module1", ":module2", ":services:webservices"
+rootProject.name='mandelbrot'
+
+new File( './env' ).listFiles().findAll { it.isDirectory() }.each() { 
+  def pdir = ":env:"+it.name
+  it.listFiles().findAll { it.isDirectory() } .each() {
+    def prj = pdir+":"+it.name
+    include prj
+    project(prj).name = project(":").name+prj.replace(":","-")
+  }
+}
+
+include ":dep"
+project(":dep").name = project(":").name+"-dep"

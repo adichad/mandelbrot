@@ -11,7 +11,7 @@ import grizzled.slf4j.Logging
 object Launcher extends App with Logging with Configurable {
 
   protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
-  private val hazel = Hazelcast.newHazelcastInstance
+
   try {
     // hack to make configuration parameters available in logback.xml
     backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
@@ -21,8 +21,15 @@ object Launcher extends App with Logging with Configurable {
     writePID(string("daemon.pidfile"))
     if (boolean("sysout.detach")) System.out.close()
     if (boolean("syserr.detach")) System.err.close()
-    val servers = map[Server]("server").values
-    closeOnExit(servers)
+    
+    val hazel = Hazelcast.newHazelcastInstance(new com.hazelcast.config.Config().setProperty("hazelcast.logging.type", "slf4j"))
+    val chazel = new Closeable {
+      override def close() = hazel.shutdown
+    }
+
+    val servers = map[Server]("server").values.toList
+
+    closeOnExit(chazel +: servers)
     servers.foreach(_.bind)
   } catch {
     case e: Throwable =>
@@ -62,7 +69,7 @@ object Launcher extends App with Logging with Configurable {
     }
   }
 
-  private[this] def closeOnExit(closeables: Iterable[Closeable]) = {
+  private[this] def closeOnExit(closeables: Seq[Closeable]) = {
     Runtime.getRuntime addShutdownHook new Thread {
       override def run() = {
         try {

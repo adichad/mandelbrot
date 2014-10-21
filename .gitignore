@@ -10,3 +10,8 @@ tmp
 temp
 src/main/resources/application.*
 src/main/resources/environment.*
+env/*/*/build
+env/*/*/bin
+dep/build
+dep/bin
+

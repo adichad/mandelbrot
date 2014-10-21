@@ -5,18 +5,11 @@ apply plugin: 'provided-base'
 
 apply from: 'gradle.properties'
 
-ext {
-  scala_version     = '2.10.4'
-  titan_version     = '0.5.0'
-  algebird_version  = '0.6.0'
-  storehaus_version = '0.9.0'
-  spark_version     = '1.1.0'
-  hadoop_version    = '2.4.1'
-  es_version        = '1.3.4'
-  lucene_version    = '4.9.1'
-}
-
 defaultTasks 'go'
+
+ext {
+  hadoop_version    = '2.4.1'
+}
 
 eclipse {
   jdt {
@@ -37,7 +30,7 @@ task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
   description = 'Start up ' + project.name
 
   main = 'com.askme.mandelbrot.Launcher'
-  classpath = sourceSets.main.runtimeClasspath
+  classpath(sourceSets.main.runtimeClasspath, configurations.compile)
 
   standardInput = System.in
   if(System.getProperty('log.level')!=null) systemProperty 'log.level', System.getProperty('log.level')
@@ -117,70 +110,17 @@ configurations {
   // integTestCompile.extendsFrom testRuntime
 }
 
-dependencies {
-  compile     group: 'org.scala-lang',             name: 'scala-library',                    version: scala_version
-  compile     group: 'org.elasticsearch',          name: 'elasticsearch',                    version: es_version         // elasticsearch
-  compile     group: 'org.apache.lucene',          name: 'lucene-expressions',               version: lucene_version     // lucene stuff not already included in elasticsearch
-
-  compile     group: 'ch.qos.logback',             name: 'logback-classic',                  version: '1.1.+'           // logging backend
-  compile     group: 'org.clapper',                name: 'grizzled-slf4j_2.10',              version: '1.0.2'            // logging api
- 
-  compile     group: 'io.spray',                   name: 'spray-can',                        version: '1.2.1'            // http serving
-  compile     group: 'io.spray',                   name: 'spray-routing',                    version: '1.2.1'            // http serving
-
-  compile     group: 'edu.stanford.nlp',           name: 'stanford-corenlp',                 version: '3.4.1'
-
-//  compile     group: 'com.thinkaurelius.titan',    name: 'titan-core',                       version: titan_version      // distributed graph database engine
-//  compile     group: 'com.thinkaurelius.titan',    name: 'titan-es',                         version: titan_version      // distributed graph database engine
-  compile     group: 'com.hazelcast',              name: 'hazelcast',                        version: '3.3.1'            // distributed in-memory data grid
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-databind',                 version: '2.4.+'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.4.+'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.4.+'            // json support
-
-//  compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
-
-  compile     group: 'org.openstreetmap.osmosis',  name: 'osmosis-pbf2',                     version: '0.43.1'           // openstreetmap
-  compile     group: 'com.twitter',                name: 'algebird-core_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  compile     group: 'com.twitter',                name: 'algebird-util_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  compile     group: 'com.twitter',                name: 'algebird-bijection_2.10',          version: algebird_version   // abstract algebra library: monoids, groups, rings
-  
-  compile     group: 'com.twitter',                name: 'storehaus-algebra_2.10',           version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-core_2.10',              version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-memcache_2.10',          version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-mysql_2.10',             version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-hbase_2.10',             version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-cache_2.10',             version: storehaus_version   // persistence abstractions
-  
-  
-  compile     group: 'org.apache.spark',           name: 'spark-core_2.10',                  version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming_2.10',             version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-kafka_2.10',       version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-zeromq_2.10',      version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-flume_2.10',       version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-twitter_2.10',     version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-mqtt_2.10',        version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-sql_2.10',                   version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-mllib_2.10',                 version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-graphx_2.10',                version: spark_version      // distributed computation platform
-//  compile     group: 'org.apache.spark',           name: 'spark-yarn_2.10',                  version: spark_version      // distributed computation platform
- 
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
-  
-  compile     group: 'net.databinder.dispatch',    name: 'dispatch-core_2.10',               version: '0.11.1'
-  
-  testCompile group: 'org.scalatest',              name: 'scalatest_2.10',                   version: '1.9.2'            //
-  testCompile group: 'org.specs2',                 name: 'specs2_2.10',                      version: '2.2.2'            //
-  testCompile group: 'com.twitter',                name: 'algebird-test_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  testCompile group: 'com.twitter',                name: 'storehaus-testing_2.10',           version: storehaus_version   // persistence abstractions
-  
- 
-//integTest 
+project(':') {
+  dependencies {
+    provided    project(':'+project(':').name+'-dep')
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
+  }
 }
 
 repositories {
@@ -194,4 +134,5 @@ repositories {
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
   maven { url "file://Users/adichad/.m2/repository/" }
   mavenCentral()
+  jcenter()
 }
