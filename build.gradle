@@ -78,8 +78,8 @@ task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
 
   classpath(sourceSets.main.runtimeClasspath, configurations.compile)
 
+  systemProperties = System.getProperties()
   standardInput = System.in
-  if(System.getProperty('log.level')!=null) systemProperty 'log.level', System.getProperty('log.level')
   if(System.getProperty('main')!=null) main = System.getProperty('main') else main = 'com.askme.mandelbrot.Launcher'
 
   jvmArgs+=['-Djava.library.path='+System.getProperty('java.library.path')]

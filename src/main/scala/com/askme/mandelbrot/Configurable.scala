@@ -42,4 +42,11 @@ trait Configurable {
   protected[this] def long(part: String) = config getLong part
   protected[this] def double(part: String) = config getDouble part
   protected[this] def string(part: String) = config getString part
+
+  protected[this] def configure(resourceBases: String*) =
+    ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _).withFallback(ConfigFactory.systemEnvironment()))
+
+  protected[this] def backFillSystemProperties(propertyNames: String*) =
+    for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
+
 }

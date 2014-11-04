@@ -1,7 +1,9 @@
 package com.askme.mandelbrot.loader
 
-import java.io.{BufferedInputStream, FileInputStream}
+import java.io.{BufferedOutputStream, FileOutputStream, BufferedInputStream, FileInputStream}
+import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
+import com.askme.mandelbrot.Configurable
 import grizzled.slf4j.Logging
 
 import scala.io.{Codec, Source}
@@ -11,21 +13,22 @@ import scala.io.{Codec, Source}
  */
 
 
-object CSVLoader extends App with Logging {
+object CSVLoader extends App with Logging with Configurable {
   implicit class `nonempty or else`(val s: String) extends AnyVal {
     def nonEmptyOrElse(other: => String) = if (s.trim.isEmpty) other else s }
 
+  protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
   try {
+    backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
     val input =
-      new GZIPInputStream(new BufferedInputStream(new FileInputStream("/Users/adichad/bizloc.2004-01-01 00-00-00_2014-11-03 11-23-13.1-10000.txt.gz")))
-
+      new GZIPInputStream(new BufferedInputStream(new FileInputStream(string("file.input"))))
+    val output = new BufferedOutputStream(new FileOutputStream(string("file.output")))
     val sb = (new StringBuilder)
-    sb.append("{")
     Source.fromInputStream(input)(Codec.ISO8859).getLines().foreach(
       line => {
-        val cells = line.split(9.toChar.toString, -1)
+        val cells = line.replace(0.toChar.toString, "").split(9.toChar.toString, -1)
 
-        sb.append("{ \"index\" : { \"_index\" : \"askme\", \"_type\" : \"place\", \"_uid\" : \"").append(cells(1)).append("\" } }\n")
+        sb.append("{ \"index\" : { \"_index\" : \"askme\", \"_type\" : \"place\", \"_id\" : \"").append(cells(1)).append("\" } }\n")
         sb.append("{ ")
         sb.append("\"").append("UniqueID").append("\": \"").append(cells(1)).append("\"")
         sb.append(", ").append("\"").append("BusinessUserID").append("\": ").append(cells(2))
@@ -107,12 +110,13 @@ object CSVLoader extends App with Logging {
         sb.append(", { ").append("\"").append("question").append("\": \"").append(cells(66)).append("\"")
         sb.append(", ").append("\"").append("answer").append("\": ").append(cells(42).nonEmptyOrElse("null")).append(" }]")
         sb.append(" }\n")
+        val bytes = sb.toString.getBytes(Charset.forName("UTF-8"))
+        output.write(bytes, 0, bytes.length)
+        sb.setLength(0)
       }
 
     )
-    sb.append("}\n")
-    println(sb)
-
+    output.close()
     input.close()
   } catch {
     case e: Throwable => error(e)

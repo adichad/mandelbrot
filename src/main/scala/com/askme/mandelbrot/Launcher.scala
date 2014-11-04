@@ -37,12 +37,6 @@ object Launcher extends App with Logging with Configurable {
       throw e
   }
 
-  private[this] def configure(resourceBases: String*) =
-    ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _).withFallback(ConfigFactory.systemEnvironment()))
-  
-  private[this] def backFillSystemProperties(propertyNames: String*) =
-    for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
-
   private[this] def writePID(destPath: String) = {
     def pid(fallback: String) = {
       val jvmName = ManagementFactory.getRuntimeMXBean.getName
