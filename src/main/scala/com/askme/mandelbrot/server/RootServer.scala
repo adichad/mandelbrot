@@ -28,10 +28,13 @@ object RootServer {
 
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
-    val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
+    val esNode = NodeBuilder.nodeBuilder.clusterName(string("cluster.name")).local(false).data(true).settings(
       ImmutableSettings.settingsBuilder()
-        .put("node.name", string("es.node.name"))
-        .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
+        .put("node.name", string("node.name"))
+        .put("discovery.zen.ping.multicast.enabled", string("discovery.zen.ping.multicast.enabled"))
+        .put("discovery.zen.ping.unicast.hosts", string("discovery.zen.ping.unicast.hosts"))
+        .put("network.host", string("network.host"))
+        .put("path.data", string("path.data"))
     ).node
     val esClient = esNode.client
 
@@ -103,7 +106,7 @@ class RootServer(val config: Config) extends Server with Logging {
   private implicit lazy val system = ActorSystem(string("actorSystem.name"), conf("actorSystem"))
 
   private val pipesContext = new RootServer.PipelineContext(config)
-  private val searchContext = new RootServer.SearchContext(config)
+  private val searchContext = new RootServer.SearchContext(conf("es"))
   //private val sparkApp = new RootServer.SparkApp(config)
 
   private val topActor = system.actorOf(Props(classOf[StreamAdminHandler], conf("handler"), searchContext), string("handler.name"))
