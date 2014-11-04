@@ -31,6 +31,7 @@ object RootServer {
     val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
       ImmutableSettings.settingsBuilder()
         .put("node.name", string("es.node.name"))
+        .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
     ).node
     val esClient = esNode.client
 
