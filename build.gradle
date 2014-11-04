@@ -19,11 +19,58 @@ eclipse {
 }
 
 buildscript {
-  repositories { jcenter() }
+  repositories {
+    jcenter()
+    mavenCentral()
+  }
 
   dependencies {
-    classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
+    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.+')
+    classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '3.0.1')
   }
+}
+
+apply plugin: 'com.jfrog.artifactory'
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+    publish {
+        repository {
+            repoKey = 'libs-snapshot-local'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'libs-snapshot'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+        }
+    }
+}
+
+configurations {
+    provided {
+        dependencies.all { dep ->
+            configurations.runtime.exclude group: dep.group, module: dep.name
+        }
+    }
+    compile.extendsFrom provided
+
+    // exclusions
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
+
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
+
+    // integTestCompile.extendsFrom testRuntime
 }
 
 task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
@@ -45,9 +92,9 @@ task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
     into buildName+'/lib'
   }
   
-  from(configurations.runtime) {
-    into buildName+'/lib'
-  }
+  //from(configurations.runtime) {
+  //  into buildName+'/lib'
+  //}
   
   from('src/main/scripts/linux') {
     fileMode = 0755
@@ -90,26 +137,6 @@ sourceSets {
   }
 }
 
-configurations {
-  provided {
-    dependencies.all { dep ->
-      configurations.runtime.exclude group: dep.group, module: dep.name
-    }
-  }
-  compile.extendsFrom provided
-
-  // exclusions 
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
-
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
-
-  // integTestCompile.extendsFrom testRuntime
-}
-
 project(':') {
   dependencies {
     provided    project(':'+project(':').name+'-dep')
@@ -124,15 +151,16 @@ project(':') {
 }
 
 repositories {
-  maven { url "http://maven.twttr.com/" }
+  jcenter()
+  mavenCentral()
   maven { url "http://repo.typesafe.com/typesafe/releases/" }
   maven { url "http://typesafe.artifactoryonline.com/typesafe/repo" }
+  maven { url "http://maven.twttr.com/" }
   maven { url "http://maven.restlet.org/" }
   maven { url "http://repo.spray.io/" }
   maven { url "http://repo.akka.io/releases/" }
   maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
-  maven { url "file://Users/adichad/.m2/repository/" }
-  mavenCentral()
-  jcenter()
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-release/" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-snapshot/" }
 }

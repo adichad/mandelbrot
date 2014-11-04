@@ -26,19 +26,25 @@ eclipse {
 }
 
 buildscript {
-  repositories { jcenter() }
+  repositories {
+    jcenter()
+    mavenCentral()
+  }
 
   dependencies {
-    classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
+    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.+')
+    classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '3.0.1')
   }
 }
+
+apply plugin: 'com.jfrog.artifactory'
 
 jar {
   onlyIf { false }
 }
 
 task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
-  def buildName=baseName+'-'+project.version
+  def buildName=rootProject.name+'-'+project.version
 
   from(jar.outputs.files) {
     into buildName+'/lib'
@@ -51,11 +57,6 @@ task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
   from('src/main/scripts/linux') {
     fileMode = 0755
     into buildName+'/bin'
-  }
-  
-  from('.') {
-    include 'README.md'
-    into buildName
   }
 
   compression = Compression.GZIP
@@ -104,7 +105,7 @@ dependencies {
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.4.+'            // json support
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.4.+'            // json support
 
-  compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
+  //compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
 
   compile     group: 'org.openstreetmap.osmosis',  name: 'osmosis-pbf2',                     version: '0.43.1'           // openstreetmap
   compile     group: 'com.twitter',                name: 'algebird-core_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
@@ -151,14 +152,16 @@ dependencies {
 }
 
 repositories {
-  maven { url "http://maven.twttr.com/" }
+  jcenter()
+  mavenCentral()
   maven { url "http://repo.typesafe.com/typesafe/releases/" }
   maven { url "http://typesafe.artifactoryonline.com/typesafe/repo" }
+  maven { url "http://maven.twttr.com/" }
   maven { url "http://maven.restlet.org/" }
   maven { url "http://repo.spray.io/" }
   maven { url "http://repo.akka.io/releases/" }
   maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
-  maven { url "file://Users/adichad/.m2/repository/" }
-  mavenCentral()
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-release/" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-snapshot/" }
 }

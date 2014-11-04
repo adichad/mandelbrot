@@ -23,7 +23,7 @@ buildscript {
 }
 
 task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
-  def buildName=baseName+'-'+project.version
+  def buildName=rootProject.name+'-'+project.version
 
   from(jar.outputs.files) {
     into buildName+'/lib'

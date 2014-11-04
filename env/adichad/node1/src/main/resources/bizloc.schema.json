@@ -1,0 +1,299 @@
+{
+    "place": {
+        "_source": {
+            "enabled": "true"
+        },
+        "properties": {
+            "UniqueID": {
+                "type": "string",
+                "store": "true",
+                "index": "not_analyzed",
+                "index_name": "id"
+            },
+            "StringAttribute": {
+                "type": "nested",
+                "index_name": "stratt",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "store": "false",
+                        "index": "analyzed"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    }
+                }
+            },
+            "IntAttribute": {
+                "type": "nested",
+                "index_name": "intatt",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "store": "false",
+                        "index": "analyzed"
+                    },
+                    "answer": {
+                        "type": "integer",
+                        "store": "true",
+                        "ignore_malformed": "true"
+                    }
+                }
+            },
+            "BusinessUserID": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "uid"
+            },
+            "ProductID": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "pid"
+            },
+            "LocationID": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "lid"
+            },
+            "BusinessCompanyID": {
+                "type": "integer",
+                "store": "true",
+                "ignore_malformed": "true",
+                "index_name": "compid"
+            },
+            "L3CategoryID": {
+                "type": "integer",
+                "store": "true",
+                "ignore_malformed": "true",
+                "index_name": "cat3id"
+            },
+            "UpdateFlag": {
+                "type": "boolean",
+                "store": "false",
+                "index": "no",
+                "ignore_malformed": "true"
+            },
+            "InsertFlag": {
+                "type": "boolean",
+                "store": "false",
+                "index": "no",
+                "ignore_malformed": "true"
+            },
+            "DeleteFlag": {
+                "type": "boolean",
+                "store": "false",
+                "index": "no",
+                "ignore_malformed": "true"
+            },
+            "LastUpdated": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss.SSS",
+                "store": "true",
+                "ignore_malformed": "false"
+            },
+            "LocationName": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "placename"
+            },
+            "LocationDescription": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "placedesc"
+            },
+            "LocationType": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "placetype"
+            },
+            "BusinessType": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "biztype"
+            },
+            "Address": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "address"
+            },
+            "Area": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "area"
+            },
+            "AreaSynonyms": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "areasyn"
+            },
+            "City": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "city"
+            },
+            "PinCode": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "pin"
+            },
+            "ZonesServed": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "zonesrv"
+            },
+            "Zone": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "zone"
+            },
+            "State": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "state"
+            },
+            "Country": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "country"
+            },
+            "LatLong": {
+                "type": "geo_point",
+                "lat_lon": "true",
+                "geohash": "true",
+                "geohash_precision": "1m",
+                "geohash_prefix": "true",
+                "normalize": "true",
+                "fielddata": {
+                    "format": "compressed",
+                    "precision": "1m"
+                }
+            },
+            "Company": {
+                "type": "nested",
+                "index_name": "company",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "description": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "keywords": {
+                        "type": "string",
+                        "store ": " true",
+                        "index": "analyzed"
+                    },
+                    "email": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "logourl": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "no"
+                    }
+                }
+            },
+            "Contact": {
+                "type": "nested",
+                "index_name": "contact",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "no"
+                    },
+                    "landline": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "no"
+                    },
+                    "mobile": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "no"
+                    }
+                }
+            },
+            "L1Category": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "cat1"
+            },
+            "L2Category": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "cat2"
+            },
+            "L3Category": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "cat3"
+            },
+            "CategoryPath": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "catpath"
+            },
+            "CategoryKeywords": {
+                "type": "string",
+                "store": "true",
+                "index": "analyzed",
+                "index_name": "cat3kw"
+            },
+            "Product": {
+                "type": "nested",
+                "index_name": "product",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "description": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "brand": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "analyzed"
+                    },
+                    "imageurls": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "no"
+                    }
+                }
+            }
+        }
+    }
+}

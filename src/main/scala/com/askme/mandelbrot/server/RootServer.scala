@@ -5,10 +5,13 @@ import java.sql.DriverManager
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.StreamAdminHandler
 import com.hazelcast.core.Hazelcast
+import org.apache.spark.{SparkConf, SparkContext}
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
+
+import org.apache.spark.deploy.worker._
 
 import scala.concurrent.duration.DurationInt
 
@@ -19,6 +22,7 @@ import akka.util.Timeout
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import spray.can.Http
+import org.apache.spark.SparkContext._
 
 object RootServer {
 
@@ -37,8 +41,8 @@ object RootServer {
   }
 
   class PipelineContext private[RootServer] (val config: Config) extends Configurable with Logging {
-    Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver")
-    val conn = DriverManager.getConnection("jdbc:sqlserver://10.0.5.9;database=FastSynchronization;user=developer;password=developer@123")
+    //Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver")
+    //val conn = DriverManager.getConnection("jdbc:sqlserver://10.0.5.9;database=FastSynchronization;user=developer;password=developer@123")
     /*
     val statement = conn.prepareStatement("select top 10 * from [FastSynchronization].[eDMS].[GetitFlatfile]")
 
@@ -52,7 +56,43 @@ object RootServer {
     */
     private[RootServer] def close() {
 
-      conn.close()
+      //conn.close()
+    }
+  }
+
+  class SparkApp private[RootServer] (val config: Config) extends Configurable with Logging {
+    val sc = new SparkContext(new SparkConf()
+      .setAppName("mandelbrot")
+      .setMaster("spark://GIMAZSRCHDAP002:7077")
+      .set("spark.logConf", "true")
+      .set("spark.driver.host", "192.168.9.51")
+    )
+
+
+    val counts = sc.textFile("/Users/adichad/Downloads/adventures.of.sherlock.holms.txt").flatMap(line => line.split(" "))
+      .map(word => (word, 1)).reduceByKey(_ + _)
+    try {
+      info("COUNTS: " + counts.saveAsTextFile("/Users/adichad/Downloads/adventures.of.sherlock.holms.wordcount.txt"))
+    } catch {
+      case e: Throwable =>
+        error("local error received",e)
+        throw e
+    }
+
+    //val conn = DriverManager.getConnection("jdbc:sqlserver://10.0.5.9;database=FastSynchronization;user=developer;password=developer@123")
+    /*
+    val statement = conn.prepareStatement("select top 10 * from [FastSynchronization].[eDMS].[GetitFlatfile]")
+
+    val results = statement.executeQuery()
+    while(results.next()) {
+      for(i <- 0 to results.getMetaData.getColumnCount)
+        info(results.getMetaData.getColumnName(i+1))
+    }
+    results.close()
+    statement.close()
+    */
+    private[RootServer] def close() {
+      sc.stop()
     }
   }
 
@@ -63,6 +103,7 @@ class RootServer(val config: Config) extends Server with Logging {
 
   private val pipesContext = new RootServer.PipelineContext(config)
   private val searchContext = new RootServer.SearchContext(config)
+  //private val sparkApp = new RootServer.SparkApp(config)
 
   private val topActor = system.actorOf(Props(classOf[StreamAdminHandler], conf("handler"), searchContext), string("handler.name"))
   private implicit val timeout = Timeout(int("timeout").seconds)
@@ -70,7 +111,7 @@ class RootServer(val config: Config) extends Server with Logging {
 
 
   override def bind {
-    //transport ? Http.Bind(topActor, interface = string("host"), port = int("port"))
+    transport ? Http.Bind(topActor, interface = string("host"), port = int("port"))
     info("server bound: " + string("host") + ":" + int("port"))
   }
 
