@@ -22,14 +22,9 @@ object Launcher extends App with Logging with Configurable {
     if (boolean("sysout.detach")) System.out.close()
     if (boolean("syserr.detach")) System.err.close()
     
-    val hazel = Hazelcast.newHazelcastInstance(new com.hazelcast.config.Config().setProperty("hazelcast.logging.type", "slf4j"))
-    val chazel = new Closeable {
-      override def close() = hazel.shutdown
-    }
-
     val servers = map[Server]("server").values.toList
 
-    closeOnExit(chazel +: servers)
+    closeOnExit(servers)
     servers.foreach(_.bind)
   } catch {
     case e: Throwable =>
