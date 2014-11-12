@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 
 import com.typesafe.config.{Config, ConfigFactory}
 
+
 trait Configurable {
   protected[this] val config: Config
 

@@ -16,7 +16,7 @@ class PluralStemmingTokenizer extends AbstractPlugin {
   override def description(): String = "Porter stemmer toned down to stem only plurals"
 
   override def modules: util.Collection[Class[_ <: Module]] = {
-    val modules =
+    //val modules =
     null
   }
 }

@@ -1,0 +1,365 @@
+USE [FastSynchronization];
+IF OBJECT_ID (N'[eDMS].[udfCleanupString]', N'FN') IS NOT NULL
+    DROP FUNCTION [eDMS].[udfCleanupString];
+GO
+
+CREATE FUNCTION [eDMS].[udfCleanupString](@input varchar(max))
+RETURNS varchar(max)
+AS
+-- Returns the stock level for the product.
+BEGIN
+    DECLARE @RET varchar(max);
+    SELECT @RET = @input;
+	SELECT @RET = REPLACE(@RET, char(13), ' ');
+	SELECT @RET = REPLACE(@RET, char(10), ' ');
+	SELECT @RET = REPLACE(@RET, char(9), ' ');
+	SELECT @RET = REPLACE(@RET, char(12), ' ');
+	SELECT @RET = REPLACE(@RET, char(11), ' ');
+	SELECT @RET = REPLACE(@RET, '"', '\"');
+    RETURN LTRIM(RTRIM(@RET));
+END;
+GO
+
+
+DECLARE @BatchSize int
+	   ,@BasePath varchar(128)
+	   ,@FilePrefix varchar(7000)
+	   ,@DestPath varchar(128)
+
+SET @BatchSize = 50000
+SET @BasePath = 'd:\mandelbrot-temp'
+SET @FilePrefix = 'bizloc'
+SET @DestPath = 'd:\mandelbrot'
+
+DECLARE @FromBookmarkDT datetime
+       ,@ToBookmarkDT datetime
+	   ,@JobStartDT datetime
+	   ,@FromRowID bigint
+	   ,@ToRowID bigint
+	   ,@query varchar(max)
+
+
+IF OBJECT_ID('[FastSynchronization].[eDMS].[BizLocSearch_Bookmark]') IS NULL
+CREATE TABLE [FastSynchronization].[eDMS].[BizLocSearch_Bookmark] (
+  [ID] int IDENTITY(1,1) PRIMARY KEY not null
+ ,[BookmarkDT] [datetime] not null
+ ,[JobStartDT] [datetime] not null
+ ,[JobEndDT] [datetime] not null
+ ,[RowCount] int not null
+)
+
+SET @JobStartDT = GETDATE()
+
+-- Fetch bookmark
+select @FromBookmarkDT = coalesce(max([BookmarkDT]), '2004-01-01 00:00:00') from [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]
+
+
+IF OBJECT_ID('[FastSynchronization].[eDMS].[BizLocSearch_Staging]') IS NOT NULL
+drop table [FastSynchronization].[eDMS].[BizLocSearch_Staging]
+
+CREATE TABLE [FastSynchronization].[eDMS].[BizLocSearch_Staging](
+    [RowID] [int] identity primary key clustered not null
+   ,[UniqueID] [varchar](100) unique NOT NULL
+   ,[BusinessUserID] [int] NULL
+   ,[ProductID] [int] NULL
+   ,[LocationID] [int] NULL
+   ,[BusinessCompanyID] [int] NULL
+   ,[L3CategoryID] [int] NULL
+   ,[UpdateFlag] [bit] NULL
+   ,[InsertFlag] [bit] NULL
+   ,[DeleteFlag] [bit] NULL
+   ,[FastIndexStatus] [varchar](50) NULL
+   ,[FastIndexTimestamp] [datetime] NULL
+   ,[LastUpdated] [datetime] NOT NULL
+   ,[ValidFlag] [bit] NULL
+   ,[PPCOnline] [int] NULL
+   ,[PPCVoice] [int] NULL
+   ,[CustomerType] [int] NULL
+   ,[NowCustomerType] [int] NULL
+   ,[LocationName] [varchar](500) NULL
+   ,[LocationDescription] [varchar](7000) NULL
+   ,[LocationType] [varchar](500) NULL
+   ,[BusinessType] [varchar](1600) NULL
+   ,[Address] [varchar](1502) NULL
+   ,[Area] [varchar](7000) NULL
+   ,[AreaSynonyms] [varchar](1000) NULL
+   ,[City] [varchar](7000) NULL
+   ,[PinCode] [varchar](100) NULL
+   ,[ZonesServed] [varchar](500) NULL
+   ,[Zone] [varchar](7000) NULL
+   ,[State] [varchar](7000) NULL
+   ,[Country] [varchar](7000) NULL
+   ,[Latitude] [float] NULL
+   ,[Longitude] [float] NULL
+   ,[CompanyName] [varchar](500) NULL
+   ,[CompanyDescription] [varchar](max) NULL
+   ,[CompanyKeywords] [varchar](max) NULL
+   ,[CompanyEmail] [varchar](500) NULL
+   ,[CompanyLogo] [varchar](500) NULL
+   ,[PrimaryContactName] [varchar](7000) NULL
+   ,[PrimaryContactLandLine] [varchar](7000) NULL
+   ,[PrimaryContactMobile] [varchar](7000) NULL
+   ,[L1Category] [varchar](7000) NULL
+   ,[L2Category] [varchar](7000) NULL
+   ,[L3Category] [varchar](7000) NULL
+   ,[CategoryPath] [varchar](7000) NULL
+   ,[CategoryKeywords] [varchar](7000) NULL
+   ,[A1] [varchar](7000) NULL
+   ,[A2] [varchar](7000) NULL
+   ,[A3] [varchar](7000) NULL
+   ,[A4] [varchar](7000) NULL
+   ,[A5] [varchar](7000) NULL
+   ,[A6] [varchar](7000) NULL
+   ,[A7] [varchar](7000) NULL
+   ,[A8] [varchar](7000) NULL
+   ,[A9] [varchar](7000) NULL
+   ,[A10] [varchar](7000) NULL
+   ,[A11] [varchar](7000) NULL
+   ,[A12] [varchar](7000) NULL
+   ,[A13] [varchar](7000) NULL
+   ,[A14] [varchar](7000) NULL
+   ,[A15] [varchar](7000) NULL
+   ,[A16] [varchar](7000) NULL
+   ,[A17] [varchar](7000) NULL
+   ,[A18] [varchar](7000) NULL
+   ,[A19] [int] NULL
+   ,[A20] [int] NULL
+   ,[ProductName] [varchar](7000) NULL
+   ,[ProductDescription] [varchar](7000) NULL
+   ,[ProductKeywords] [varchar](7000) NULL
+   ,[ProductBrand] [varchar](7000) NULL
+   ,[ProductImages] [varchar](7000) NULL
+   ,[Q1] [varchar](100) NULL
+   ,[Q2] [varchar](100) NULL
+   ,[Q3] [varchar](100) NULL
+   ,[Q4] [varchar](100) NULL
+   ,[Q5] [varchar](100) NULL
+   ,[Q6] [varchar](100) NULL
+   ,[Q7] [varchar](100) NULL
+   ,[Q8] [varchar](100) NULL
+   ,[Q9] [varchar](100) NULL
+   ,[Q10] [varchar](100) NULL
+   ,[Q11] [varchar](100) NULL
+   ,[Q12] [varchar](100) NULL
+   ,[Q13] [varchar](100) NULL
+   ,[Q14] [varchar](100) NULL
+   ,[Q15] [varchar](100) NULL
+   ,[Q16] [varchar](100) NULL
+   ,[Q17] [varchar](100) NULL
+   ,[Q18] [varchar](100) NULL
+   ,[Q19] [varchar](100) NULL
+   ,[Q20] [varchar](100) NULL
+   ) on FG01
+
+insert into [FastSynchronization].[eDMS].[BizLocSearch_Staging]
+select *
+from (
+           SELECT
+		          -- ids
+				  [ypbusinessid] as [UniqueId]
+                 ,[yusrid] as [BusinessUserID]
+				 ,[batvypid] as [ProductID]
+                 ,[intgen1] as [LocationID]
+                 ,[batvycoid] as [BusinessCompanyID]
+				 ,[ypcat3id] as [L3CategoryID]
+				 -- status
+				 ,[espUpdate] as [UpdateFlag]
+				 ,[espNew] as [InsertFlag]
+				 ,[espDelete] as [DeleteFlag]
+				 ,[eDMS].[udfCleanupString]([espStatusNM]) as [FastIndexStatus]
+				 ,[espUpdDateNM] as [FastIndexTimestamp]
+				 ,[upddate] as [LastUpdated]
+				 -- signals
+				 ,[yvalid] as [ValidFlag]
+                 ,[pvonp] as [PPCOnline]
+                 ,[pvvoh] as [PPCVoice]
+                 ,[yclttyp] as [CustomerType]
+				 ,[gnyclttyp] as [NowCustomerType]
+				 -- location
+				 ,[eDMS].[udfCleanupString]([yconam]) as [LocationName] -- should be ylconam!
+                 ,[eDMS].[udfCleanupString]([ypdesc]) as [LocationDescription]
+                 ,[eDMS].[udfCleanupString]([yltyp]) as [LocationType]
+                 ,[eDMS].[udfCleanupString]([ybstyp]) as [BusinessType]
+                 ,[eDMS].[udfCleanupString](concat(isnull([yladd],''),' ', isnull([ylbdnam],''), ' ', isnull([ylsloc],''))) as [Address]
+                 ,[eDMS].[udfCleanupString]([ylloc]) as [Area]
+                 ,[eDMS].[udfCleanupString]([yarsyn]) as [AreaSynonyms]
+				 ,[eDMS].[udfCleanupString]([ccty]) as [City]
+				 ,[eDMS].[udfCleanupString]([cpin]) as [PinCode]
+                 ,[eDMS].[udfCleanupString]([ypoarsrv]) as [ZonesServed]
+                 ,[eDMS].[udfCleanupString]([czone]) as [Zone]
+                 ,[eDMS].[udfCleanupString]([cstate]) as [State]
+                 ,[eDMS].[udfCleanupString]([ylcry]) as [Country]
+                 ,[lat] as [Latitude]
+                 ,[lon] as [Longitude]
+				 -- company
+                 ,[eDMS].[udfCleanupString]([yconam]) as [CompanyName]
+                 ,[eDMS].[udfCleanupString]([ycodec]) as [CompanyDescription]
+				 ,[eDMS].[udfCleanupString]([ypsupkey]) as [CompanyKeywords]
+				 ,[eDMS].[udfCleanupString]([ylem]) as [CompanyEmail]
+				 ,[eDMS].[udfCleanupString]([cimglogo1]) as [CompanyLogo]
+                 ,[eDMS].[udfCleanupString]([ylptcnam]) as [PrimaryContactName]
+                 ,[eDMS].[udfCleanupString]([ylph1]) as [PrimaryContactLandLine]
+                 ,[eDMS].[udfCleanupString]([ylmob1]) as [PrimaryContactMobile]
+				 -- category
+                 ,[eDMS].[udfCleanupString]([ypcat1]) as [L1Category]
+                 ,[eDMS].[udfCleanupString]([ypcat2]) as [L2Category]
+                 ,[eDMS].[udfCleanupString]([ypcat3]) as [L3Category]
+				 ,[eDMS].[udfCleanupString]([cmnscat]) as [CategoryPath]
+				 ,[eDMS].[udfCleanupString]([ypcat3keys]) as [CategoryKeywords]
+				 ,[eDMS].[udfCleanupString]([ypcat3a1]) as [A1]
+                 ,[eDMS].[udfCleanupString]([ypcat3a2]) as [A2]
+                 ,[eDMS].[udfCleanupString]([ypcat3atr3]) as [A3]
+                 ,[eDMS].[udfCleanupString]([ypcat3a4]) as [A4]
+                 ,[eDMS].[udfCleanupString]([ypcat3a5]) as [A5]
+                 ,[eDMS].[udfCleanupString]([ypcat3a6]) as [A6]
+                 ,[eDMS].[udfCleanupString]([ypcat3a7]) as [A7]
+                 ,[eDMS].[udfCleanupString]([ypcat3a8]) as [A8]
+                 ,[eDMS].[udfCleanupString]([ypcat3a9]) as [A9]
+                 ,[eDMS].[udfCleanupString]([ypcat3a10]) as [A10]
+                 ,[eDMS].[udfCleanupString]([ypcat3a11]) as [A11]
+                 ,[eDMS].[udfCleanupString]([ypcat3a12]) as [A12]
+                 ,[eDMS].[udfCleanupString]([ypcat3a13]) as [A13]
+                 ,[eDMS].[udfCleanupString]([ypcat3a14]) as [A14]
+                 ,[eDMS].[udfCleanupString]([ypcat3a15]) as [A15]
+                 ,[eDMS].[udfCleanupString]([ypcat3a16]) as [A16]
+                 ,[eDMS].[udfCleanupString]([ypcat3a17]) as [A17]
+                 ,[eDMS].[udfCleanupString]([ypcat3a18]) as [A18]
+                 ,[ypcat3a19] as [A19]
+                 ,[ypcat3a20] as [A20]
+				 ,d.Label as [Label]
+				 ,d.Col_id as [Col_id]
+                 -- product ???
+				 ,[eDMS].[udfCleanupString]([ypnam]) as [ProductName]
+				 ,[eDMS].[udfCleanupString]([ypdesc]) as [ProductDescription]
+				 ,[eDMS].[udfCleanupString]('[ypkey]') as [ProductKeywords]
+				 ,[eDMS].[udfCleanupString]([ypbrdnam]) as [ProductBrand]
+				 ,[eDMS].[udfCleanupString]([cimg1]) as [ProductImages]
+             from [FastSynchronization].[eDMS].[GetitFlatfile] a (nolock)
+  left outer join [GetitOnline].[dbo].[category3] b (nolock)
+               on a.[ypcat3id] = b.[cat3_id]
+  left outer join [GetitOnline].[dbo].[AdditionalInfoTemplate] c (nolock)
+               on b.[Additionalinfotemplate_id] = c.AdditionalInfoTemplate_id_new
+  left outer join [GetitOnline].[dbo].[TemplateFields] d (nolock)
+               on c.AdditionalInfoTemplate_id = d.AdditionalInfoTemplate_id
+            where([espNew] = 1 or [espUpdate] = 1 or [espDelete] = 1)
+			  and [upddate] >= @FromBookmarkDT and [upddate] < @JobStartDT
+
+ ) inn
+            pivot(max(inn.Label) for inn.Col_id IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20])
+ ) as p
+
+declare @TotalRows bigint = @@ROWCOUNT
+
+
+SET @FromRowID = 1
+SET @ToBookmarkDT = case when @TotalRows > 0 then @JobStartDT else @FromBookmarkDT end
+
+declare @FileName varchar(max)
+
+WHILE @FromRowID <= @TotalRows
+BEGIN
+  SET @ToRowID = @FromRowID + @BatchSize
+  SET @query = '"select * from [FastSynchronization].[eDMS].[BizLocSearch_Staging] where [RowID] >= '+cast(@FromRowID as varchar(20))+' and [RowID] < '+cast(@ToRowID as varchar(20))+'"'
+  SET @FileName = @FilePrefix
+    + cast('.' as varchar(max))
+	+ replace(convert(varchar(max), @FromBookmarkDT, 120), ':','-')
+	+ cast('_' as varchar(max))
+	+ replace(convert(varchar(max), @ToBookmarkDT, 120), ':','-')
+	+ cast('.' as varchar(max))
+	+ cast(@FromRowID as varchar(max))
+	+ cast('-' as varchar(max))
+	+ cast((@ToRowID-1) as varchar(max))
+
+  declare @cmd varchar(7000)
+    = cast('bcp ' as varchar(max))
+	+ @query
+	+ cast(' queryout "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+    + @FileName
+	+ cast('.txt" -b ' as varchar(max))
+	+ cast((case when @BatchSize/10 > 1 then @BatchSize/10 else 1 end) as varchar(max))
+	+ cast(' -c -T -a 65534' as varchar(max))
+
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+  SET @cmd =
+      cast('"C:\Program Files\Dos2Unix\bin\dos2unix.exe" "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.txt"' as varchar(max))
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+
+  SET @cmd =
+      cast('C:\"Program Files"\UnxUtils\usr\local\wbin\gzip.exe "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.txt"' as varchar(max))
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+  SET @cmd =
+      cast('C:\"Program Files"\UnxUtils\usr\local\wbin\md5sum.exe "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.txt.gz" > "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.md5"' as varchar(max))
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+  SET @cmd =
+      cast('move "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.txt.gz" "' as varchar(max))
+	+ @DestPath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.txt.gz"' as varchar(max))
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+  SET @cmd =
+      cast('move "' as varchar(max))
+	+ @BasePath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.md5" "' as varchar(max))
+	+ @DestPath
+	+ cast('\' as varchar(max))
+	+ @FileName
+	+ cast('.md5"' as varchar(max))
+  select @cmd
+  EXEC master..XP_CMDSHELL @cmd
+
+
+
+  SET @FromRowID = @ToRowID
+END
+
+
+insert into [FastSynchronization].[eDMS].[BizLocSearch_Bookmark] (
+  [BookmarkDT]
+ ,[JobStartDT]
+ ,[JobEndDT]
+ ,[RowCount]
+) values (
+  @ToBookmarkDT
+ ,@JobStartDT
+ ,GETDATE()
+ ,@TotalRows
+)
+
+
+-- select * from [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]
+-- truncate table [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]

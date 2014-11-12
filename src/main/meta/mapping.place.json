@@ -14,14 +14,24 @@
                 "type": "nested",
                 "index_name": "stratt",
                 "properties": {
+                    "qaggr": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "not_analyzed"
+                    },
                     "question": {
                         "type": "string",
                         "store": "false",
                         "index": "analyzed"
                     },
-                    "answer": {
+                    "aaggr": {
                         "type": "string",
                         "store": "true",
+                        "index": "not_analyzed"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "store": "false",
                         "index": "analyzed"
                     }
                 }
@@ -30,6 +40,11 @@
                 "type": "nested",
                 "index_name": "intatt",
                 "properties": {
+                    "qaggr": {
+                        "type": "string",
+                        "store": "true",
+                        "index": "not_analyzed"
+                    },
                     "question": {
                         "type": "string",
                         "store": "false",
@@ -95,6 +110,36 @@
                 "format": "yyyy-MM-dd HH:mm:ss.SSS",
                 "store": "true",
                 "ignore_malformed": "false"
+            },
+            "ValidFlag": {
+                "type": "boolean",
+                "store": "false",
+                "ignore_malformed": "true",
+                "index_name": "valid"
+            },
+            "PPCOnline": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "ppconline"
+            },
+            "PPCVoice": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "ppcvoice"
+            },
+            "CustomerType": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "custtype"
+            },
+            "NowCustomerType": {
+                "type": "integer",
+                "store": "false",
+                "ignore_malformed": "false",
+                "index_name": "custtypenow"
             },
             "LocationName": {
                 "type": "string",
@@ -282,6 +327,11 @@
                         "store": "true",
                         "index": "analyzed"
                     },
+                    "keywords": {
+                        "type": "string",
+                        "store": "true",
+                        "index: "analyzed"
+                    }
                     "brand": {
                         "type": "string",
                         "store": "true",
