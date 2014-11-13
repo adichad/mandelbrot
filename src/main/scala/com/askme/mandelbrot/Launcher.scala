@@ -4,8 +4,6 @@ import java.io.{Closeable, File, PrintWriter}
 import java.lang.management.ManagementFactory
 
 import com.askme.mandelbrot.server.Server
-import com.hazelcast.core.Hazelcast
-import com.typesafe.config.{ConfigFactory, Config}
 import grizzled.slf4j.Logging
 
 object Launcher extends App with Logging with Configurable {

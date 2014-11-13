@@ -2,10 +2,10 @@ package com.askme.mandelbrot
 
 import java.util.{List, Map}
 
+import com.typesafe.config.{Config, ConfigFactory}
+
 import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
 import scala.reflect.ClassTag
-
-import com.typesafe.config.{Config, ConfigFactory}
 
 
 trait Configurable {

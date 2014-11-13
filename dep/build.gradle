@@ -141,11 +141,11 @@ dependencies {
   provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
   
   compile     group: 'net.databinder.dispatch',    name: 'dispatch-core_2.10',               version: '0.11.1'
-  
+
   testCompile group: 'org.scalatest',              name: 'scalatest_2.10',                   version: '1.9.2'            //
   testCompile group: 'org.specs2',                 name: 'specs2_2.10',                      version: '2.2.2'            //
   testCompile group: 'com.twitter',                name: 'algebird-test_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  testCompile group: 'com.twitter',                name: 'storehaus-testing_2.10',           version: storehaus_version   // persistence abstractions
+  testCompile group: 'com.twitter',                name: 'storehaus-testing_2.10',           version: storehaus_version  // persistence abstractions
   
  
 //integTest 

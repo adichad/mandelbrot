@@ -304,7 +304,7 @@
             "CategoryPath": {
                 "type": "string",
                 "store": "true",
-                "index": "analyzed",
+                "index": "not_analyzed",
                 "index_name": "catpath"
             },
             "CategoryKeywords": {
@@ -330,8 +330,8 @@
                     "keywords": {
                         "type": "string",
                         "store": "true",
-                        "index: "analyzed"
-                    }
+                        "index": "analyzed"
+                    },
                     "brand": {
                         "type": "string",
                         "store": "true",

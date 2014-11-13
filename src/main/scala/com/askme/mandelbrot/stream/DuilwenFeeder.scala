@@ -1,10 +1,10 @@
 package com.askme.mandelbrot.stream
 
+import akka.actor.{Actor, ActorRef}
 import org.apache.spark.streaming.receiver.ActorHelper
-import scala.util.Random
+
 import scala.collection.mutable.LinkedList
-import akka.actor.Actor
-import akka.actor.ActorRef
+import scala.util.Random
 
 class DuilwenFeeder extends Actor with ActorHelper {
   val rand = new Random()

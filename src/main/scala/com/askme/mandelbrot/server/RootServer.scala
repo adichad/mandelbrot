@@ -1,30 +1,24 @@
 package com.askme.mandelbrot.server
 
-import java.sql.DriverManager
-
+import akka.actor.{ActorSystem, Props}
+import akka.io.IO
+import akka.pattern.ask
+import akka.util.Timeout
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.StreamAdminHandler
-import com.hazelcast.config.NetworkConfig
 import com.hazelcast.core.Hazelcast
+import com.typesafe.config.Config
+import grizzled.slf4j.Logging
+import org.apache.spark.SparkContext._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
-
-import org.apache.spark.deploy.worker._
-
-import scala.concurrent.duration.DurationInt
-
-import akka.actor.{ActorSystem, Props}
-import akka.io.IO
-import akka.pattern.ask
-import akka.util.Timeout
-import com.typesafe.config.Config
-import grizzled.slf4j.Logging
 import spray.can.Http
-import org.apache.spark.SparkContext._
+
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.DurationInt
 
 object RootServer {
 

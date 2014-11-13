@@ -1,16 +1,11 @@
 package com.askme.mandelbrot.stream
 
-import org.apache.spark.streaming.receiver.ActorHelper
-import dispatch.host
 import akka.actor.Actor
-import scala.concurrent.{ future, blocking }
-import akka.actor.actorRef2Scala
 import dispatch.Defaults.executor
-import dispatch.Http
-import dispatch.as
-import dispatch.enrichFuture
-import dispatch.host
-import dispatch.implyRequestHandlerTuple
+import dispatch.{Http, as, enrichFuture, host, implyRequestHandlerTuple}
+import org.apache.spark.streaming.receiver.ActorHelper
+
+import scala.concurrent.{blocking, future}
 
 
 class DuilwenWorker extends Actor with ActorHelper {

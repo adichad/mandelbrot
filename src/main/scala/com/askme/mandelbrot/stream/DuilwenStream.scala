@@ -1,26 +1,14 @@
 package com.askme.mandelbrot.stream
 
-import scala.collection.mutable.LinkedList
-import scala.reflect.ClassTag
-import scala.util.Random
-import scala.xml.XML
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.Seconds
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.receiver.ActorHelper
-import org.apache.spark.streaming.receiver.Receiver
-import com.askme.mandelbrot.server.Server
-import com.typesafe.config.Config
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.ActorSelection.toScala
-import akka.actor.Props
-import akka.actor.SupervisorStrategy
-
-import grizzled.slf4j.Logging
+import akka.actor.{ActorRef, Props, SupervisorStrategy}
 import com.askme.mandelbrot.Configurable
+import com.typesafe.config.Config
+import grizzled.slf4j.Logging
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+import scala.xml.XML
 
 case class SubscribeReceiver(receiverActor: ActorRef)
 case class UnsubscribeReceiver(receiverActor: ActorRef)
