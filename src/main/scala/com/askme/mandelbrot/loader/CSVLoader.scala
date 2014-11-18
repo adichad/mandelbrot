@@ -4,11 +4,15 @@ import java.io._
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 
+import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.typesafe.config.Config
 import dispatch.Defaults.executor
-import dispatch.{Http, as, enrichFuture, host, implyRequestHandlerTuple}
+import dispatch._
 import grizzled.slf4j.Logging
+import org.elasticsearch.action.ActionListener
+import org.elasticsearch.action.bulk.BulkResponse
+import org.elasticsearch.client.Client
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -22,28 +26,38 @@ import scala.util.matching.Regex
  */
 
 
-object CSVLoader extends App with Logging with Configurable {
+case class Index(file: File)
 
-  protected[this] val config = configure("placesrc","environment", "application", "environment_defaults", "application_defaults")
-
-  implicit class `nonempty or else`(val s: String) extends AnyVal {
+object CSVLoader {
+  implicit class `string utils`(val s: String) extends AnyVal {
     def nonEmptyOrElse(other: => String) = if (s.isEmpty) other else s
+
     def tokenize(regex: Regex): List[List[String]] = regex.findAllIn(s).matchData.map(_.subgroups).toList
+
+    def escapeJson: String = {
+      var res = s.replace("\\", "\\\\").replace("\"", "\\\"")
+      (0x0000 to 0x0020).foreach {
+        c => res = res.replace(c.toChar.toString, "\\u" +  ("%4s" format Integer.toHexString(c)).replace(" ","0"))
+      }
+      res
+    }
   }
 
   implicit class `replace in StringBuilder`(val sb: StringBuilder) extends AnyVal {
 
-    def appendReplaced(tokens: List[List[String]], map: String=>(Int,String, String, String), vals: IndexedSeq[String]): StringBuilder = {
+    //'tokens' is all consecutive pairs of tokens created by splitting around the placeholder regex, so starting count from 1, every
+    //even token is a placeholder. makes for a fast (linear) replacer
+    def appendReplaced(tokens: List[List[String]], map: String => (Int, String, String, String), vals: IndexedSeq[String]): StringBuilder = {
       val func: (StringBuilder, List[String]) => StringBuilder = (sb, token) => {
         token match {
           case List(_, placeholder: String) => {
             val d = map(placeholder)
-            if(d._3=="many") {
+            if (d._3 == "many") {
               val elems = vals(d._1).nonEmptyOrElse("").split(d._4).filter(!_.trim.isEmpty)
-              if(elems.length>0) {
+              if (elems.length > 0) {
                 sb.append("[")
                 if (d._2 == "String") {
-                  elems.foreach(sb.append("\"").append(_).append("\", "))
+                  elems.foreach(x => sb.append("\"").append(x.escapeJson).append("\", "))
                 } else {
                   elems.foreach(sb.append(_).append(", "))
                 }
@@ -52,8 +66,8 @@ object CSVLoader extends App with Logging with Configurable {
               } else
                 sb.append("[]")
             } else {
-              if(d._2=="String") {
-                sb.append("\"").append(vals(d._1)).append("\"")
+              if (d._2 == "String") {
+                sb.append("\"").append(vals(d._1).escapeJson).append("\"")
               } else {
                 sb.append(vals(d._1))
               }
@@ -68,71 +82,92 @@ object CSVLoader extends App with Logging with Configurable {
     }
   }
 
-  try {
-    backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
+}
 
-    val sb = new StringBuilder
-    val esType = "place"
-    val fieldDelim = int("mappings."+esType+".delimiter.field").toChar.toString
-    val elemDelim = int("mappings."+esType+".delimiter.element").toChar.toString
-    val index = string("mappings."+esType+".destination.index")
-    val endpoints = list[String]("mappings."+esType+".destination.endpoints")
-    val mapConf = conf("mappings."+esType+".fields")
-    val junk = 0.toChar.toString
-    val targetCharset = Charset.forName(string("mappings."+esType+".charset.target"))
+class CSVLoader(val config: Config, index: String, esType: String,
+                implicit val executionContext1: ExecutionContext, esClient: Client)
+  extends Actor with Logging with Configurable {
+  import com.askme.mandelbrot.loader.CSVLoader._
 
+  implicit val executionContext = executionContext1
+  override def receive = {
+    case Index(file) => {
+      info("file received: "+file.getAbsolutePath)
+      future {
+        val input = new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)))
+        info("input file opened: "+file.getAbsolutePath)
+        val sb = new StringBuilder
+        var count = 0
+        val bulkRequest = esClient.prepareBulk()
+        try {
+          Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
+            .getLines().foreach {
+            line => {
+              val cells = line.split(fieldDelim, -1)
+              bulkRequest.add(
+                esClient.prepareIndex(index, esType, cells(idPos))
+                  .setSource(sb.appendReplaced(templateTokens, valMap, cells).toString)
+              )
+              sb.setLength(0)
+              count += 1
+            }
+          }
+        } catch {
+          case e: Exception => error("error reading file: "+file.getAbsolutePath, e)
+        }
+        finally {
+          input.close()
+          info("input file closed: "+file.getAbsolutePath)
+        }
+        info("performing "+bulkRequest.numberOfActions()+" bulk indexing actions")
+        bulkRequest.execute(new ActionListener[BulkResponse] {
+          override def onResponse(response: BulkResponse) = {
+            info("failures: "+response.hasFailures)
+            sb.append("failed ids: [")
+            response.getItems.foreach { item=>
+              if(item.isFailed) {
+                sb.append(item.getId).append(":{").append(item.getFailure.getMessage).append("}, ")
+              }
+            }
+            if(sb.charAt(sb.length-2)==',')
+              sb.setLength(sb.length-2)
+            sb.append("]")
+            info(sb.toString)
+            sb.setLength(0)
+          }
 
-    val idPos = mapConf.getConfig(string("mappings."+esType+".id")).getInt("pos")
-    val valMap = new mutable.HashMap[String, (Int, String, String, String)]
+          override def onFailure(e: Throwable) = {
+            error(e.getMessage, e)
+          }
 
-    flatten(mapConf, sb, valMap, elemDelim)
-    val template = sb.toString
-
-    val placeholderPattern = "((?:[^$]+|\\$\\{(?!\\d)})+)|(\\$\\{\\d+})".r
-    val templateTokens = template.tokenize(placeholderPattern)
-
-    sb.setLength(0)
-    val input =
-      new GZIPInputStream(new BufferedInputStream(new FileInputStream(new File(string("file.input")))))
-
-
-    val uri = host(endpoints(0)) / index / esType / "_bulk"
-    info(uri)
-
-    Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings."+esType+".charset.source")))).getLines().foreach {
-      line => {
-        val cells = line.replace(junk, "").split(fieldDelim, -1)
-
-        sb.append("{ \"index\" : { \"_index\" : \"").append(index)
-          .append("\", \"_type\" : \"").append(esType)
-          .append("\", \"_id\" : \"").append(cells(idPos)).append("\" } }\n")
-        sb.appendReplaced(templateTokens, valMap, cells).append("\n")
+        })
       }
     }
-    input.close()
-    val postable = sb.toString
-    val request = uri << postable
-    val bytes = postable.getBytes(targetCharset)
-    val output = new BufferedOutputStream(new FileOutputStream(string("file.output")))
-    output.write(bytes, 0, bytes.length)
-    output.close()
-    sb.setLength(0)
-
-    val jmx: Future[String] = Http(request.OK(as.String))
-    debug("before future")
-    future {
-      blocking {
-        info("forcing future resolution")
-        info(jmx())
-      }
-    }
-    debug("after future")
-
-
-  } catch {
-    case e: Throwable => error(e)
-      throw e
   }
+
+
+  val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
+  val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
+  val endpoints = list[String]("mappings." + esType + ".destination.endpoints")
+  val mapConf = conf("mappings." + esType + ".fields")
+  val targetCharset = Charset.forName(string("mappings." + esType + ".charset.target"))
+
+  val idPos = mapConf.getConfig(string("mappings." + esType + ".id")).getInt("pos")
+  val valMap = new mutable.HashMap[String, (Int, String, String, String)]
+
+  private val sb = new StringBuilder
+  flatten(mapConf, sb, valMap, elemDelim)
+  val template = sb.toString
+  sb.setLength(0)
+
+  val placeholderPattern = "((?:[^$]+|\\$\\{(?!\\d)})+)|(\\$\\{\\d+})".r
+  val templateTokens = template.tokenize(placeholderPattern)
+
+
+  val uri = host(endpoints(0)) / index / esType / "_bulk"
+  info(uri)
+
+
 
   private def flatten(mapConf: Config, sb: StringBuilder, map: mutable.Map[String, (Int, String, String, String)], elemDelim: String): Unit = {
     val mapping = mapConf.root
@@ -142,15 +177,15 @@ object CSVLoader extends App with Logging with Configurable {
       mapConf.getAnyRef(field) match {
         case x: java.util.Map[String, AnyRef] => {
           val fconf = mapConf.getConfig(field)
-          if(fconf.hasPath("type")) {
-            val placeholder = "${"+fconf.getInt("pos")+"}"
+          if (fconf.hasPath("type")) {
+            val placeholder = "${" + fconf.getInt("pos") + "}"
             sb.append(placeholder)
             map.put(placeholder, (
               fconf.getInt("pos"),
               fconf.getString("type"),
-              (if (!fconf.hasPath("cardinality")||fconf.getString("cardinality") == null) "" else fconf.getString("cardinality")).nonEmptyOrElse("one"),
-              (if (!fconf.hasPath("delimiter")||fconf.getInt("delimiter") == null) "" else fconf.getInt("delimiter").toChar.toString).nonEmptyOrElse(elemDelim)
-            )
+              (if (!fconf.hasPath("cardinality") || fconf.getString("cardinality") == null) "" else fconf.getString("cardinality")).nonEmptyOrElse("one"),
+              (if (!fconf.hasPath("delimiter") || fconf.getInt("delimiter") == null) "" else fconf.getInt("delimiter").toChar.toString).nonEmptyOrElse(elemDelim)
+              )
             )
           } else flatten(fconf, sb, map, elemDelim)
         }
@@ -160,13 +195,13 @@ object CSVLoader extends App with Logging with Configurable {
             flatten(c, sb, map, elemDelim)
             sb.append(", ")
           }
-          sb.setLength(sb.length - 2 )
+          sb.setLength(sb.length - 2)
           sb.append(" ]")
         }
       }
       sb.append(", ")
     }
-    sb.setLength(sb.length - 2 )
+    sb.setLength(sb.length - 2)
     sb.append(" }")
   }
 

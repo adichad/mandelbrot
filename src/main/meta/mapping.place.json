@@ -237,17 +237,20 @@
                 "properties": {
                     "name": {
                         "type": "string",
-                        "store": "true",
+                        "store": true,
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "description": {
                         "type": "string",
-                        "store": "true",
+                        "store": true,
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "keywords": {
                         "type": "string",
-                        "store ": " true",
+                        "store ": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "email": {
@@ -258,6 +261,7 @@
                     "logourl": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "no"
                     }
                 }
@@ -269,16 +273,19 @@
                     "name": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "no"
                     },
                     "landline": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "no"
                     },
                     "mobile": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "no"
                     }
                 }
