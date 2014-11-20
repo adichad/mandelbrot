@@ -17,6 +17,7 @@
                     "qaggr": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "not_analyzed"
                     },
                     "question": {
@@ -27,11 +28,13 @@
                     "aaggr": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "not_analyzed"
                     },
                     "answer": {
                         "type": "string",
                         "store": "false",
+                        "position_offset_gap": 100,
                         "index": "analyzed"
                     }
                 }
@@ -43,6 +46,7 @@
                     "qaggr": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "not_analyzed"
                     },
                     "question": {
@@ -53,6 +57,7 @@
                     "answer": {
                         "type": "integer",
                         "store": "true",
+                        "include_in_parent": true,
                         "ignore_malformed": "true"
                     }
                 }
@@ -225,6 +230,7 @@
                 "geohash": "true",
                 "geohash_precision": "1m",
                 "geohash_prefix": "true",
+                "store": "true",
                 "normalize": "true",
                 "fielddata": {
                     "format": "compressed",
@@ -256,6 +262,7 @@
                     "email": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "logourl": {
@@ -308,6 +315,12 @@
                 "index": "analyzed",
                 "index_name": "cat3"
             },
+            "L3CategoryAggr": {
+                "type": "string",
+                "store": "true",
+                "index": "not_analyzed",
+                "index_name": "cat3aggr"
+            },
             "CategoryPath": {
                 "type": "string",
                 "store": "true",
@@ -318,6 +331,7 @@
                 "type": "string",
                 "store": "true",
                 "index": "analyzed",
+                "position_offset_gap": 100,
                 "index_name": "cat3kw"
             },
             "Product": {
@@ -327,26 +341,31 @@
                     "name": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "description": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "keywords": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "brand": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "analyzed"
                     },
                     "imageurls": {
                         "type": "string",
                         "store": "true",
+                        "include_in_parent": true,
                         "index": "no"
                     }
                 }

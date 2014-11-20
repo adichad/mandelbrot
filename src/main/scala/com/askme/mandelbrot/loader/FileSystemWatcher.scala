@@ -40,7 +40,7 @@ class FileSystemWatcher(val config: Config, serverContext: SearchContext) extend
   def receive = LoggingReceive {
     case MonitorDir(path, index, esType) =>
       watchServiceTask watchRecursively path
-      getOrCreate(path, index, esType)
+      register(path, index, esType)
     case Created(file, origPath) =>
       registry.get(origPath) ! Index(file)
     case Modified(file, origPath) =>
@@ -49,7 +49,7 @@ class FileSystemWatcher(val config: Config, serverContext: SearchContext) extend
 
   }
 
-  private def getOrCreate(path: Path, index: String, esType: String) = {
+  private def register(path: Path, index: String, esType: String) = {
     if(!registry.containsKey(path)) {
       val name = "loader-" + path.toString.replace("/", "=")
       registry.put(path, context.actorOf(Props(classOf[CSVLoader],

@@ -29,15 +29,17 @@ import scala.util.matching.Regex
 case class Index(file: File)
 
 object CSVLoader {
+  val specials: Seq[(String, String)] = ("\\", "\\\\") +: (("\"", "\\\"") +:
+    (for(c <- (0x0000 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ","0"))))
   implicit class `string utils`(val s: String) extends AnyVal {
     def nonEmptyOrElse(other: => String) = if (s.isEmpty) other else s
 
     def tokenize(regex: Regex): List[List[String]] = regex.findAllIn(s).matchData.map(_.subgroups).toList
 
     def escapeJson: String = {
-      var res = s.replace("\\", "\\\\").replace("\"", "\\\"")
-      (0x0000 to 0x0020).foreach {
-        c => res = res.replace(c.toChar.toString, "\\u" +  ("%4s" format Integer.toHexString(c)).replace(" ","0"))
+      var res = s
+      specials.foreach {
+        c => res = res.replace(c._1, c._2)
       }
       res
     }
