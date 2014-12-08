@@ -8,7 +8,7 @@ apply from: 'gradle.properties'
 defaultTasks 'go'
 
 ext {
-  hadoop_version    = '2.4.1'
+  hadoop_version    = '2.5.2'
 }
 
 eclipse {
@@ -150,13 +150,13 @@ sourceSets {
 project(':') {
   dependencies {
     provided    project(':'+project(':').name+'-dep')
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
-//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
   }
 }
 
@@ -172,7 +172,7 @@ repositories {
   maven { url "http://repo.akka.io/releases/" }
   maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
-
+  maven { url "http://conjars.org/repo" }
   //maven { url "http://10.0.6.11:8081/artifactory/libs-release/" }
   //maven { url "http://10.0.6.11:8081/artifactory/libs-snapshot/" }
 }

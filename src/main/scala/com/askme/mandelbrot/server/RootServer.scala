@@ -11,8 +11,11 @@ import com.askme.mandelbrot.handler.MandelbrotHandler
 import com.hazelcast.core.Hazelcast
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-//import org.apache.spark.SparkContext._
-//import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkContext._
+import org.apache.spark.serializer.KryoSerializer
+import org.apache.spark.sql._
+import org.apache.spark.streaming.{Seconds, Minutes, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -31,8 +34,8 @@ object RootServer {
       .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
 
 
-    val netConf = conf.getNetworkConfig
-    val joinConf = netConf.getJoin
+    private val netConf = conf.getNetworkConfig
+    private val joinConf = netConf.getJoin
     joinConf.getMulticastConfig.setEnabled(boolean("hazel.multicast.enabled"))
     joinConf.getTcpIpConfig.setEnabled(boolean("hazel.tcpip.enabled"))
     joinConf.getTcpIpConfig.setMembers(list[String]("hazel.tcpip.members"))
@@ -44,7 +47,7 @@ object RootServer {
 
     val hazel = Hazelcast.newHazelcastInstance(conf)
 
-    val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
+    private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
       ImmutableSettings.settingsBuilder()
         .put("node.name", string("es.node.name"))
         .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
@@ -56,10 +59,25 @@ object RootServer {
     val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
 
+    // http://spark.apache.org/docs/latest/configuration.html
+    private val sparkConf = (new SparkConf)
+      .setMaster(string("spark.master"))
+      .setAppName(string("spark.app.name"))
+      .set("spark.executor.memory", string("spark.executor.memory"))
+      .set("spark.shuffle.spill", string("spark.shuffle.spill"))
+      .set("spark.logConf", string("spark.logConf"))
+      .set("spark.local.dir", string("spark.local.dir"))
+      //.set("spark.serializer", classOf[KryoSerializer].getName)
+
+    val sparkContext = new SparkContext(sparkConf)
+    val sqlContext = new SQLContext(sparkContext)
+    val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
+
     private[RootServer] def close() {
       esClient.close()
       esNode.close()
       batchExecutionContext.shutdown()
+      sparkContext.stop()
       hazel.shutdown()
     }
   }

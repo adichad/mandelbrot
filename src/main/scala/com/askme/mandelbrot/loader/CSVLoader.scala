@@ -6,13 +6,14 @@ import java.util.zip.GZIPInputStream
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
-import dispatch.Defaults.executor
 import dispatch._
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.client.Client
+import org.elasticsearch.action.bulk.{BulkRequestBuilder, BulkResponse}
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -30,7 +31,8 @@ case class Index(file: File)
 
 object CSVLoader {
   val specials: Seq[(String, String)] = ("\\", "\\\\") +: (("\"", "\\\"") +:
-    (for(c <- (0x0000 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ","0"))))
+    (for (c <- (0x0000 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ", "0"))))
+
   implicit class `string utils`(val s: String) extends AnyVal {
     def nonEmptyOrElse(other: => String) = if (s.isEmpty) other else s
 
@@ -87,53 +89,78 @@ object CSVLoader {
 }
 
 class CSVLoader(val config: Config, index: String, esType: String,
-                implicit val executionContext1: ExecutionContext, esClient: Client)
+                implicit val executionContext: ExecutionContext, searchContext: SearchContext)
   extends Actor with Logging with Configurable {
+
   import com.askme.mandelbrot.loader.CSVLoader._
 
-  implicit val executionContext = executionContext1
+  private val esClient = searchContext.esClient
+
+  class GroupState {
+    var id: String = null
+    var json: JValue = parse("{}")
+  }
+
+  //assumes that the result is sorted
+  private val groupFlush: (String, String, String, String, BulkRequestBuilder, GroupState) => Unit = {
+    (id, jsonStr, index, esType, req, groupState) =>
+      if (id == groupState.id) {
+        groupState.json = groupState.json merge parse(jsonStr)
+      } else {
+        req.add(
+          esClient.prepareIndex(index, esType, groupState.id)
+            .setSource(compact(render(groupState.json)))
+        )
+        //info(pretty(render(groupState.json)))
+        groupState.id = id
+        groupState.json = parse(jsonStr)
+      }
+  }
+
+  private def getId(cells: Array[String]) = "U"+cells(2)+"L"+cells(4)
+
   override def receive = {
     case Index(file) => {
-      info("file received: "+file.getAbsolutePath)
+      info("input file received: " + file.getAbsolutePath)
       future {
         val input = new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)))
-        info("input file opened: "+file.getAbsolutePath)
+        info("input file opened: " + file.getAbsolutePath)
         val sb = new StringBuilder
         var count = 0
-        val bulkRequest = esClient.prepareBulk()
+        val bulkRequest = esClient.prepareBulk
         try {
+          val groupState = new GroupState
           Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
             .getLines().foreach {
             line => {
               val cells = line.split(fieldDelim, -1)
-              bulkRequest.add(
-                esClient.prepareIndex(index, esType, cells(idPos))
-                  .setSource(sb.appendReplaced(templateTokens, valMap, cells).toString)
-              )
+              cells(idPos) = getId(cells)
+              //assumes that the result is sorted
+              groupFlush(cells(idPos), sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, bulkRequest, groupState)
               sb.setLength(0)
               count += 1
             }
           }
+          groupFlush(null, "{}", index, esType, bulkRequest, groupState)
         } catch {
-          case e: Exception => error("error reading file: "+file.getAbsolutePath, e)
-        }
-        finally {
+          case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
+        } finally {
           input.close()
-          info("input file closed: "+file.getAbsolutePath)
+          info("input file closed: " + file.getAbsolutePath)
         }
-        info("performing "+bulkRequest.numberOfActions()+" bulk indexing actions")
+        info("indexing " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse) = {
-            info("failures: "+response.hasFailures)
-            sb.append("failed ids: [")
-            response.getItems.foreach { item=>
-              if(item.isFailed) {
-                sb.append(item.getId).append(":{").append(item.getFailure.getMessage).append("}, ")
+            info("failures: " + response.hasFailures)
+            sb.append("{\"failed\": [")
+            response.getItems.foreach { item =>
+              if (item.isFailed) {
+                sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
               }
             }
-            if(sb.charAt(sb.length-2)==',')
-              sb.setLength(sb.length-2)
-            sb.append("]")
+            if (sb.charAt(sb.length - 2) == ',')
+              sb.setLength(sb.length - 2)
+            sb.append("]}")
             info(sb.toString)
             sb.setLength(0)
           }
@@ -146,7 +173,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
       }
     }
   }
-
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
@@ -165,11 +191,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
   val placeholderPattern = "((?:[^$]+|\\$\\{(?!\\d)})+)|(\\$\\{\\d+})".r
   val templateTokens = template.tokenize(placeholderPattern)
 
-
   val uri = host(endpoints(0)) / index / esType / "_bulk"
   info(uri)
-
-
 
   private def flatten(mapConf: Config, sb: StringBuilder, map: mutable.Map[String, (Int, String, String, String)], elemDelim: String): Unit = {
     val mapping = mapConf.root
