@@ -58,7 +58,7 @@ object RootServer {
     val esClient = esNode.client
     val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
-
+/*
     // http://spark.apache.org/docs/latest/configuration.html
     private val sparkConf = (new SparkConf)
       .setMaster(string("spark.master"))
@@ -72,12 +72,12 @@ object RootServer {
     val sparkContext = new SparkContext(sparkConf)
     val sqlContext = new SQLContext(sparkContext)
     val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
-
+*/
     private[RootServer] def close() {
       esClient.close()
       esNode.close()
       batchExecutionContext.shutdown()
-      sparkContext.stop()
+      //sparkContext.stop()
       hazel.shutdown()
     }
   }
