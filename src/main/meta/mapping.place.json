@@ -109,7 +109,8 @@
       "City": {
         "type": "string",
         "store": "true",
-        "index": "not_analyzed",
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
         "index_name": "city"
       },
       "PinCode": {

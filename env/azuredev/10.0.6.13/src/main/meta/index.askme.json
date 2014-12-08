@@ -1,13 +1,13 @@
 {
     "settings" : {
-        "number_of_shards" : 4,
-        "number_of_replicas" : 2,
+        "number_of_shards" : 5,
+        "number_of_replicas" : 3,
         "analysis": {
             "analyzer": {
                 "keyword_analyzer": {
                     "type": "custom",
                     "tokenizer": "keyword",
-                    "filter": ["lowercase"]
+                    "filter": ["trim", "lowercase"]
                 }
             }
         }

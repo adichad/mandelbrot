@@ -19,6 +19,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, Search
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{DistanceUnit, Fuzziness}
 import org.elasticsearch.common.xcontent.{XContentType, XContentFactory, XContentBuilder}
+import org.elasticsearch.index.query.BaseQueryBuilder
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders
@@ -63,6 +64,15 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
     }
   }
 
+  private def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+    val parts = fieldName.split(".")
+    var res = q
+    (1 to parts.length-1).foreach { until =>
+      res = nestedQuery(parts.slice(0, until).mkString("."), q)
+    }
+    res
+  }
+
   private val route =
     clientIP { clip =>
       requestInstance { httpReq =>
@@ -72,7 +82,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'dist.as[Double] ? 10.0d,
               'source.as[Boolean] ? true, 'explain.as[Boolean] ? false,
-              'fuzzyprefix.as[Int] ? 3, 'fuzzysim.as[Float] ? 0.8f,
+              'fuzzyprefix.as[Int] ? 3, 'fuzzysim.as[Float] ? 0.85f,
               'sort ? "_score",
               'select ? "_id",
               'agg.as[Boolean] ? true) {
@@ -89,26 +99,42 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                   complete {
                     implicit val execctx = serverContext.userExecutionContext
                     future {
-                      val dismax = disMaxQuery()
-                      kw.split( """\s+""").foreach { w =>
-                        dismax
-                          .add(termQuery("LocationName", w).boost(10))
-                          .add(termQuery("CompanyName", w).boost(20))
-                          .add(termQuery("CompanyDescription", w).boost(0.001f))
-                          .add(nestedQuery("Product", nestedQuery("Product.stringattribute", fuzzyQuery("Product.stringattribute.answer", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim))).boost(25)))
-                          .add(nestedQuery("Product", nestedQuery("Product.stringattribute", fuzzyQuery("Product.stringattribute.question", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim))).boost(10)))
 
-                          .add(nestedQuery("Product", fuzzyQuery("Product.l3category", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)).boost(30)))
-                          .add(nestedQuery("Product", fuzzyQuery("Product.l2category", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)).boost(5)))
-                          .add(nestedQuery("Product", fuzzyQuery("Product.l1category", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)).boost(2)))
-                          .add(nestedQuery("Product", fuzzyQuery("Product.categorykeywords", w).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)).boost(30)))
+                      val query = boolQuery()
+                      if(kw!=null && kw.trim!="") {
+                        val kwquery = boolQuery()
+                        val w = kw.split( """\s+""")
+                        val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.l3category" -> 40,
+                          "Product.categorykeywords" -> 40, "Product.l2category" -> 5, "Product.l1category" -> 2)
+
+
+                        searchFields.foreach {
+                          field: (String, Int) => {
+                            val fieldQuery = spanOrQuery().boost(field._2)
+                            val locNameTerms = w
+                              .map(fuzzyQuery(field._1, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
+                              .map(spanMultiTermQueryBuilder)
+                            (1 to Math.min(locNameTerms.length, 4)).foreach { len =>
+                              locNameTerms.sliding(len).foreach { shingle =>
+                                val nearQuery = spanNearQuery().slop(shingle.length - 1).inOrder(false).boost(field._2 * shingle.length)
+                                shingle.foreach(nearQuery.clause)
+                                fieldQuery.clause(nearQuery)
+                              }
+                            }
+                            kwquery.should(nestIfNeeded(field._1, fieldQuery))
+
+                          }
+                        }
+                        query.must(kwquery)
                       }
-                      val query = boolQuery().must(dismax)
+
                       if (city != "")
-                        query.must(termsQuery("City", city.split( """\s+"""): _*))
+                        query.must(termsQuery("City", city.split( ""","""): _*))
                       if (area != "")
-                        query.must(disMaxQuery().add(termsQuery("Area", area.split( """\s+"""): _*))
-                          .add(termsQuery("AreaSynonyms", area.split( """\s+"""): _*)))
+                        query.must(
+                          disMaxQuery().add(termsQuery("Area", area.split( """\s+"""): _*))
+                            .add(termsQuery("AreaSynonyms", area.split( """\s+"""): _*))
+                        )
 
                       val search = esClient.prepareSearch(index.split(","): _*)
                         .setTypes(esType.split(","): _*)
