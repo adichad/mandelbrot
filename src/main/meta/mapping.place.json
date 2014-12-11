@@ -100,10 +100,22 @@
         "index": "analyzed",
         "index_name": "area"
       },
+      "AreaExact": {
+        "type": "string",
+        "store": "true",
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false},
+        "index_name": "areaexact"
+      },
       "AreaSynonyms": {
         "type": "string",
         "store": "true",
         "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false},
         "index_name": "areasyn"
       },
       "City": {
@@ -111,7 +123,15 @@
         "store": "true",
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false},
         "index_name": "city"
+      },
+      "CityAggr": {
+        "type": "string",
+        "store": "true",
+        "index": "not_analyzed",
+        "index_name": "cityaggr"
       },
       "PinCode": {
         "type": "string",
@@ -123,12 +143,14 @@
         "type": "string",
         "store": "true",
         "index": "analyzed",
+        "norms": {"enabled": false},
         "index_name": "zonesrv"
       },
       "Zone": {
         "type": "string",
         "store": "true",
         "index": "analyzed",
+        "norms": {"enabled": false},
         "index_name": "zone"
       },
       "State": {
@@ -288,6 +310,16 @@
             "include_in_root": true,
             "index_name": "cat3aggr"
           },
+          "l3categoryexact": {
+            "type": "string",
+            "store": "true",
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "index_name": "cat3exact"
+          },
           "l3categoryid": {
             "type": "integer",
             "store": "true",
@@ -308,6 +340,17 @@
             "position_offset_gap": 100,
             "include_in_root": true,
             "index_name": "cat3kw"
+          },
+          "categorykeywordsexact": {
+            "type": "string",
+            "store": "true",
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "index_name": "cat3kwexact"
           },
           "stringattribute": {
             "type": "nested",

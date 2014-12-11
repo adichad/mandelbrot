@@ -54,6 +54,12 @@ object RootServer {
         .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
         .put("network.host", string("es.network.host"))
         .put("path.data", string("es.path.data"))
+        .put("path.logs", string("es.path.logs"))
+        .put("indices.cache.query.size", string("es.indices.cache.query.size"))
+        .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
+        .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
+        .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
+        .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
     ).node
     val esClient = esNode.client
     val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
