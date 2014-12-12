@@ -100,6 +100,12 @@
         "index": "analyzed",
         "index_name": "area"
       },
+      "AreaAggr": {
+        "type": "string",
+        "store": "true",
+        "index": "not_analyzed",
+        "index_name": "areaaggr"
+      },
       "AreaExact": {
         "type": "string",
         "store": "true",
@@ -113,10 +119,16 @@
         "type": "string",
         "store": "true",
         "index": "analyzed",
+        "index_name": "areasyn"
+      },
+      "AreaSynonymsExact": {
+        "type": "string",
+        "store": "true",
+        "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false},
-        "index_name": "areasyn"
+        "index_name": "areasynexact"
       },
       "City": {
         "type": "string",

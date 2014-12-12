@@ -20,6 +20,9 @@ import org.elasticsearch.index.query.{QueryBuilders, BaseQueryBuilder}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket
+import org.elasticsearch.search.aggregations.{Aggregation, Aggregations}
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort._
@@ -147,7 +150,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       if (area != "") {
                         query = filteredQuery(query, boolFilter
                           .should(termsFilter("AreaExact", area.split( """,""").map(_.trim.toLowerCase): _*))
-                          .should(termsFilter("AreaSynonyms", area.split( """,""").map(_.trim.toLowerCase): _*)).cache(true)
+                          .should(termsFilter("AreaSynonymsExact", area.split( """,""").map(_.trim.toLowerCase): _*)).cache(true)
                         )
                       }
                       if (category != "") {
@@ -178,9 +181,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       if (agg) {
                         if(city=="")
                           search.addAggregation(terms("city").field("CityAggr"))
-                        search.addAggregation(terms("area").field("AreaExact"))
+                        search.addAggregation(terms("area").field("AreaAggr"))
                         search.addAggregation(nested("products").path("Product")
                             .subAggregation(terms("categories").field("Product.cat3aggr"))
+                            .subAggregation(terms("catkw").field("Product.cat3aggr")
+                              .subAggregation(terms("kw").field("Product.cat3kwexact"))
+                            )
                             /*
                             .subAggregation(nested("attributes").path("Product.stringattribute")
                               .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
@@ -195,11 +201,14 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                       val result = search.execute().actionGet()
 
-                      val catbuckets = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("categories").asInstanceOf[Terms].getBuckets
-                      val topCategory = (if(catbuckets.size>0) catbuckets.get(0).getKey else "")
+                      val cleanKW = kw.trim.toLowerCase
+
+                      val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+                        .find(b => b.getKey.trim.toLowerCase == cleanKW || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(_.getKey.trim.toLowerCase == cleanKW)))
+                        .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll("""\s+""", "-"), "UTF-8"))(k => "/" + URLEncoder.encode(k.getKey.replaceAll("""\s+""", "-"), "UTF-8"))
 
                       val slug = (if(city!="") "/" + URLEncoder.encode(city, "UTF-8") else "") +
-                        (if(topCategory.trim.toLowerCase == kw.trim.toLowerCase) "/"+URLEncoder.encode(topCategory, "UTF-8") else "/"+URLEncoder.encode(kw, "UTF-8")) +
+                        matchedCat +
                         (if(category!="") "/cat/" + URLEncoder.encode(category, "UTF-8") else "") +
                         (if(area!="") "/in/" + URLEncoder.encode(area, "UTF-8") else "")
 
