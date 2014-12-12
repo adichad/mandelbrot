@@ -162,7 +162,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                             .point(lat, lon)
                             .distance(distkm, DistanceUnit.KILOMETERS)
                             .optimizeBbox("indexed")
-                            .geoDistance(GeoDistance.ARC).cache(true))
+                            .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
 
                       val search = esClient.prepareSearch(index.split(","): _*)
                         .setTypes(esType.split(","): _*)
