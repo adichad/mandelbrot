@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket
-import org.elasticsearch.search.aggregations.{Aggregation, Aggregations}
+import org.elasticsearch.search.aggregations.{AggregationBuilders, Aggregation, Aggregations}
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -82,7 +82,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
           path("search" / Segment / Segment) { (index, esType) =>
             parameters('kw.as[String] ? "", 'city ? "", 'area ? "", 'category ? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
-              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'distkm.as[Double] ? 20.0d,
+              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double]? 0d, 'tokm.as[Double] ? 20.0d,
               'source.as[Boolean] ? true, 'explain.as[Boolean] ? false,
               'fuzzyprefix.as[Int] ? 3, 'fuzzysim.as[Float] ? 0.85f,
               'sort ? "CustomerType.DESC,_score",
@@ -92,7 +92,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
               'timeoutms.as[Long]?2000l) {
               (kw, city, area, category,
                size, offset,
-               lat, lon, distkm,
+               lat, lon, fromkm, tokm,
                source, explain,
                fuzzyprefix, fuzzysim,
                sort,
@@ -158,9 +158,10 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       }
                       if (lat != 0.0d || lon != 0.0d)
                         query = filteredQuery(query,
-                          geoDistanceFilter("LatLong")
+                          geoDistanceRangeFilter("LatLong")
                             .point(lat, lon)
-                            .distance(distkm, DistanceUnit.KILOMETERS)
+                            .from(fromkm+"km")
+                            .to(tokm+"km")
                             .optimizeBbox("indexed")
                             .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
 
@@ -175,7 +176,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
                         .setExplain(explain)
                         .setFetchSource(source)
-
+                      
                       addSort(search, sort)
 
                       if (agg) {
@@ -187,14 +188,29 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                             .subAggregation(terms("catkw").field("Product.cat3aggr")
                               .subAggregation(terms("kw").field("Product.cat3kwexact"))
                             )
-                            /*
-                            .subAggregation(nested("attributes").path("Product.stringattribute")
-                              .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
-                                .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
+                          /*
+                              .subAggregation(nested("attributes").path("Product.stringattribute")
+                                .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
+                                  .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
+                                )
                               )
-                            )
-                            */
+                              */
+                        )
+                        if(lat!=0.0d || lon!=0.0d)
+                          search.addAggregation(
+                            geoDistance("geotarget")
+                              .field("LatLong")
+                              .lat(lat).lon(lon)
+                              .distanceType(GeoDistance.SLOPPY_ARC)
+                              .unit(DistanceUnit.KILOMETERS)
+                              .addUnboundedTo("within 1.5 kms", 1.5d)
+                              .addRange("1.5 to 4 kms", 1.5d, 4d)
+                              .addRange("4 to 8 kms", 4d, 8d)
+                              .addRange("8 to 30 kms", 8d, 30d)
+                              .addUnboundedFrom("30 kms and beyond", 30d)
                           )
+
+
                       }
 
                       debug("query "+pretty(render(parse(search.toString)))+"]")
@@ -207,10 +223,10 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         .find(b => b.getKey.trim.toLowerCase == cleanKW || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(_.getKey.trim.toLowerCase == cleanKW)))
                         .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll("""\s+""", "-"), "UTF-8"))(k => "/" + URLEncoder.encode(k.getKey.replaceAll("""\s+""", "-"), "UTF-8"))
 
-                      val slug = (if(city!="") "/" + URLEncoder.encode(city, "UTF-8") else "") +
+                      val slug = (if(city!="") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "") +
                         matchedCat +
-                        (if(category!="") "/cat/" + URLEncoder.encode(category, "UTF-8") else "") +
-                        (if(area!="") "/in/" + URLEncoder.encode(area, "UTF-8") else "")
+                        (if(category!="") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "") +
+                        (if(area!="") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "")
 
                       info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTook + " (" + result.getHits.hits.length + ")]")
 

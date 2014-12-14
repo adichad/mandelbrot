@@ -55,6 +55,7 @@ object RootServer {
         .put("network.host", string("es.network.host"))
         .put("path.data", string("es.path.data"))
         .put("path.logs", string("es.path.logs"))
+        .put("path.conf", string("es.path.conf"))
         .put("indices.cache.query.size", string("es.indices.cache.query.size"))
         .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
         .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
