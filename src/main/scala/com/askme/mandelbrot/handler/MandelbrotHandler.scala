@@ -69,28 +69,132 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
     val parts = fieldName.split(".")
     var res = q
-    (1 to parts.length-1).foreach { until =>
+    (1 to parts.length - 1).foreach { until =>
       res = nestedQuery(parts.slice(0, until).mkString("."), q)
     }
     res
   }
 
   private val route =
+
     clientIP { clip =>
       requestInstance { httpReq =>
         get {
+          path( "apidocs") {
+            respondWithMediaType(`application/json`) {
+              complete {
+                """
+                  |{
+                  |  "api": "GET /search/<index>/<type>",
+                  |  "parameters": {
+                  |    "kw": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "",
+                  |      "description": "free-form 'keywords'/'text' searched in analyzed fields",
+                  |      "multivalued": false
+                  |    },
+                  |    "city": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "",
+                  |      "description": "filter on 'City' field",
+                  |      "multivalued": true,
+                  |      "seperator": ","
+                  |    },
+                  |    "area": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "",
+                  |      "description": "filter on 'Area', 'AreaSynonyms' fields",
+                  |      "multivalued": true,
+                  |      "seperator": ","
+                  |    },
+                  |    "category": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "",
+                  |      "description": "filter on 'Product.l3categoryexact' field, for use in navigation from the 'categories' aggregation",
+                  |      "multivalued": true,
+                  |      "seperator": "#"
+                  |    },
+                  |    "id": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "",
+                  |      "description": "filter by document ids",
+                  |      "multivalued": true,
+                  |      "seperator": ","
+                  |    },
+                  |    "size": {
+                  |      "type": "Integer",
+                  |      "required": false,
+                  |      "default": 20,
+                  |      "description": "the number of hits to return",
+                  |      "multivalued": false
+                  |    },
+                  |    "offset": {
+                  |      "type": "Integer",
+                  |      "required": false,
+                  |      "default": 0,
+                  |      "description": "the number of hits to skip from the top, used for paging in tandem with 'size'",
+                  |      "multivalued": false
+                  |    },
+                  |    "lat": {
+                  |      "type": "Double",
+                  |      "required": false,
+                  |      "default": 0.0,
+                  |      "description": "latitude (degrees) of point around which to focus search",
+                  |      "multivalued": false
+                  |    },
+                  |    "lon": {
+                  |      "type": "Double",
+                  |      "required": false,
+                  |      "default": 0.0,
+                  |      "description": "longitude (degrees) of point around which to focus search",
+                  |      "multivalued": false
+                  |    },
+                  |    "fromkm": {
+                  |      "type": "Double",
+                  |      "required": false,
+                  |      "default": 0.0,
+                  |      "description": "distance in km from point specified by 'lat','lon' that specifies a lower-bound (inclusive) on the distance filter; for use in navigation from the 'geotarget' aggregation",
+                  |      "multivalued": false
+                  |    },
+                  |    "tokm": {
+                  |      "type": "Double",
+                  |      "required": false,
+                  |      "default": 20.0,
+                  |      "description": "distance in km from point specified by 'lat','lon' that specifies an upper-bound (inclusive) on the distance filter; for use in navigation from the 'geotarget' aggregation",
+                  |      "multivalued": false
+                  |    },
+                  |    "select": {
+                  |      "type": "String",
+                  |      "required": false,
+                  |      "default": "_id",
+                  |      "description": "list of field values to retrieve for each hit",
+                  |      "multivalued": true,
+                  |      "seperator": ","
+                  |    }
+                  |  },
+                  |  "example": "GET http://138.91.34.100:9999/search/askme/place?kw=building+hardware&city=delhi&select=Area,LocationName,CompanyName,CompanyDescription,Product.cat3,Product.id,LatLong,City,CustomerType&lat=28.6479&lon=77.2342&fromkm=0&tokm=20"
+                  |}
+                """.stripMargin
+              }
+            }
+          } ~
           path("search" / Segment / Segment) { (index, esType) =>
-            parameters('kw.as[String] ? "", 'city ? "", 'area ? "", 'category ? "",
+            parameters('kw.as[String] ? "", 'city ? "", 'area ? "", 'category ? "", 'id ? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
-              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double]? 0d, 'tokm.as[Double] ? 20.0d,
-              'source.as[Boolean] ? true, 'explain.as[Boolean] ? false,
+              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[Double] ? 20.0d,
+              'source.as[Boolean] ? false, 'explain.as[Boolean] ? false,
               'fuzzyprefix.as[Int] ? 3, 'fuzzysim.as[Float] ? 0.85f,
               'sort ? "CustomerType.DESC,_score",
               'select ? "_id",
               'agg.as[Boolean] ? true,
-              'maxdocspershard.as[Int]?100000,
-              'timeoutms.as[Long]?2000l) {
-              (kw, city, area, category,
+              'maxdocspershard.as[Int] ? 100000,
+              'timeoutms.as[Long] ? 2000l) {
+              (kw, city, area, category, id,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain,
@@ -100,13 +204,13 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                agg,
                maxdocspershard,
                timeoutms) =>
-
+                val start = System.currentTimeMillis
                 respondWithMediaType(`application/json`) {
                   complete {
                     implicit val execctx = serverContext.userExecutionContext
                     future {
                       var query: BaseQueryBuilder = null
-                      if(kw!=null && kw.trim!="") {
+                      if (kw != null && kw.trim != "") {
                         val kwquery = boolQuery()
                         val w = kw.split( """\s+""")
                         val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.l3category" -> 40,
@@ -129,7 +233,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           }
                         }
 
-                        val exactFields = Map("Product.l3categoryexact"->80, "Product.categorykeywordsexact"->80)
+                        val exactFields = Map("Product.l3categoryexact" -> 80, "Product.categorykeywordsexact" -> 80)
                         exactFields.foreach {
                           field: (String, Int) => {
                             val fieldQuery = boolQuery
@@ -145,6 +249,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       }
 
                       // filters
+                      if (id != "")
+                        query = filteredQuery(query, idsFilter(esType).addIds(id.split(""","""): _*))
                       if (city != "")
                         query = filteredQuery(query, termsFilter("City", city.split( """,""").map(_.trim.toLowerCase): _*).cache(true))
                       if (area != "") {
@@ -154,14 +260,14 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         )
                       }
                       if (category != "") {
-                        query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryexact", category.split("""#""").map(_.trim.toLowerCase): _*)).cache(true))
+                        query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryexact", category.split( """#""").map(_.trim.toLowerCase): _*)).cache(true))
                       }
                       if (lat != 0.0d || lon != 0.0d)
                         query = filteredQuery(query,
                           geoDistanceRangeFilter("LatLong")
                             .point(lat, lon)
-                            .from(fromkm+"km")
-                            .to(tokm+"km")
+                            .from(fromkm + "km")
+                            .to(tokm + "km")
                             .optimizeBbox("indexed")
                             .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
 
@@ -176,27 +282,27 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
                         .setExplain(explain)
                         .setFetchSource(source)
-                      
+
                       addSort(search, sort)
 
                       if (agg) {
-                        if(city=="")
+                        if (city == "")
                           search.addAggregation(terms("city").field("CityAggr"))
                         search.addAggregation(terms("area").field("AreaAggr"))
                         search.addAggregation(nested("products").path("Product")
-                            .subAggregation(terms("categories").field("Product.cat3aggr"))
-                            .subAggregation(terms("catkw").field("Product.cat3aggr")
-                              .subAggregation(terms("kw").field("Product.cat3kwexact"))
-                            )
+                          .subAggregation(terms("categories").field("Product.cat3aggr"))
+                          .subAggregation(terms("catkw").field("Product.cat3aggr")
+                          .subAggregation(terms("kw").field("Product.cat3kwexact"))
+                          )
                           /*
-                              .subAggregation(nested("attributes").path("Product.stringattribute")
-                                .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
-                                  .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
-                                )
+                            .subAggregation(nested("attributes").path("Product.stringattribute")
+                              .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
+                                .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
                               )
-                              */
+                            )
+                            */
                         )
-                        if(lat!=0.0d || lon!=0.0d)
+                        if (lat != 0.0d || lon != 0.0d)
                           search.addAggregation(
                             geoDistance("geotarget")
                               .field("LatLong")
@@ -209,28 +315,26 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                               .addRange("8 to 30 kms", 8d, 30d)
                               .addUnboundedFrom("30 kms and beyond", 30d)
                           )
-
-
                       }
 
-                      debug("query "+pretty(render(parse(search.toString)))+"]")
+                      debug("query " + pretty(render(parse(search.toString))) + "]")
 
                       val result = search.execute().actionGet()
-
                       val cleanKW = kw.trim.toLowerCase
 
                       val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
                         .find(b => b.getKey.trim.toLowerCase == cleanKW || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(_.getKey.trim.toLowerCase == cleanKW)))
-                        .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll("""\s+""", "-"), "UTF-8"))(k => "/" + URLEncoder.encode(k.getKey.replaceAll("""\s+""", "-"), "UTF-8"))
+                        .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(k => "/" + URLEncoder.encode(k.getKey.replaceAll( """\s+""", "-"), "UTF-8"))
 
-                      val slug = (if(city!="") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "") +
+                      val slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
                         matchedCat +
-                        (if(category!="") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "") +
-                        (if(area!="") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll("""\s+""", "-"), "UTF-8") else "")
+                        (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
+                        (if (area != "") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "")
 
-                      info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTook + " (" + result.getHits.hits.length + ")]")
+                      val timeTaken = System.currentTimeMillis - start
+                      info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTookInMillis + "/" + timeTaken + " (" + result.getHits.hits.length + "/" + result.getHits.getTotalHits +")]")
 
-                      "{ \"slug\": \""+slug+"\", \"hit-count\": "+result.getHits.hits.length+", \"results\": "+result.toString+" }"
+                      "{ \"slug\": \"" + slug + "\", \"hit-count\": " + result.getHits.hits.length + "\", \"server-time-ms\": " + timeTaken + ", \"results\": " + result.toString + " }"
                     }
                   }
                 }
@@ -243,9 +347,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                 fsActor ! MonitorDir(Paths.get(dir), index, esType)
                 respondWithMediaType(`application/json`) {
                   complete {
-                    json"""{
-                "acknowledged": true
-              }""".toString
+                    """{"acknowledged": true}"""
                   }
                 }
               }
