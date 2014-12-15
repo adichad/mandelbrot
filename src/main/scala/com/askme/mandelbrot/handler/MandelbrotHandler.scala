@@ -213,8 +213,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       if (kw != null && kw.trim != "") {
                         val kwquery = boolQuery()
                         val w = kw.split( """\s+""")
-                        val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.l3category" -> 40,
-                          "Product.categorykeywords" -> 40, "Product.l2category" -> 5, "Product.l1category" -> 2)
+                        val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.stringattribute.question"->5, "Product.stringattribute.answer"->40, "Product.l3category" -> 80,
+                          "Product.categorykeywords" -> 80, "Product.l2category" -> 5, "Product.l1category" -> 2)
 
                         searchFields.foreach {
                           field: (String, Int) => {
@@ -233,7 +233,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           }
                         }
 
-                        val exactFields = Map("Product.l3categoryexact" -> 80, "Product.categorykeywordsexact" -> 80)
+                        val exactFields = Map("Product.l3categoryexact" -> 160, "Product.categorykeywordsexact" -> 160)
                         exactFields.foreach {
                           field: (String, Int) => {
                             val fieldQuery = boolQuery
@@ -294,13 +294,11 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           .subAggregation(terms("catkw").field("Product.cat3aggr")
                           .subAggregation(terms("kw").field("Product.cat3kwexact"))
                           )
-                          /*
-                            .subAggregation(nested("attributes").path("Product.stringattribute")
-                              .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
-                                .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
-                              )
+                          .subAggregation(nested("attributes").path("Product.stringattribute")
+                            .subAggregation(terms("questions").field("Product.stringattribute.qaggr")
+                              .subAggregation(terms("answers").field("Product.stringattribute.aaggr"))
                             )
-                            */
+                          )
                         )
                         if (lat != 0.0d || lon != 0.0d)
                           search.addAggregation(
