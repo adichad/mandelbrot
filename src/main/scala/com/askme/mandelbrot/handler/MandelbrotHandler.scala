@@ -257,7 +257,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           if (kw != null && kw.trim != "") {
                             val kwquery = boolQuery()
                             val w = kw.split( """\s+""")
-                            val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.stringattribute.question" -> 5, "Product.stringattribute.answer" -> 40, "Product.l3category" -> 80,
+                            val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.stringattribute.answer" -> 40, "Product.l3category" -> 80,
                               "Product.categorykeywords" -> 80, "Product.l2category" -> 5, "Product.l1category" -> 2)
 
                             searchFields.foreach {
