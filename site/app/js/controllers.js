@@ -6,14 +6,7 @@ var mandelbrotControllers = angular.module('mandelbrotControllers', []);
 
 mandelbrotControllers.controller('HitListCtrl', ['$scope', 'leafletData', 'Mandelbrot',
   function($scope, leafletData, Mandelbrot) {
-    $scope.mandelbrot = new Mandelbrot();
-    leafletData.getMap('map').then(function(map) {
-        var options = { fill: false, weight: 2 }
-        L.circle([$scope.mandelbrot.center.lat, $scope.mandelbrot.center.lng], 1500, options).addTo(map);
-        L.circle([$scope.mandelbrot.center.lat, $scope.mandelbrot.center.lng], 4000, options).addTo(map);
-        L.circle([$scope.mandelbrot.center.lat, $scope.mandelbrot.center.lng], 8000, options).addTo(map);
-        L.circle([$scope.mandelbrot.center.lat, $scope.mandelbrot.center.lng], 30000, options).addTo(map);
-      });
+    $scope.mandelbrot = new Mandelbrot(leafletData);
   }]);
 
 mandelbrotApp.factory('PieChart', function() {
@@ -77,9 +70,10 @@ mandelbrotApp.factory('PieChart', function() {
   }
 )
 
-mandelbrotApp.factory('Mandelbrot',
+mandelbrotApp.factory('Mandelbrot', ['$http', 'PieChart', 
   function($http, PieChart) {
-    var Mandelbrot = function() {
+    var Mandelbrot = function(leafletData) {
+      this.leafletData = leafletData;
       this.hits = [];
       this.busy = false;
       this.kw = "";
@@ -110,6 +104,8 @@ mandelbrotApp.factory('Mandelbrot',
       };
       this.areaChartConfig = new PieChart("Top Localities");
       this.geoChartConfig = new PieChart("Distance Ranges");
+      this.toCircle={};
+      this.fromCircle={};
     };
 
     Mandelbrot.prototype.search = function($button) {
@@ -127,17 +123,32 @@ mandelbrotApp.factory('Mandelbrot',
             'tokm': this.tokm, 
             'offset': this.from,
             'source': 'true',
-            'select': 'LatLong,Address,PinCode,Area,City,State,LocationName,CompanyName,CompanyLogoURL,CompanyDescription,CustomerType,NowCustomerType,ContactLandline,ContactMobile'
+            'select': 'LocationName,CompanyName,CompanyLogoURL,CompanyDescription,Cust',
+            'sort': '_score,CustomerType.DESC'
           }
         }).success(function(data,status,headers,config) {
           var hits = data.results.hits.hits;
           if($button) {
             this.hits = [];
+            this.markers = {};
           }
           for (var i = 0; i < hits.length; i++) {
             this.hits.push(hits[i]);
           }
           if("geotarget" in data.results.aggregations) {
+            var center = this.center;
+            var fromkm = this.fromkm;
+            var tokm = this.tokm;
+            this.leafletData.getMap('map').then(function(map, $center, $fromkm, $tokm) {
+              var options = { fill: false, weight: 2 }
+              var optionsRed = { fill: false, weight: 2, color: '#ee0000' }
+              L.circle([center.lat, center.lng], 1500, options).addTo(map);
+              L.circle([center.lat, center.lng], 4000, options).addTo(map);
+              L.circle([center.lat, center.lng], 8000, options).addTo(map);
+              L.circle([center.lat, center.lng], 30000, options).addTo(map);
+              L.circle([center.lat, center.lng], fromkm*1000, optionsRed).addTo(map);
+              L.circle([center.lat, center.lng], tokm*1000, optionsRed).addTo(map);
+            });
             for (var i = 0; i < hits.length; i++) {
               this.markers[hits[i]._source.PlaceID] = {
                 lat: hits[i]._source.LatLong.lat,
@@ -184,6 +195,6 @@ mandelbrotApp.factory('Mandelbrot',
 
     };
     return Mandelbrot;
-  }
+  }]
 );
 

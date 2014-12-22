@@ -16,3 +16,4 @@ dep/build
 dep/bin
 *.log
 site/node_modules
+site/app/bower_components
