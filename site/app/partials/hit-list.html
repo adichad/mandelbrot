@@ -62,7 +62,7 @@
       <table class="hits">
         <tr ng-repeat="hit in mandelbrot.hits">
           <td class="thumbnail hit-listing">
-            <h4>{{hit._source.LocationName}} <strong style="font-size: 9px;">({{hit._id}})</strong></h4>
+            <h4 style="background-color: {{hit._source.CustomerType > 0 ? '#003355' : 'black'}};">{{hit._source.LocationName}} <strong style="font-size: 9px;">({{hit._id}})</strong></h4>
             <p><small style="font-size: 9px;">Customer Type: {{hit._source.CustomerType === 350 ? "350 (APL)" : hit._source.CustomerType}}, Normalized Score (0-100): {{(hit._score/mandelbrot.maxscore*100)|number:4}}</small></p>
             <p><small style="font-size: 9px;"><img src="img/home.png" height="12" width="12" /> {{hit._source.Address}}, {{hit._source.Area}}, {{hit._source.City}} - {{hit._source.PinCode}}, {{hit._source.State}} [latitude,longitude]=[{{hit._source.LatLong.lat}},{{hit._source.LatLong.lon}}] </small></p>
             <p><small style="font-size: 9px;"><img src="img/phone.png" height="12" width="12" /> {{hit._source.ContactName}} {{hit._source.ContactMobile}} {{hit._source.ContactLandLine}} {{hit._source.CompanyEmail}}</small></p>
@@ -72,6 +72,7 @@
                 {{product.l3category}}
                 <p><small style="font-size: 9px;">{{product.categorykeywords}}</small></p>
                 {{product.imageurls}}
+                brands: <small ng-repeat="attr in product.stringattribute | filter: 'brand'" >{{attr.aaggr}}</small>
                 <small style="font-size: 9px;">{{product.name}} {{product.description}}</small>
               </div>
             </div>
