@@ -2,8 +2,34 @@
 
 body {
   padding-top: 20px;
+  background-color: #003355;
+  color: #eeeeee;
+  font-size: small;
+  font-family: arial,helvetica,sans-serif;
 }
 
+input {
+  color: black;
+  border: solid 1px;
+  border-radius: 3px;
+  padding-left: 1px;
+  text-indent: 2px;
+}
+
+.button {
+  background-color: black;
+  color: white;
+  border: solid 1px;
+  border-radius: 3px;
+  pading-left: 1px;
+}
+
+.row {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px; 
+}
 
 .hit-images {
   background-color: white;
@@ -18,6 +44,11 @@ body {
   list-style: none;
 }
 
+.angular-leaflet-map {
+  width: 350px;
+  height: 500px;
+}
+
 .thumb {
   float: left;
   margin: -0.5em 1em 1.5em 0;
@@ -25,11 +56,26 @@ body {
   height: 100px;
   width: 100px;
 }
+.thumbnail {
+  background-color: black;
+}
 
-.hits li {
+.hits div {
+  background-color: black;
   clear: both;
-  height: 115px;
-  padding-top: 15px;
+  padding-top: 5px;
+  border-radius: 5px;
+  border: solid 1px;
+  width: 100%;
+}
+
+.hits table {
+  background-color: black;
+  clear: both;
+  padding-top: 5px;
+  border-radius: 5px;
+  border: solid 1px;
+  width: 100%;
 }
 
 /** Detail View **/
@@ -95,5 +141,5 @@ ul.specs dt {
 }
 
 h1 {
-  border-bottom: 1px solid gray;
+  border-bottom: 1px solid black;
 }

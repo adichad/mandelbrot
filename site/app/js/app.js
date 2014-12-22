@@ -4,11 +4,13 @@
 
 var mandelbrotApp = angular.module('mandelbrotApp', [
   'ngRoute',
+  'infinite-scroll',
   'mandelbrotAnimations',
-
+  'highcharts-ng',
   'mandelbrotControllers',
   'mandelbrotFilters',
-  'mandelbrotServices'
+  'mandelbrotServices',
+  'leaflet-directive'
 ]);
 
 mandelbrotApp.config(['$routeProvider',

@@ -1,24 +1,89 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-2">
-      <!--Sidebar content-->
-
-      Search1: <input ng-model="kw" />
-      City: <input type="text" ng-model="city" />
-      Area: <input type="text" ng-model="area" />
-      <input type="submit" value="Search" ng-click="search()" />
+    <div class="col-md-1">
+      Search: 
     </div>
-    <div class="col-md-10">
-      <!--Body content-->
-      
-      <ul class="hits">
-        <li ng-repeat="hit in hits"
-            class="thumbnail hit-listing">
-          {{hit._id}}
-          <p>{{hit.fields.placename[0]}}</p>
-        </li>
-      </ul>
-
+    <div class="col-md-2">
+      <input ng-model="mandelbrot.kw" />
+    </div>
+    <div class="col-md-1">
+      City: 
+    </div>
+    <div class="col-md-2">
+      <input type="text" ng-model="mandelbrot.city"/>
+    </div>
+    <div class="col-md-1">
+      Area: 
+    </div>
+    <div class="col-md-2">
+      <input type="text" ng-model="mandelbrot.area"/>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-1" style="">
+      Lat, Long: 
+    </div>
+    <div class="col-md-2">
+      <input type="number" ng-model="mandelbrot.center.lat" style="width: 67px;"/>, <input type="number" ng-model="mandelbrot.center.lng" style="width: 67px;"/>
+    </div>
+    <div class="col-md-2">
+      Min, Max Distance (Km): 
+    </div>
+    <div class="col-md-2">
+      <input type="number" ng-model="mandelbrot.fromkm" style="width: 60px;"/> to <input type="number" ng-model="mandelbrot.tokm" style="width: 60px;"/>
+    </div>
+    
+    <div class="col-md-2">
+      <input type="submit" value="Search" ng-click="mandelbrot.search(true)" class="button" />
+    </div>
+  </div>
+  <div class="row" ng-if="mandelbrot.count != '' && mandelbrot.count > 0">
+    <div class="col-md-2">
+      <small style="font-size: 10px;">Results: {{mandelbrot.count}}</small>
+    </div>
+    <div class="col-md-2">
+      <small style="font-size: 10px;">Server Time (ms): {{mandelbrot.timems}}</small>
+    </div>
+    <div class="col-md-2">
+      <small style="font-size: 10px;">Max Relevance Score: {{mandelbrot.maxscore}}</small>
+    </div>
+    <div class="col-md-2">
+      <small style="font-size: 10px;">URL Slug: {{mandelbrot.slug}}</small>
+    </div>
+  </div>
+  <div class="row" ng-if="mandelbrot.count != '' && mandelbrot.count > 0">
+    <div class="col-md-3" style="height: 500px; float: left; overflow-y: scroll;">
+      <leaflet ng-if="mandelbrot.aggr_geo != undefined" id="map" markers="mandelbrot.markers" defaults="mandelbrot.defaults" center="mandelbrot.center" height="350px" width="100%"></leaflet>
+      <highchart ng-if="mandelbrot.aggr_geo != undefined" id="geoChart" config="mandelbrot.geoChartConfig.chart"></highchart>
+      <highchart id="catsChart" config="mandelbrot.catsChartConfig.chart"></highchart>
+      <highchart id="areaChart" config="mandelbrot.areaChartConfig.chart"></highchart>
+    </div>
+    <div class="col-md-9" infinite-scroll="mandelbrot.search(false)" infinite-scroll-disabled='mandelbrot.busy' infinite-scroll-distance="1" style="height: 500px;float: left; overflow-y: scroll;">
+      <table class="hits">
+        <tr ng-repeat="hit in mandelbrot.hits">
+          <td class="thumbnail hit-listing">
+            <h4>{{hit._source.LocationName}} <strong style="font-size: 9px;">({{hit._id}})</strong></h4>
+            <p><small style="font-size: 9px;">Customer Type: {{hit._source.CustomerType === 350 ? "350 (APL)" : hit._source.CustomerType}}, Normalized Score (0-100): {{(hit._score/mandelbrot.maxscore*100)|number:4}}</small></p>
+            <p><small style="font-size: 9px;"><img src="img/home.png" height="12" width="12" /> {{hit._source.Address}}, {{hit._source.Area}}, {{hit._source.City}} - {{hit._source.PinCode}}, {{hit._source.State}} [latitude,longitude]=[{{hit._source.LatLong.lat}},{{hit._source.LatLong.lon}}] </small></p>
+            <p><small style="font-size: 9px;"><img src="img/phone.png" height="12" width="12" /> {{hit._source.ContactName}} {{hit._source.ContactMobile}} {{hit._source.ContactLandLine}} {{hit._source.CompanyEmail}}</small></p>
+            <div class="hits">
+              <legend style="font-size: 10px; color: #eeeeee;">Products</legend>
+              <div ng-repeat="product in hit._source.Product" class="hits">
+                {{product.l3category}}
+                <p><small style="font-size: 9px;">{{product.categorykeywords}}</small></p>
+                {{product.imageurls}}
+                <small style="font-size: 9px;">{{product.name}} {{product.description}}</small>
+              </div>
+            </div>
+            {{hit._source.CompanyLogoURL}}
+            <small style="font-size: 9px;">{{hit._source.CompanyName}} {{hit._source.CompanyKeywords}}</small>
+            <small style="font-size: 9px;">{{hit._source.CompanyDescription}}</small>
+            
+          </td>
+        </tr>
+      </table>
+      <div ng-show='mandelbrot.busy'>Loading data...</div>
     </div>
   </div>
 </div>
+
