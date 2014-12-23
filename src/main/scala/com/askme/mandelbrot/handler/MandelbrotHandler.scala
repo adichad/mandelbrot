@@ -257,17 +257,18 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           if (kw != null && kw.trim != "") {
                             val kwquery = boolQuery()
                             val w = kw.split( """\s+""")
-                            val searchFields = Map("LocationName" -> 10, "CompanyName" -> 20, "Product.stringattribute.answer" -> 40, "Product.l3category" -> 80,
-                              "Product.categorykeywords" -> 80, "Product.l2category" -> 5, "Product.l1category" -> 2)
+                            val searchFields = Map("LocationName" -> 80, "CompanyName" -> 80, "CompanyKeywords"->40,
+                              "Product.stringattribute.answer" -> 40, "Product.l3category" -> 80,
+                              "Product.categorykeywords" -> 80, "Product.l2category"->1)
 
                             searchFields.foreach {
                               field: (String, Int) => {
                                 val fieldQuery = spanOrQuery().boost(field._2)
-                                val locNameTerms = w
+                                val terms = w
                                   .map(fuzzyQuery(field._1, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
                                   .map(spanMultiTermQueryBuilder)
-                                (1 to Math.min(locNameTerms.length, 4)).foreach { len =>
-                                  locNameTerms.sliding(len).foreach { shingle =>
+                                (1 to Math.min(terms.length, 4)).foreach { len =>
+                                  terms.sliding(len).foreach { shingle =>
                                     val nearQuery = spanNearQuery.slop(shingle.length - 1).inOrder(false).boost(field._2 * shingle.length)
                                     shingle.foreach(nearQuery.clause)
                                     fieldQuery.clause(nearQuery)
@@ -277,7 +278,45 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                               }
                             }
 
-                            val exactFields = Map("Product.l3categoryexact" -> 160, "Product.categorykeywordsexact" -> 160)
+                            val condFields = Map(
+                              "Product.stringattribute.question"->Map(
+                                "brands"->Map("Product.stringattribute.answer"->160),
+                                "product"->Map("Product.stringattribute.answer"->160)
+                              )
+                            )
+                            condFields.foreach {
+                              field: (String, Map[String, Map[String, Int]]) => {
+                                val fieldQuery = boolQuery()
+
+                                field._2.foreach {
+                                  v: (String, Map[String, Int]) => {
+                                    fieldQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
+
+                                    val mQuery = boolQuery()
+                                    v._2.foreach {
+                                      subField: (String, Int) => {
+                                        val subQuery = spanOrQuery().boost(subField._2)
+                                        val terms = w
+                                          .map(fuzzyQuery(subField._1, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
+                                          .map(spanMultiTermQueryBuilder)
+                                        (1 to Math.min(terms.length, 4)).foreach { len =>
+                                          terms.sliding(len).foreach { shingle =>
+                                            val nearQuery = spanNearQuery.slop(shingle.length - 1).inOrder(false).boost(subField._2 * shingle.length)
+                                            shingle.foreach(nearQuery.clause)
+                                            subQuery.clause(nearQuery)
+                                          }
+                                        }
+                                        mQuery.should(nestIfNeeded(subField._1, subQuery))
+                                      }
+                                    }
+                                    fieldQuery.must(mQuery)
+                                  }
+                                }
+                                kwquery.should(fieldQuery)
+                              }
+                            }
+
+                            val exactFields = Map("Product.l3categoryexact" -> 320, "Product.categorykeywordsexact" -> 320)
                             exactFields.foreach {
                               field: (String, Int) => {
                                 val fieldQuery = boolQuery
