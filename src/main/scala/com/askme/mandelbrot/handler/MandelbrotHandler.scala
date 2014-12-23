@@ -100,11 +100,9 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   private def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
     val parts = fieldName.split(".")
-    var res = q
-    (1 to parts.length - 1).foreach { until =>
-      res = nestedQuery(parts.slice(0, until).mkString("."), q)
-    }
-    res
+    if(parts.length > 1)
+      nestedQuery(parts(0), q).scoreMode("sum")
+    else q
   }
 
   private val route =
