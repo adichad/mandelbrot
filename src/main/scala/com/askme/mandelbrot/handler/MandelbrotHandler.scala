@@ -284,7 +284,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                             if (kw != null && kw.trim != "") {
                               val kwquery = boolQuery()
                               val w = kw.split( """\s+""")
-                              val searchFields = Map("LocationName" -> 80, "CompanyName" -> 80, "CompanyKeywords" -> 20,
+                              val searchFields = Map("LocationName" -> 80, "CompanyName" -> 80, "CompanyKeywords" -> 80,
                                 "Product.l3category" -> 80,
                                 "Product.categorykeywords" -> 80, "Product.l2category" -> 1)
 
@@ -307,7 +307,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                               val condFields = Map(
                                 "Product.stringattribute.question" -> Map(
-                                  "brands" -> Map("Product.stringattribute.answer" -> 160),
+                                  "brands" -> Map("Product.stringattribute.answer" -> 80),
                                   "product" -> Map("Product.stringattribute.answer" -> 20),
                                   "services" -> Map("Product.stringattribute.answer" -> 20),
                                   "features" -> Map("Product.stringattribute.answer" -> 1),
@@ -348,7 +348,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 }
                               }
 
-                              val exactFields = Map("Product.l3categoryexact" -> 320, "Product.categorykeywordsexact" -> 320)
+                              val exactFields = Map("Product.l3categoryexact" -> 80, "Product.categorykeywordsexact" -> 10)
                               exactFields.foreach {
                                 field: (String, Int) => {
                                   val fieldQuery = boolQuery
