@@ -129,7 +129,6 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       clientIP { clip =>
         requestInstance { httpReq =>
           get {
-            requestContext:RequestContext => {
               jsonpWithParameter("callback") {
                 path("apidocs") {
                   respondWithMediaType(`application/json`) {
@@ -318,8 +317,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 val kwquery = disMaxQuery
                                 val w = kw.split( """\s+""")
                                 val searchFields = Map("LocationName" -> 256f, "CompanyName" -> 256f, "CompanyKeywords" -> 64f,
-                                  "Product.l3category" -> 128f,
-                                  "Product.categorykeywords" -> 128f, "Product.l2category" -> 4f)
+                                  "Product.l3category" -> 128f, "Product.name" -> 256f,
+                                  "Product.categorykeywords" -> 128f, "Product.l2category" -> 8f)
 
                                 searchFields.foreach {
                                   field: (String, Float) => {
@@ -329,33 +328,34 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                                 val condFields = Map(
                                   "Product.stringattribute.question" -> Map(
-                                    "brands" -> Map("Product.stringattribute.answer" -> 16f),
-                                    "product" -> Map("Product.stringattribute.answer" -> 8f),
-                                    "services" -> Map("Product.stringattribute.answer" -> 8f),
-                                    "features" -> Map("Product.stringattribute.answer" -> 1f),
-                                    "facilities" -> Map("Product.stringattribute.answer" -> 2f),
-                                    "material" -> Map("Product.stringattribute.answer" -> 2f),
-                                    "condition" -> Map("Product.stringattribute.answer" -> 4f)
+                                    "brands" -> Map("Product.stringattribute.answer" -> 1024f),
+                                    "product" -> Map("Product.stringattribute.answer" -> 256f),
+                                    "services" -> Map("Product.stringattribute.answer" -> 16f),
+                                    "features" -> Map("Product.stringattribute.answer" -> 2f),
+                                    "facilities" -> Map("Product.stringattribute.answer" -> 4f),
+                                    "material" -> Map("Product.stringattribute.answer" -> 4f),
+                                    "condition" -> Map("Product.stringattribute.answer" -> 8f)
                                   )
                                 )
                                 condFields.foreach {
                                   field: (String, Map[String, Map[String, Float]]) => {
-                                    val fieldQuery = boolQuery()
-
+                                    val conditionalQuery = disMaxQuery
                                     field._2.foreach {
                                       v: (String, Map[String, Float]) => {
-                                        fieldQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
+                                        val perQuestionQuery = boolQuery
+                                        perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
 
-                                        val mQuery = disMaxQuery
+                                        val answerQuery = disMaxQuery
                                         v._2.foreach {
                                           subField: (String, Float) => {
-                                            mQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
+                                            answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
                                           }
                                         }
-                                        fieldQuery.must(mQuery)
+                                        perQuestionQuery.must(answerQuery)
+                                        conditionalQuery.add(perQuestionQuery)
                                       }
                                     }
-                                    kwquery.add(fieldQuery)
+                                    kwquery.add(conditionalQuery)
                                   }
                                 }
 
@@ -469,7 +469,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         }
                     }
                   }
-              }
+
             }
           } ~
             post {

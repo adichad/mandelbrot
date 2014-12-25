@@ -45,7 +45,7 @@ object RootServer {
     netConf.getInterfaces.setInterfaces(list[String]("hazel.interfaces"))
     netConf.getInterfaces.setEnabled(boolean("hazel.interface.enabled"))
 
-    val hazel = Hazelcast.newHazelcastInstance(conf)
+    //val hazel = Hazelcast.newHazelcastInstance(conf)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
       ImmutableSettings.settingsBuilder()
@@ -85,7 +85,7 @@ object RootServer {
       esNode.close()
       batchExecutionContext.shutdown()
       //sparkContext.stop()
-      hazel.shutdown()
+      //hazel.shutdown()
     }
   }
 
