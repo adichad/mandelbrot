@@ -1,7 +1,10 @@
 {
   "place": {
     "_source": {
-      "enabled": "true"
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
     },
     "properties": {
       "PlaceID": {
@@ -14,13 +17,15 @@
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "uid"
+        "index_name": "uid",
+        "doc_values": true
       },
       "LocationID": {
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "lid"
+        "index_name": "lid",
+        "doc_values": true
       },
       "UpdateFlag": {
         "type": "boolean",
@@ -50,25 +55,29 @@
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "ppconline"
+        "index_name": "ppconline",
+        "doc_values": true
       },
       "PPCVoice": {
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "ppcvoice"
+        "index_name": "ppcvoice",
+        "doc_values": true
       },
       "CustomerType": {
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "custtype"
+        "index_name": "custtype",
+        "doc_values": true
       },
       "NowCustomerType": {
         "type": "integer",
         "store": "false",
         "ignore_malformed": "false",
-        "index_name": "custtypenow"
+        "index_name": "custtypenow",
+        "doc_values": true
       },
       "LocationName": {
         "type": "string",
@@ -119,6 +128,7 @@
         "type": "string",
         "store": "true",
         "index": "analyzed",
+        "position_offset_gap": 100,
         "index_name": "areasyn"
       },
       "AreaSynonymsExact": {
@@ -127,6 +137,7 @@
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
         "norms": {"enabled": false},
         "index_name": "areasynexact"
       },
@@ -320,7 +331,8 @@
             "store": "true",
             "index": "not_analyzed",
             "include_in_root": true,
-            "index_name": "cat3aggr"
+            "index_name": "cat3aggr",
+            "doc_values": true
           },
           "l3categoryexact": {
             "type": "string",
@@ -373,7 +385,8 @@
                 "type": "string",
                 "store": "true",
                 "include_in_root": true,
-                "index": "not_analyzed"
+                "index": "not_analyzed",
+                "doc_values": true
               },
               "question": {
                 "type": "string",
@@ -384,7 +397,8 @@
                 "type": "string",
                 "store": "true",
                 "include_in_root": true,
-                "index": "not_analyzed"
+                "index": "not_analyzed",
+                "doc_values": true
               },
               "answer": {
                 "type": "string",
@@ -403,7 +417,8 @@
                 "type": "string",
                 "store": "true",
                 "include_in_root": true,
-                "index": "not_analyzed"
+                "index": "not_analyzed",
+                "doc_values": true
               },
               "question": {
                 "type": "string",
@@ -414,7 +429,8 @@
                 "type": "integer",
                 "store": "true",
                 "include_in_root": true,
-                "ignore_malformed": "true"
+                "ignore_malformed": "true",
+                "doc_values": true
               }
             }
           }

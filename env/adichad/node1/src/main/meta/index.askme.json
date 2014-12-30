@@ -4,11 +4,37 @@
         "number_of_replicas" : 0,
         "index.cache.query.enable": true,
         "analysis": {
+            "char_filter": {
+                "mapping_char_filter": {
+                    "type": "mapping",
+                    "mappings": ["&=> and "]
+                }
+            },
+            "filter" : {
+                "light_stemmer": {
+                    "type": "stemmer",
+                    "name": "light_english"
+                },
+                "possessive_stemmer": {
+                    "type": "stemmer",
+                    "name": "possessive_english"
+                },
+                "stopword": {
+                    "type": "stop",
+                    "stopwords": ["a", "an", "the", "and", "or"]
+                }
+            },
             "analyzer": {
                 "keyword_analyzer": {
                     "type": "custom",
                     "tokenizer": "keyword",
                     "filter": ["trim", "lowercase"]
+                },
+                "default": {
+                    "type": "custom",
+                    "char_filter": ["mapping_char_filter"],
+                    "tokenizer": "standard",
+                    "filter": ["standard", "asciifolding", "lowercase", "stopword", "possessive_stemmer", "light_stemmer"]
                 }
             }
         }

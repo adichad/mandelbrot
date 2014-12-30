@@ -30,8 +30,8 @@ import scala.util.matching.Regex
 case class Index(file: File)
 
 object CSVLoader {
-  val specials: Seq[(String, String)] = ("\\", "\\\\") +: (("\"", "\\\"") +:
-    (for (c <- (0x0000 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ", "0"))))
+  val specials: Seq[(String, String)] = ("\\", "\\\\") +: (("\"", "\\\"") +: (0x0000.toChar.toString, "") +:
+    (for (c <- (0x0001 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ", "0"))))
 
   implicit class `string utils`(val s: String) extends AnyVal {
     def nonEmptyOrElse(other: => String) = if (s.isEmpty) other else s
@@ -57,7 +57,7 @@ object CSVLoader {
           case List(_, placeholder: String) => {
             val d = map(placeholder)
             if (d._3 == "many") {
-              val elems = vals(d._1).nonEmptyOrElse("").split(d._4).filter(!_.trim.isEmpty)
+              val elems = vals(d._1).nonEmptyOrElse("").split(d._4).filter(!_.trim.isEmpty).map(_.trim)
               if (elems.length > 0) {
                 sb.append("[")
                 if (d._2 == "String") {

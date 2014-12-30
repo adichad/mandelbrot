@@ -11,6 +11,7 @@ import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import net.maffoo.jsonquote.literal._
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 
 
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchRequest}
@@ -52,7 +53,6 @@ trait CORS {
     `Access-Control-Max-Age`(1728000))
 
   def cors[T]: Directive0 = mapRequestContext { ctx => ctx.withRouteResponseHandling({
-    //It is an option requeset for a resource that responds to some other method
     case Rejected(x) if (ctx.request.method.equals(HttpMethods.OPTIONS) && !x.filter(_.isInstanceOf[MethodRejection]).isEmpty) => {
       val allowedMethods: List[HttpMethod] = x.filter(_.isInstanceOf[MethodRejection]).map(rejection => {
         rejection.asInstanceOf[MethodRejection].supported
@@ -107,7 +107,6 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
 
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int) = {
-
       val fieldQuery = disMaxQuery()
       val terms = w
         .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
@@ -115,14 +114,51 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
         terms.sliding(len).foreach { shingle =>
+          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len * fuzzysim * fuzzysim)
+          shingle.foreach(nearQuery.clause)
+          fieldQuery.add(nearQuery)
+        }
+      }
+
+      val termsExact = w.map(spanTermQuery(field, _))
+      (1 to Math.min(terms.length, maxShingle)).foreach { len =>
+        termsExact.sliding(len).foreach { shingle =>
           val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
           shingle.foreach(nearQuery.clause)
           fieldQuery.add(nearQuery)
         }
       }
       nestIfNeeded(field, fieldQuery)
-
   }
+
+  private def matchAnalyzed(index: String, field: String, text: String, keywords: Array[String]): Boolean = {
+    analyze(index, field, text).deep == keywords.deep
+  }
+
+  private def analyze(index: String, field: String, text: String): Array[String] =
+    (new AnalyzeRequestBuilder(esClient.admin.indices, index, text)).setField(field).get().getTokens.map(_.getTerm).toArray
+
+  private val emptyStringArray = new Array[String](0)
+
+
+  private val searchFields = Map("LocationName" -> 256f, "CompanyName" -> 256f, "CompanyKeywords" -> 64f,
+    "Product.l3category" -> 128f, "Product.name" -> 256f,
+    "Product.categorykeywords" -> 128f, "Product.l2category" -> 8f)
+
+  private val condFields = Map(
+    "Product.stringattribute.question" -> Map(
+      "brands" -> Map("Product.stringattribute.answer" -> 1024f),
+      "product" -> Map("Product.stringattribute.answer" -> 256f),
+      "services" -> Map("Product.stringattribute.answer" -> 16f),
+      "features" -> Map("Product.stringattribute.answer" -> 2f),
+      "facilities" -> Map("Product.stringattribute.answer" -> 4f),
+      "material" -> Map("Product.stringattribute.answer" -> 4f),
+      "condition" -> Map("Product.stringattribute.answer" -> 8f)
+    )
+  )
+
+  private val exactFields = Map("Product.l3categoryexact" -> 512f, "Product.categorykeywordsexact" -> 512f)
+
 
   private val route =
     cors {
@@ -275,7 +311,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         Double] ? 20.0d,
                       'source.as[Boolean] ? false, 'explain.as
                         [Boolean] ? false,
-                      'sort ? "CustomerType.DESC,_score",
+                      'sort ? "_score",
                       'select ?
                         "_id",
                       'agg.as[Boolean]
@@ -312,13 +348,10 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                             future {
                               var
                               query: BaseQueryBuilder = null
-                              if
-                              (kw != null && kw.trim != "") {
+                              var w = emptyStringArray
+                              if(kw != null && kw.trim != "") {
                                 val kwquery = disMaxQuery
-                                val w = kw.split( """\s+""")
-                                val searchFields = Map("LocationName" -> 256f, "CompanyName" -> 256f, "CompanyKeywords" -> 64f,
-                                  "Product.l3category" -> 128f, "Product.name" -> 256f,
-                                  "Product.categorykeywords" -> 128f, "Product.l2category" -> 8f)
+                                w = analyze(index, "CompanyName", kw)
 
                                 searchFields.foreach {
                                   field: (String, Float) => {
@@ -326,17 +359,6 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                   }
                                 }
 
-                                val condFields = Map(
-                                  "Product.stringattribute.question" -> Map(
-                                    "brands" -> Map("Product.stringattribute.answer" -> 1024f),
-                                    "product" -> Map("Product.stringattribute.answer" -> 256f),
-                                    "services" -> Map("Product.stringattribute.answer" -> 16f),
-                                    "features" -> Map("Product.stringattribute.answer" -> 2f),
-                                    "facilities" -> Map("Product.stringattribute.answer" -> 4f),
-                                    "material" -> Map("Product.stringattribute.answer" -> 4f),
-                                    "condition" -> Map("Product.stringattribute.answer" -> 8f)
-                                  )
-                                )
                                 condFields.foreach {
                                   field: (String, Map[String, Map[String, Float]]) => {
                                     val conditionalQuery = disMaxQuery
@@ -344,12 +366,10 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                       v: (String, Map[String, Float]) => {
                                         val perQuestionQuery = boolQuery
                                         perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
-
                                         val answerQuery = disMaxQuery
                                         v._2.foreach {
-                                          subField: (String, Float) => {
+                                          subField: (String, Float) =>
                                             answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
-                                          }
                                         }
                                         perQuestionQuery.must(answerQuery)
                                         conditionalQuery.add(perQuestionQuery)
@@ -360,7 +380,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 }
 
                                 if (w.length > 1) {
-                                  val exactFields = Map("Product.l3categoryexact" -> 512f, "Product.categorykeywordsexact" -> 512f)
+
                                   exactFields.foreach {
                                     field: (String, Float) => {
                                       val fieldQuery = disMaxQuery
@@ -381,25 +401,32 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
                               if (city != "")
                                 query = filteredQuery(query, termsFilter("City", city.split( """,""").map(_.trim.toLowerCase): _*).cache(true))
+                              val locFilter = boolFilter
                               if (area != "") {
-                                query = filteredQuery(query, boolFilter
-                                  .should(termsFilter("AreaExact", area.split( """,""").map(_.trim.toLowerCase): _*))
-                                  .should(termsFilter("AreaSynonymsExact", area.split( """,""").map(_.trim.toLowerCase): _*)).cache(true)
-                                )
+                                val areas = area.split(""",""")
+                                areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
+                                areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
+
                               }
+
+                              if (lat != 0.0d || lon != 0.0d)
+                                locFilter.should(
+                                  geoDistanceRangeFilter("LatLong")
+                                    .point(lat, lon)
+                                    .from((if(area=="") fromkm else 0.0d) + "km")
+                                    .to((if(area=="") tokm else 10.0d) + "km")
+                                    .optimizeBbox("indexed")
+                                    .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
+
+                              if(locFilter.hasClauses)
+                                query = filteredQuery(query, locFilter)
                               if (pin != "")
                                 query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
                               if (category != "") {
-                                query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryexact", category.split( """#""").map(_.trim.toLowerCase): _*)).cache(true))
+                                query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryexact", category.split( """#""").map(
+                                  k => analyze(index, "Product.l3categoryexact", k).mkString(" ")): _*)).cache(true))
                               }
-                              if (lat != 0.0d || lon != 0.0d)
-                                query = filteredQuery(query,
-                                  geoDistanceRangeFilter("LatLong")
-                                    .point(lat, lon)
-                                    .from(fromkm + "km")
-                                    .to(tokm + "km")
-                                    .optimizeBbox("indexed")
-                                    .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
+
 
                               val search = esClient.prepareSearch(index.split(","): _*)
                                 .setTypes(esType.split(","): _*)
@@ -421,17 +448,16 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                                 search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
                                 search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
+                                search.addAggregation(terms("categories").field("Product.l3categoryexact").size(aggbuckets))
                                 search.addAggregation(nested("products").path("Product")
-                                  .subAggregation(terms("categories").field("Product.l3categoryexact").size(aggbuckets))
-                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets)
-                                  .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets))
-                                  )
-                                  .subAggregation(nested("attributes").path("Product.stringattribute")
-                                  .subAggregation(terms("questions").field("Product.stringattribute.qaggr").size(aggbuckets)
-                                  .subAggregation(terms("answers").field("Product.stringattribute.aaggr").size(aggbuckets))
-                                  )
+                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(0)
+                                    .subAggregation(terms("kw").field("Product.cat3kwexact").size(0))
                                   )
                                 )
+                                search.addAggregation(terms("areasyns").field("AreaAggr").size(0)
+                                  .subAggregation(terms("syns").field("AreaSynonymsExact").size(0))
+                                )
+
                                 if (lat != 0.0d || lon != 0.0d)
                                   search.addAggregation(
                                     geoDistance("geotarget")
@@ -450,15 +476,16 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                               debug("query [" + pretty(render(parse(search.toString))) + "]")
 
                               val result = search.execute().actionGet()
-                              val cleanKW = kw.trim.toLowerCase
+                              val cleanKW = w.mkString(" ")
                               val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-                                .find(b => b.getKey.trim.toLowerCase == cleanKW || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(_.getKey.trim.toLowerCase == cleanKW)))
-                                .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(k => "/" + URLEncoder.encode(k.getKey.replaceAll( """\s+""", "-"), "UTF-8"))
+                                .find(b => matchAnalyzed(index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(index, "Product.categorykeywords", c.getKey, w))))
+                                .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(
+                                  k => "/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
 
                               val slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
                                 matchedCat +
-                                (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
-                                (if (area != "") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "")
+                                (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "") +
+                                (if (area != "") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "")
 
                               val timeTaken = System.currentTimeMillis - start
                               info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTookInMillis + "/" + timeTaken + " (" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + ")]")

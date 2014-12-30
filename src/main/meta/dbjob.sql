@@ -4,12 +4,12 @@ IF OBJECT_ID (N'[eDMS].[udfCleanupString]', N'FN') IS NOT NULL
 GO
 
 CREATE FUNCTION [eDMS].[udfCleanupString](@input varchar(max))
-RETURNS varchar(max)
-AS
--- Returns the stock level for the product.
+RETURNS varchar(max) 
+AS 
 BEGIN
     DECLARE @RET varchar(max);
     SELECT @RET = @input;
+	SELECT @RET = REPLACE(@RET, char(0), '');
 	SELECT @RET = REPLACE(@RET, char(13), ' ');
 	SELECT @RET = REPLACE(@RET, char(10), ' ');
 	SELECT @RET = REPLACE(@RET, char(9), ' ');
@@ -38,7 +38,7 @@ DECLARE @FromBookmarkDT datetime
 	   ,@ToRowID bigint
 	   ,@query varchar(max)
 
-
+	   
 IF OBJECT_ID('[FastSynchronization].[eDMS].[BizLocSearch_Bookmark]') IS NULL
 CREATE TABLE [FastSynchronization].[eDMS].[BizLocSearch_Bookmark] (
   [ID] int IDENTITY(1,1) PRIMARY KEY not null
@@ -152,9 +152,9 @@ CREATE TABLE [FastSynchronization].[eDMS].[BizLocSearch_Staging](
    ) on FG01
 
 insert into [FastSynchronization].[eDMS].[BizLocSearch_Staging]
-select *
+select * 
 from (
-           SELECT
+           SELECT 
 		          -- ids
 				  [ypbusinessid] as [UniqueId]
                  ,[yusrid] as [BusinessUserID]
@@ -163,7 +163,7 @@ from (
                  ,[batvycoid] as [BusinessCompanyID]
 				 ,[ypcat3id] as [L3CategoryID]
 				 -- status
-				 ,[espUpdate] as [UpdateFlag]
+				 ,[espUpdate] as [UpdateFlag] 
 				 ,[espNew] as [InsertFlag]
 				 ,[espDelete] as [DeleteFlag]
 				 ,[eDMS].[udfCleanupString]([espStatusNM]) as [FastIndexStatus]
@@ -231,7 +231,7 @@ from (
                  -- product ???
 				 ,[eDMS].[udfCleanupString]([ypnam]) as [ProductName]
 				 ,[eDMS].[udfCleanupString]([ypdesc]) as [ProductDescription]
-				 ,[eDMS].[udfCleanupString]('[ypkey]') as [ProductKeywords]
+				 ,[eDMS].[udfCleanupString]('[ypkey]') as [ProductKeywords] 
 				 ,[eDMS].[udfCleanupString]([ypbrdnam]) as [ProductBrand]
 				 ,[eDMS].[udfCleanupString]([cimg1]) as [ProductImages]
              from [FastSynchronization].[eDMS].[GetitFlatfile] a (nolock)
@@ -269,7 +269,7 @@ BEGIN
 	+ cast(@FromRowID as varchar(max))
 	+ cast('-' as varchar(max))
 	+ cast((@ToRowID-1) as varchar(max))
-
+  
   declare @cmd varchar(7000)
     = cast('bcp ' as varchar(max))
 	+ @query
@@ -280,11 +280,11 @@ BEGIN
 	+ cast('.txt" -b ' as varchar(max))
 	+ cast((case when @BatchSize/10 > 1 then @BatchSize/10 else 1 end) as varchar(max))
 	+ cast(' -c -T -a 65534' as varchar(max))
-
+  
   select @cmd
   EXEC master..XP_CMDSHELL @cmd
-
-  SET @cmd =
+  
+  SET @cmd = 
       cast('"C:\Program Files\Dos2Unix\bin\dos2unix.exe" "' as varchar(max))
 	+ @BasePath
 	+ cast('\' as varchar(max))
@@ -294,55 +294,55 @@ BEGIN
   EXEC master..XP_CMDSHELL @cmd
 
 
-  SET @cmd =
+  SET @cmd = 
       cast('C:\"Program Files"\UnxUtils\usr\local\wbin\gzip.exe "' as varchar(max))
-	+ @BasePath
+	+ @BasePath 
 	+ cast('\' as varchar(max))
 	+ @FileName
 	+ cast('.txt"' as varchar(max))
   select @cmd
   EXEC master..XP_CMDSHELL @cmd
-
-  SET @cmd =
+ 
+  SET @cmd = 
       cast('C:\"Program Files"\UnxUtils\usr\local\wbin\md5sum.exe "' as varchar(max))
 	+ @BasePath
 	+ cast('\' as varchar(max))
 	+ @FileName
-	+ cast('.txt.gz" > "' as varchar(max))
-	+ @BasePath
+	+ cast('.txt.gz" > "' as varchar(max)) 
+	+ @BasePath 
 	+ cast('\' as varchar(max))
 	+ @FileName
 	+ cast('.md5"' as varchar(max))
   select @cmd
   EXEC master..XP_CMDSHELL @cmd
 
-  SET @cmd =
+  SET @cmd = 
       cast('move "' as varchar(max))
 	+ @BasePath
 	+ cast('\' as varchar(max))
 	+ @FileName
-	+ cast('.txt.gz" "' as varchar(max))
-	+ @DestPath
+	+ cast('.txt.gz" "' as varchar(max)) 
+	+ @DestPath 
 	+ cast('\' as varchar(max))
 	+ @FileName
 	+ cast('.txt.gz"' as varchar(max))
   select @cmd
   EXEC master..XP_CMDSHELL @cmd
 
-  SET @cmd =
+  SET @cmd = 
       cast('move "' as varchar(max))
 	+ @BasePath
 	+ cast('\' as varchar(max))
 	+ @FileName
-	+ cast('.md5" "' as varchar(max))
-	+ @DestPath
+	+ cast('.md5" "' as varchar(max)) 
+	+ @DestPath 
 	+ cast('\' as varchar(max))
 	+ @FileName
 	+ cast('.md5"' as varchar(max))
   select @cmd
   EXEC master..XP_CMDSHELL @cmd
 
-
+  
 
   SET @FromRowID = @ToRowID
 END
