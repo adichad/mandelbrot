@@ -163,8 +163,7 @@ mandelbrotApp.factory('Mandelbrot', ['$http', 'PieChart',
             this.count = data.results.hits.total;
             this.maxscore = data.results.hits.max_score;
             this.aggr_area = data.results.aggregations.area.buckets;
-            this.aggr_cats = data.results.aggregations.products.categories.buckets;
-            this.aggr_attr = data.results.aggregations.products.attributes.questions.buckets;
+            this.aggr_cats = data.results.aggregations.categories.buckets;
             this.aggr_geo = undefined;
             var catsData = [];
             for(var i=0; i<this.aggr_cats.length; ++i) {
