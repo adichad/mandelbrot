@@ -2,6 +2,7 @@ package com.askme.mandelbrot.handler
 
 import java.io.IOException
 import java.nio.file.Paths
+import java.util
 
 import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume}
 import akka.actor.{Actor, OneForOneStrategy, Props}
@@ -26,10 +27,12 @@ import org.elasticsearch.search.aggregations.{AggregationBuilders, Aggregation, 
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.rescore.RescoreBuilder
 import org.elasticsearch.search.sort._
 import spray.http.MediaTypes.`application/json`
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
+import scala.collection.mutable
 import scala.concurrent.future
 import scala.concurrent.duration._
 import scala.collection.JavaConversions._
@@ -131,6 +134,46 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       nestIfNeeded(field, fieldQuery)
   }
 
+  private def strongMatch(fields: Set[String],
+                          condFields: Map[String, Map[String, Set[String]]],
+                          w: Array[String], fuzzyprefix: Int, fuzzysim: Float ) = {
+
+    val allQuery = boolQuery.minimumShouldMatch("66%").boost(8192f)
+    w.foreach {
+      word => {
+        val wordQuery = boolQuery
+        fields.foreach {
+          field =>
+            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
+        }
+        condFields.foreach {
+          cond: (String, Map[String, Set[String]]) => {
+            cond._2.foreach {
+              valField: (String, Set[String]) => {
+                val perQuestionQuery = boolQuery
+                perQuestionQuery.must(nestIfNeeded(cond._1, termQuery(cond._1, valField._1)))
+                val answerQuery = boolQuery
+                valField._2.foreach {
+                  subField: String =>
+                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim))))
+                }
+                perQuestionQuery.must(answerQuery)
+                wordQuery.should(perQuestionQuery)
+              }
+            }
+          }
+        }
+        allQuery.should(wordQuery)
+      }
+    }
+    filteredQuery(allQuery,
+      boolFilter.cache(true)
+        .should(termFilter("CustomerType", 275))
+        .should(termFilter("CustomerType", 300))
+        .should(termFilter("CustomerType", 350))
+    )
+  }
+
   private def matchAnalyzed(index: String, field: String, text: String, keywords: Array[String]): Boolean = {
     analyze(index, field, text).deep == keywords.deep
   }
@@ -156,6 +199,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       "condition" -> Map("Product.stringattribute.answer" -> 8f)
     )
   )
+
+  private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
   private val exactFields = Map("Product.l3categoryexact" -> 512f, "Product.categorykeywordsexact" -> 512f)
 
@@ -346,54 +391,56 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           complete {
                             implicit val execctx = serverContext.userExecutionContext
                             future {
-                              var
-                              query: BaseQueryBuilder = null
+                              var query: BaseQueryBuilder = null
                               var w = emptyStringArray
                               if(kw != null && kw.trim != "") {
-                                val kwquery = disMaxQuery
                                 w = analyze(index, "CompanyName", kw)
+                                if(w.length > 0) {
+                                  val kwquery = disMaxQuery
 
-                                searchFields.foreach {
-                                  field: (String, Float) => {
-                                    kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4))
-                                  }
-                                }
-
-                                condFields.foreach {
-                                  field: (String, Map[String, Map[String, Float]]) => {
-                                    val conditionalQuery = disMaxQuery
-                                    field._2.foreach {
-                                      v: (String, Map[String, Float]) => {
-                                        val perQuestionQuery = boolQuery
-                                        perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
-                                        val answerQuery = disMaxQuery
-                                        v._2.foreach {
-                                          subField: (String, Float) =>
-                                            answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
-                                        }
-                                        perQuestionQuery.must(answerQuery)
-                                        conditionalQuery.add(perQuestionQuery)
-                                      }
-                                    }
-                                    kwquery.add(conditionalQuery)
-                                  }
-                                }
-
-                                if (w.length > 1) {
-
-                                  exactFields.foreach {
+                                  searchFields.foreach {
                                     field: (String, Float) => {
-                                      val fieldQuery = disMaxQuery
-                                      (2 to Math.min(w.length, 4)).foreach { len =>
-                                        w.sliding(len).foreach { shingle =>
-                                          fieldQuery.add(termQuery(field._1, shingle.mkString(" ").toLowerCase).boost(field._2 * len))
-                                        }
-                                      }
-                                      kwquery.add(nestIfNeeded(field._1, fieldQuery))
+                                      kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4))
                                     }
                                   }
+
+                                  condFields.foreach {
+                                    field: (String, Map[String, Map[String, Float]]) => {
+                                      val conditionalQuery = disMaxQuery
+                                      field._2.foreach {
+                                        v: (String, Map[String, Float]) => {
+                                          val perQuestionQuery = boolQuery
+                                          perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
+                                          val answerQuery = disMaxQuery
+                                          v._2.foreach {
+                                            subField: (String, Float) =>
+                                              answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
+                                          }
+                                          perQuestionQuery.must(answerQuery)
+                                          conditionalQuery.add(perQuestionQuery)
+                                        }
+                                      }
+                                      kwquery.add(conditionalQuery)
+                                    }
+                                  }
+
+                                  if (w.length > 1) {
+                                    exactFields.foreach {
+                                      field: (String, Float) => {
+                                        val fieldQuery = disMaxQuery
+                                        (2 to Math.min(w.length, 4)).foreach { len =>
+                                          w.sliding(len).foreach { shingle =>
+                                            fieldQuery.add(termQuery(field._1, shingle.mkString(" ").toLowerCase).boost(field._2 * len))
+                                          }
+                                        }
+                                        kwquery.add(nestIfNeeded(field._1, fieldQuery))
+                                      }
+                                    }
+                                  }
+                                  kwquery.add(strongMatch(searchFields.keySet, condFieldSet, w, fuzzyprefix, fuzzysim))
+
+                                  query = kwquery
                                 }
-                                query = kwquery
                               }
 
                               // filters
@@ -406,7 +453,6 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 val areas = area.split(""",""")
                                 areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
                                 areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
-
                               }
 
                               if (lat != 0.0d || lon != 0.0d)
@@ -448,16 +494,28 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                                 search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
                                 search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
-                                search.addAggregation(terms("categories").field("Product.l3categoryexact").size(aggbuckets))
+                                search.addAggregation(
+                                  terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+                                    .subAggregation(sum("sum_score").script("_score"))
+                                )
                                 search.addAggregation(nested("products").path("Product")
-                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets*2)
+                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets*2).order(Terms.Order.aggregation("sum_score", false))
                                     .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets*2))
+                                    .subAggregation(sum("sum_score").script("_score"))
                                   )
                                 )
                                 search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets*2)
                                   .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets*2))
                                 )
-
+/*
+                                search.addAggregation(
+                                  terms("apl")
+                                    .script("if([100, 275, 300, 350].grep(doc['custtype'].value)) return 1; else return 0;")
+                                    .subAggregation(
+                                      topHits("best").addSort(new ScoreSortBuilder().order(SortOrder.DESC)).setSize(size+offset)
+                                    )
+                                )
+*/
                                 if (lat != 0.0d || lon != 0.0d)
                                   search.addAggregation(
                                     geoDistance("geotarget")
@@ -472,6 +530,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                       .addUnboundedFrom("30 kms and beyond", 30d)
                                   )
                               }
+
 
                               debug("query [" + pretty(render(parse(search.toString))) + "]")
 
