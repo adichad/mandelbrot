@@ -144,7 +144,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+            wordQuery.should(nestIfNeeded(field, fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
         }
         condFields.foreach {
           cond: (String, Map[String, Set[String]]) => {
