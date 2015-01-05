@@ -112,12 +112,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int) = {
       val fieldQuery = disMaxQuery()
       val terms = w
-        .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
+        .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
         .map(spanMultiTermQueryBuilder)
 
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
         terms.sliding(len).foreach { shingle =>
-          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len * fuzzysim * fuzzysim)
+          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
           shingle.foreach(nearQuery.clause)
           fieldQuery.add(nearQuery)
         }
@@ -126,7 +126,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       val termsExact = w.map(spanTermQuery(field, _))
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
         termsExact.sliding(len).foreach { shingle =>
-          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
+          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len * len)
           shingle.foreach(nearQuery.clause)
           fieldQuery.add(nearQuery)
         }
@@ -144,7 +144,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim)))
+            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
         }
         condFields.foreach {
           cond: (String, Map[String, Set[String]]) => {
@@ -155,7 +155,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                 val answerQuery = boolQuery
                 valField._2.foreach {
                   subField: String =>
-                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.fromSimilarity(fuzzysim))))
+                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO)))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(perQuestionQuery)
@@ -381,7 +381,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                        maxdocspershard,
                        timeoutms, searchType) =>
                         val fuzzyprefix = 3
-                        val fuzzysim = 0.85f
+                        val fuzzysim = 2f
                         val start =
                           System.
                             currentTimeMillis
@@ -496,16 +496,16 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
                                 search.addAggregation(
                                   terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-                                    .subAggregation(sum("sum_score").script("_score"))
+                                    .subAggregation(avg("sum_score").script("_score"))
                                 )
                                 search.addAggregation(nested("products").path("Product")
-                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets*2).order(Terms.Order.aggregation("sum_score", false))
-                                    .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets*2))
-                                    .subAggregation(sum("sum_score").script("_score"))
+                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+                                    .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets))
+                                    .subAggregation(avg("sum_score").script("_score"))
                                   )
                                 )
-                                search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets*2)
-                                  .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets*2))
+                                search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
+                                  .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets))
                                 )
 /*
                                 search.addAggregation(
