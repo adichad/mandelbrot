@@ -166,12 +166,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         allQuery.should(wordQuery)
       }
     }
-    filteredQuery(allQuery,
-      boolFilter.cache(true)
-        .should(termFilter("CustomerType", 275))
-        .should(termFilter("CustomerType", 300))
-        .should(termFilter("CustomerType", 350))
-    )
+    allQuery.must(
+      boolQuery
+        .should(termQuery("CustomerType", 275))
+        .should(termQuery("CustomerType", 300))
+        .should(termQuery("CustomerType", 350)))
+    
   }
 
   private def matchAnalyzed(index: String, field: String, text: String, keywords: Array[String]): Boolean = {
@@ -380,8 +380,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                        agg, aggbuckets,
                        maxdocspershard,
                        timeoutms, searchType) =>
-                        val fuzzyprefix = 1
-                        val fuzzysim = 2f
+                        val fuzzyprefix = 3
+                        val fuzzysim = 1f
                         val start =
                           System.
                             currentTimeMillis
