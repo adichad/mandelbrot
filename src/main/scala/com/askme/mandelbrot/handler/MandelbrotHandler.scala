@@ -112,7 +112,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int) = {
       val fieldQuery = disMaxQuery()
       val terms = w
-        .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
+        .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
         .map(spanMultiTermQueryBuilder)
 
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
@@ -138,13 +138,13 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                           condFields: Map[String, Map[String, Set[String]]],
                           w: Array[String], fuzzyprefix: Int, fuzzysim: Float ) = {
 
-    val allQuery = boolQuery.minimumShouldMatch("66%").boost(8192f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat*2f/3f).toInt).boost(16384f)
     w.foreach {
       word => {
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
+            wordQuery.should(fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
         }
         condFields.foreach {
           cond: (String, Map[String, Set[String]]) => {
@@ -155,7 +155,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                 val answerQuery = boolQuery
                 valField._2.foreach {
                   subField: String =>
-                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO)))
+                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(perQuestionQuery)
@@ -185,8 +185,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
 
   private val searchFields = Map("LocationName" -> 256f, "CompanyName" -> 256f, "CompanyKeywords" -> 64f,
-    "Product.l3category" -> 128f, "Product.name" -> 256f,
-    "Product.categorykeywords" -> 128f, "Product.l2category" -> 8f)
+    "Product.l3category" -> 512f, "Product.name" -> 256f,
+    "Product.categorykeywords" -> 512f, "Product.l2category" -> 8f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
@@ -380,7 +380,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                        agg, aggbuckets,
                        maxdocspershard,
                        timeoutms, searchType) =>
-                        val fuzzyprefix = 3
+                        val fuzzyprefix = 1
                         val fuzzysim = 2f
                         val start =
                           System.
@@ -496,12 +496,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
                                 search.addAggregation(
                                   terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-                                    .subAggregation(avg("sum_score").script("_score"))
+                                    .subAggregation(sum("sum_score").script("_score"))
                                 )
                                 search.addAggregation(nested("products").path("Product")
                                   .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
                                     .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets))
-                                    .subAggregation(avg("sum_score").script("_score"))
+                                    .subAggregation(sum("sum_score").script("_score"))
                                   )
                                 )
                                 search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
