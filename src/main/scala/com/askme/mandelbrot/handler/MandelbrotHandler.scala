@@ -126,7 +126,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       val termsExact = w.map(spanTermQuery(field, _))
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
         termsExact.sliding(len).foreach { shingle =>
-          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len * len)
+          val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len)
           shingle.foreach(nearQuery.clause)
           fieldQuery.add(nearQuery)
         }
@@ -145,6 +145,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         fields.foreach {
           field =>
             wordQuery.should(nestIfNeeded(field, fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
+            wordQuery.should(nestIfNeeded(field, termQuery(field, word).boost(16384f)))
         }
         condFields.foreach {
           cond: (String, Map[String, Set[String]]) => {
@@ -156,6 +157,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                 valField._2.foreach {
                   subField: String =>
                     answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
+                    answerQuery.should(nestIfNeeded(subField, termQuery(subField, word).boost(16384f)))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(perQuestionQuery)
@@ -184,7 +186,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private val emptyStringArray = new Array[String](0)
 
 
-  private val searchFields = Map("LocationName" -> 256f, "CompanyName" -> 256f, "CompanyKeywords" -> 64f,
+  private val searchFields = Map("LocationName" -> 1024f, "CompanyName" -> 1024f, "CompanyKeywords" -> 64f,
     "Product.l3category" -> 512f, "Product.name" -> 256f,
     "Product.categorykeywords" -> 512f, "Product.l2category" -> 8f)
 

@@ -37,6 +37,13 @@
                     "filter": ["standard", "asciifolding", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
                 }
             }
+        },
+        "similarity": {
+            "alternative_similarity": {
+                "type": "BM25",
+                "k1": 1.1,
+                "b": 0.8
+            }
         }
     }
 }
