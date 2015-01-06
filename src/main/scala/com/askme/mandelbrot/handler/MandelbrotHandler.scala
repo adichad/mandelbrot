@@ -110,7 +110,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
 
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int) = {
-      val fieldQuery = disMaxQuery()
+      val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
       val terms = w
         .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
         .map(spanMultiTermQueryBuilder)
@@ -119,19 +119,20 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         terms.sliding(len).foreach { shingle =>
           val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
           shingle.foreach(nearQuery.clause)
-          fieldQuery.add(nearQuery)
+          fieldQuery1.should(nearQuery)
         }
       }
 
+      val fieldQuery2 = boolQuery
       val termsExact = w.map(spanTermQuery(field, _))
       (1 to Math.min(terms.length, maxShingle)).foreach { len =>
         termsExact.sliding(len).foreach { shingle =>
           val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len)
           shingle.foreach(nearQuery.clause)
-          fieldQuery.add(nearQuery)
+          fieldQuery2.should(nearQuery)
         }
       }
-      nestIfNeeded(field, fieldQuery)
+      nestIfNeeded(field, disMaxQuery.add(fieldQuery1).add(fieldQuery2))
   }
 
   private def strongMatch(fields: Set[String],
@@ -502,7 +503,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 )
                                 search.addAggregation(nested("products").path("Product")
                                   .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-                                    .subAggregation(terms("kw").field("Product.cat3kwexact").size(aggbuckets))
+                                    .subAggregation(terms("kw").field("Product.categorykeywordsexact").size(aggbuckets))
                                     .subAggregation(sum("sum_score").script("_score"))
                                   )
                                 )
