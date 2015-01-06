@@ -186,7 +186,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private val emptyStringArray = new Array[String](0)
 
 
-  private val searchFields = Map("LocationName" -> 1024f, "CompanyName" -> 1024f, "CompanyKeywords" -> 64f,
+  private val searchFields = Map("LocationName" -> 512f, "CompanyName" -> 512f, "CompanyKeywords" -> 64f,
     "Product.l3category" -> 512f, "Product.name" -> 256f,
     "Product.categorykeywords" -> 512f, "Product.l2category" -> 8f)
 
@@ -204,7 +204,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
-  private val exactFields = Map("Product.l3categoryexact" -> 512f, "Product.categorykeywordsexact" -> 512f)
+  private val exactFields = Map("Product.l3categoryexact" -> 1024f, "Product.categorykeywordsexact" -> 1024f)
 
 
   private val route =
