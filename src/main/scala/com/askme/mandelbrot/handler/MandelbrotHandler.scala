@@ -15,7 +15,7 @@ import net.maffoo.jsonquote.literal._
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 
 
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchRequest}
+import org.elasticsearch.action.search.{SearchResponse, SearchRequestBuilder, SearchType, SearchRequest}
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{TimeValue, DistanceUnit, Fuzziness}
 import org.elasticsearch.index.query.{QueryBuilders, BaseQueryBuilder}
@@ -390,15 +390,15 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                             currentTimeMillis
                         respondWithMediaType(
                           `application/json`) {
-
                           complete {
+
                             implicit val execctx = serverContext.userExecutionContext
                             future {
                               var query: BaseQueryBuilder = null
                               var w = emptyStringArray
-                              if(kw != null && kw.trim != "") {
+                              if (kw != null && kw.trim != "") {
                                 w = analyze(index, "CompanyName", kw)
-                                if(w.length > 0) {
+                                if (w.length > 0) {
                                   val kwquery = disMaxQuery
 
                                   searchFields.foreach {
@@ -453,7 +453,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 query = filteredQuery(query, termsFilter("City", city.split( """,""").map(_.trim.toLowerCase): _*).cache(true))
                               val locFilter = boolFilter
                               if (area != "") {
-                                val areas = area.split(""",""")
+                                val areas = area.split( """,""")
                                 areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
                                 areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
                               }
@@ -462,12 +462,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 locFilter.should(
                                   geoDistanceRangeFilter("LatLong")
                                     .point(lat, lon)
-                                    .from((if(area=="") fromkm else 0.0d) + "km")
-                                    .to((if(area=="") tokm else 10.0d) + "km")
+                                    .from((if (area == "") fromkm else 0.0d) + "km")
+                                    .to((if (area == "") tokm else 10.0d) + "km")
                                     .optimizeBbox("indexed")
                                     .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
 
-                              if(locFilter.hasClauses)
+                              if (locFilter.hasClauses)
                                 query = filteredQuery(query, locFilter)
                               if (pin != "")
                                 query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
@@ -501,16 +501,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                   terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
                                     .subAggregation(sum("sum_score").script("_score"))
                                 )
-                                search.addAggregation(nested("products").path("Product")
-                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-                                    .subAggregation(terms("kw").field("Product.categorykeywordsexact").size(aggbuckets))
-                                    .subAggregation(sum("sum_score").script("_score"))
-                                  )
-                                )
-                                search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
-                                  .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets))
-                                )
-/*
+
+                                /*
                                 search.addAggregation(
                                   terms("apl")
                                     .script("if([100, 275, 300, 350].grep(doc['custtype'].value)) return 1; else return 0;")
@@ -534,25 +526,46 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                   )
                               }
 
-
-                              debug("query [" + pretty(render(parse(search.toString))) + "]")
+                              val slugFlag = true
+                              if (slugFlag) {
+                                search.addAggregation(nested("products").path("Product")
+                                  .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+                                  .subAggregation(terms("kw").field("Product.categorykeywordsexact").size(aggbuckets))
+                                  .subAggregation(sum("sum_score").script("_score"))
+                                  )
+                                )
+                                search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
+                                  .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets))
+                                )
+                              }
 
                               val result = search.execute().actionGet()
                               val cleanKW = w.mkString(" ")
-                              val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-                                .find(b => matchAnalyzed(index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(index, "Product.categorykeywords", c.getKey, w))))
-                                .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(
-                                  k => "/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
+                              val areaWords = analyze(index, "Area", area)
 
-                              val slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
-                                matchedCat +
-                                (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "") +
-                                (if (area != "") "/in/" + URLEncoder.encode(area.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "")
+                              var slug = ""
+                              if (slugFlag) {
+                                val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+                                  .find(b => matchAnalyzed(index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(index, "Product.categorykeywords", c.getKey, w))))
+                                  .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(
+                                    k => "/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
+
+                                val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+                                  .find(b => matchAnalyzed(index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(index, "AreaSynonyms", c.getKey, areaWords))))
+                                  .fold("/in/" + URLEncoder.encode(areaWords.mkString("-"), "UTF-8"))(
+                                    k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
+
+                                slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
+                                  matchedCat +
+                                  (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "") +
+                                  (if (area != "") matchedArea else "")
+                              }
+
+                              debug("query [" + pretty(render(parse(search.toString))) + "]")
 
                               val timeTaken = System.currentTimeMillis - start
                               info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTookInMillis + "/" + timeTaken + " (" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + ")]")
                               "{ \"slug\": \"" + slug + "\", \"hit-count\": " + result.getHits.hits.length + ", \"server-time-ms\": " + timeTaken + ", \"results\": " + result.toString + " }"
-
                             }
                           }
                         }
