@@ -195,6 +195,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
       "brands" -> Map("Product.stringattribute.answer" -> 1024f),
+      "menu" -> Map("Product.stringattribute.answer" -> 512f),
       "product" -> Map("Product.stringattribute.answer" -> 256f),
       "services" -> Map("Product.stringattribute.answer" -> 16f),
       "features" -> Map("Product.stringattribute.answer" -> 2f),
@@ -399,6 +400,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                               var w = emptyStringArray
                               if (kw != null && kw.trim != "") {
                                 w = analyze(index, "CompanyName", kw)
+                                debug("analyzed keywords: "+w.toList)
                                 if (w.length > 0) {
                                   val kwquery = disMaxQuery
 
