@@ -206,7 +206,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
-  private val exactFields = Map("Product.l3categoryexact" -> 4096f, "Product.categorykeywordsexact" -> 4096f)
+  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "CompanyName" -> 32768f, "LocationName" -> 32768f)
 
 
   private val route =
@@ -428,17 +428,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                     }
                                   }
 
-                                  if (w.length > 1) {
-                                    exactFields.foreach {
-                                      field: (String, Float) => {
-                                        val fieldQuery = disMaxQuery
-                                        (2 to Math.min(w.length, 4)).foreach { len =>
-                                          w.sliding(len).foreach { shingle =>
-                                            fieldQuery.add(termQuery(field._1, shingle.mkString(" ").toLowerCase).boost(field._2 * len))
-                                          }
-                                        }
-                                        kwquery.add(nestIfNeeded(field._1, fieldQuery))
-                                      }
+                                  exactFields.foreach {
+                                    field: (String, Float) => {
+                                      val termsExact = w.map(spanTermQuery(field._1, _))
+                                      val nearQuery = spanNearQuery.slop(0).inOrder(true)
+                                      termsExact.foreach(nearQuery.clause)
+                                      kwquery.add(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length+1).boost(field._2)))
                                     }
                                   }
                                   kwquery.add(strongMatch(searchFields.keySet, condFieldSet, w, fuzzyprefix, fuzzysim))
