@@ -187,7 +187,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
   private val emptyStringArray = new Array[String](0)
 
 
-  private val searchFields = Map("LocationName" -> 512f, "CompanyName" -> 512f, "CompanyKeywords" -> 64f,
+  private val searchFields = Map("LocationName" -> 512f, "CompanyName" -> 512f,
+    //"CompanyKeywords" -> 64f,
     "Product.l3category" -> 2048f, "Product.name" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f)
 
@@ -590,6 +591,11 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
       }
     }
 
+
+  def runSearch(message: RestMessage): Route = {
+    ctx => context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, message))
+  }
+
   override def receive = {
     runRoute(route)
   }
@@ -598,5 +604,12 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
     info("Kill Message received")
   }
 
-  override def actorRefFactory = context
+  implicit def actorRefFactory = context
 }
+
+
+trait RestMessage
+case class SearchParams(index: String, esType: String,
+                        kw: String, city: String, area: String, pin: String, category: String, id: String, size: Int, offset: Int,
+                        lat: Double, lon: Double, fromkm: Double, tokm: Double, source: Boolean, explain: Boolean, sort: String,
+                        select: String, agg: Boolean, aggbuckets: Int, maxdocspershard: Int, timeoutms: Long) extends RestMessage

@@ -30,6 +30,7 @@ object RootServer {
 
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
+    /*
     val conf = (new com.hazelcast.config.Config)
       .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
 
@@ -44,7 +45,7 @@ object RootServer {
     netConf.setPortAutoIncrement(boolean("hazel.port.autoincrement"))
     netConf.getInterfaces.setInterfaces(list[String]("hazel.interfaces"))
     netConf.getInterfaces.setEnabled(boolean("hazel.interface.enabled"))
-
+    */
     //val hazel = Hazelcast.newHazelcastInstance(conf)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
