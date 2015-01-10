@@ -435,7 +435,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                       val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
                                       val nearQuery = spanNearQuery.slop(0).inOrder(true)
                                       termsExact.foreach(nearQuery.clause)
-                                      kwquery.add(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length+1)))
+                                      kwquery.add(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length+1).boost(field._2 * w.length)))
                                     }
                                   }
                                   kwquery.add(strongMatch(searchFields.keySet, condFieldSet, w, fuzzyprefix, fuzzysim))
