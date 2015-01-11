@@ -207,7 +207,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
-  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "CompanyName" -> 1048576f, "LocationName" -> 1048576f)
+  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "CompanyName" -> 32768f, "LocationName" -> 1048576f)
 
 
   private val route =
@@ -435,7 +435,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                       val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
                                       val nearQuery = spanNearQuery.slop(0).inOrder(true)
                                       termsExact.foreach(nearQuery.clause)
-                                      kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length+1))).boost(field._2 * w.length))
+                                      kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length+1))).boost(field._2 * 2 *w.length* w.length*(searchFields.size+condFields.values.size+1)))
                                     }
                                   }
                                   kwquery.add(strongMatch(searchFields.keySet, condFieldSet, w, fuzzyprefix, fuzzysim))
