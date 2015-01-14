@@ -105,6 +105,9 @@ dependencies {
   compile     group: 'net.maffoo',                 name: 'jsonquote-core_2.10',              version: '0.2.1'             // json serving
   compile     group: 'net.maffoo',                 name: 'jsonquote-spray_2.10',             version: '0.2.1'             // json serving
 
+  compile     group: 'org.json4s',                 name: 'json4s-native_2.10',               version: '3.2.11'
+  compile     group: 'org.json4s',                 name: 'json4s-ext_2.10',                  version: '3.2.11'
+
 
   compile     group: 'com.typesafe.akka',          name: 'akka-actor_2.10',                  version: akka_version
   compile     group: 'com.typesafe.akka',          name: 'akka-remote_2.10',                 version: akka_version

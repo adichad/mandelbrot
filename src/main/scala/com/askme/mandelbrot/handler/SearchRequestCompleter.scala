@@ -1,21 +1,15 @@
 package com.askme.mandelbrot.handler
 
-import java.util.concurrent.TimeUnit.MILLISECONDS
-
-
-import akka.actor.{ReceiveTimeout, OneForOneStrategy, Props, Actor}
 import akka.actor.SupervisorStrategy.Stop
-import spray.json.DefaultJsonProtocol
-import scala.concurrent.duration._
-
+import akka.actor.{Actor, OneForOneStrategy, Props, ReceiveTimeout}
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
-import org.json4s.DefaultFormats
+import org.json4s._
 import spray.http.StatusCode
 import spray.http.StatusCodes._
-import spray.routing.RequestContext
 import spray.httpx.Json4sSupport
+import spray.routing.RequestContext
 
 
 /**
@@ -29,13 +23,13 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
   private lazy val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
 
 
-  context.setReceiveTimeout(Math.min(searchParams.timeoutms, long("timeoutms")+50l) milliseconds)
+  //context.setReceiveTimeout(Math.min(searchParams.limits.timeoutms, long("timeoutms")+50l) milliseconds)
   target ! searchParams
 
 
   override def receive = {
     case res: RestMessage => complete(OK, res)
-    case ReceiveTimeout   => complete(GatewayTimeout, "Request timeout")
+    case ReceiveTimeout   => complete(GatewayTimeout, "{ \"response\": \"Request timeout\" }")
   }
 
   def complete[T <: AnyRef](status: StatusCode, obj: T) = {

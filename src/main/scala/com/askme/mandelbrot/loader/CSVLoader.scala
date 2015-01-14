@@ -148,7 +148,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
           input.close()
           info("input file closed: " + file.getAbsolutePath)
         }
-        info("indexing " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
+        info("sending indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse) = {
             info("failures: " + response.hasFailures)
@@ -170,6 +170,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
           }
 
         })
+        info("sent indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
       }
     }
   }
