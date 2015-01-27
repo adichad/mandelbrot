@@ -8,7 +8,6 @@ import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
-import dispatch._
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.bulk.{BulkRequestBuilder, BulkResponse}
@@ -117,8 +116,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
       }
   }
 
-  private def getId(cells: Array[String]) = "U"+cells(2)+"L"+cells(4)
-
   override def receive = {
     case Index(file) => {
       info("input file received: " + file.getAbsolutePath)
@@ -134,7 +131,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
             .getLines().foreach {
             line => {
               val cells = line.split(fieldDelim, -1)
-              cells(idPos) = getId(cells)
               //assumes that the result is sorted
               groupFlush(cells(idPos), sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, bulkRequest, groupState)
               sb.setLength(0)
@@ -177,7 +173,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
-  val endpoints = list[String]("mappings." + esType + ".destination.endpoints")
   val mapConf = conf("mappings." + esType + ".fields")
   val targetCharset = Charset.forName(string("mappings." + esType + ".charset.target"))
 
@@ -191,9 +186,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
   val placeholderPattern = "((?:[^$]+|\\$\\{(?!\\d)})+)|(\\$\\{\\d+})".r
   val templateTokens = template.tokenize(placeholderPattern)
-
-  val uri = host(endpoints(0)) / index / esType / "_bulk"
-  info(uri)
 
   private def flatten(mapConf: Config, sb: StringBuilder, map: mutable.Map[String, (Int, String, String, String)], elemDelim: String): Unit = {
     val mapping = mapConf.root

@@ -8,21 +8,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.MandelbrotHandler
-import com.hazelcast.core.Hazelcast
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.apache.spark.SparkContext._
-import org.apache.spark.serializer.KryoSerializer
-import org.apache.spark.sql._
-import org.apache.spark.streaming.{Seconds, Minutes, StreamingContext}
-import org.apache.spark.{SparkConf, SparkContext}
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
 import spray.can.Http
 
-import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 

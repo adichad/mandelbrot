@@ -24,6 +24,11 @@
         "ignore_malformed": false,
         "doc_values": true
       },
+      "DetailSlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
       "UpdateFlag": {
         "type": "boolean",
         "store": false,
@@ -72,6 +77,11 @@
         "store": true,
         "index": "analyzed"
       },
+      "LocationDescription": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
       "LocationType": {
         "type": "string",
         "store": true,
@@ -91,6 +101,11 @@
         "type": "string",
         "store": true,
         "index": "analyzed"
+      },
+      "AreaSlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
       },
       "AreaAggr": {
         "type": "string",
@@ -129,10 +144,24 @@
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
       },
+      "CitySlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
       "CityAggr": {
         "type": "string",
         "store": true,
         "index": "not_analyzed"
+      },
+      "CitySynonyms": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
       },
       "PinCode": {
         "type": "string",
@@ -184,6 +213,13 @@
         "store": true,
         "index": "analyzed"
       },
+      "CompanyAliases": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
       "CompanyDescription": {
         "type": "string",
         "store": true,
@@ -194,11 +230,10 @@
         "store ": true,
         "index": "analyzed"
       },
-      "CompanyEmail": {
+      "AdvertiserURL": {
         "type": "string",
         "store": true,
-        "include_in_root": true,
-        "index": "analyzed"
+        "index": "no"
       },
       "CompanyLogoURL": {
         "type": "string",
@@ -211,12 +246,32 @@
         "store": true,
         "index": "no"
       },
-      "ContactLandline": {
+      "ContactMobile": {
         "type": "string",
         "store": true,
         "index": "no"
       },
-      "ContactMobile": {
+      "ContactEmail": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationMobile": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationLandLine": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationEmail": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationDIDNumber": {
         "type": "string",
         "store": true,
         "index": "no"
@@ -301,6 +356,13 @@
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
             "include_in_root": true
+          },
+          "l3categoryslug": {
+            "type": "string",
+            "store": true,
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
           },
           "l3categoryid": {
             "type": "integer",

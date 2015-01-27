@@ -279,7 +279,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
     ctx => context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, message))
   }
 
-  override def receive = {
+  override def receive: Receive = {
     runRoute(route)
   }
 
