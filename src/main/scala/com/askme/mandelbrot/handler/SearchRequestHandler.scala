@@ -102,15 +102,15 @@ object SearchRequestHandler {
             cond._2.foreach {
               valField: (String, Set[String]) => {
                 val perQuestionQuery = boolQuery
-                perQuestionQuery.must(nestIfNeeded(cond._1, termQuery(cond._1, valField._1)))
+                perQuestionQuery.must(termQuery(cond._1, valField._1))
                 val answerQuery = boolQuery
                 valField._2.foreach {
                   subField: String =>
-                    answerQuery.should(nestIfNeeded(subField, fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-                    answerQuery.should(nestIfNeeded(subField, termQuery(subField, word).boost(16384f)))
+                    answerQuery.should(fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+                    answerQuery.should(termQuery(subField, word).boost(16384f))
                 }
                 perQuestionQuery.must(answerQuery)
-                wordQuery.should(perQuestionQuery)
+                wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
               }
             }
           }
@@ -134,7 +134,7 @@ object SearchRequestHandler {
     (new AnalyzeRequestBuilder(esClient.admin.indices, index, text)).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
-  private val searchFields = Map("LocationName" -> 512f, "CompanyName" -> 512f,
+  private val searchFields = Map("LocationName" -> 512f,
     "Product.l3category" -> 2048f, "BusinessType"->1024f,
     "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f)
 
@@ -153,7 +153,7 @@ object SearchRequestHandler {
 
   private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
-  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "CompanyName" -> 32768f, "LocationName" -> 1048576f)
+  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "LocationName" -> 1048576f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -233,6 +233,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val areas = area.split( """,""")
       areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
       areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
+      areas.map(a => termsFilter("AreaSlug", a)).foreach(locFilter.should)
+      areas.map(a => termsFilter("AreaSlug", a+"-")).foreach(locFilter.should)
+
     }
 
     if (lat != 0.0d || lon != 0.0d)
@@ -249,8 +252,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (pin != "")
       query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
     if (category != "") {
-      query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryexact", category.split( """#""").map(
-        k => analyze(esClient, index, "Product.l3categoryexact", k).mkString(" ")): _*)).cache(true))
+      query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#""") ++ (category.split("""#""").map(_+"-")): _*)).cache(true))
     }
 
 
