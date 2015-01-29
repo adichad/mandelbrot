@@ -40,10 +40,9 @@ BEGIN
 	SELECT @RET = REPLACE(@RET, char(9), ' ');
 	SELECT @RET = REPLACE(@RET, char(12), ' ');
 	SELECT @RET = REPLACE(@RET, char(11), ' ');
-	SELECT @RET = replace(replace(replace(@RET,' ','<>'),'><',''),'<>','-');
-	SELECT @RET = LOWER(@RET);
 	-- '      ' -> '<><><><><><>' -> '<>' -> '-'
-    RETURN LTRIM(RTRIM(@RET));
+	SELECT @RET = replace(replace(replace(LTRIM(RTRIM(@RET)),' ','<>'),'><',''),'<>','-');
+	RETURN LOWER(@RET);
 END;
 GO
 
