@@ -1,13 +1,12 @@
 package com.askme.mandelbrot
 
-import java.util.Map
-import java.util.List
-import scala.collection.JavaConversions.mapAsScalaMap
-import scala.collection.JavaConversions.asScalaBuffer
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+import java.util.{List, Map}
+
+import com.typesafe.config.{Config, ConfigFactory}
+
+import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
 import scala.reflect.ClassTag
-import java.util.HashMap
+
 
 trait Configurable {
   protected[this] val config: Config
@@ -16,9 +15,9 @@ trait Configurable {
   protected[this] def confs(part: String) = config getConfigList part
   protected[this] def map[T](part: String)(implicit t: ClassTag[T]) = {
     if (classOf[Config] isAssignableFrom t.runtimeClass)
-      (config getAnyRef part).asInstanceOf[Map[String, Map[String, Any]]].map(x ⇒ (x._1, (ConfigFactory parseMap x._2).asInstanceOf[T]))
+      (config getAnyRef part).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, (ConfigFactory parseMap x._2).asInstanceOf[T]))
     else if (classOf[Configurable] isAssignableFrom t.runtimeClass)
-      (config getAnyRef part).asInstanceOf[Map[String, Map[String, Any]]].map(x ⇒ (x._1, obj(ConfigFactory parseMap x._2).asInstanceOf[T]))
+      (config getAnyRef part).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, obj(ConfigFactory parseMap x._2).asInstanceOf[T]))
     else
       mapAsScalaMap((config getAnyRef part).asInstanceOf[Map[String, T]])
   }
@@ -44,4 +43,11 @@ trait Configurable {
   protected[this] def long(part: String) = config getLong part
   protected[this] def double(part: String) = config getDouble part
   protected[this] def string(part: String) = config getString part
+
+  protected[this] def configure(resourceBases: String*) =
+    ConfigFactory.load((for (base ← resourceBases) yield ConfigFactory.parseResourcesAnySyntax(base)).reduceLeft(_ withFallback _).withFallback(ConfigFactory.systemEnvironment()))
+
+  protected[this] def backFillSystemProperties(propertyNames: String*) =
+    for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
+
 }

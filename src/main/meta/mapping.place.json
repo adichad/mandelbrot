@@ -1,0 +1,458 @@
+{
+  "place": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "properties": {
+      "PlaceID": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "UserID": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
+      "LocationID": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
+      "DetailSlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "UpdateFlag": {
+        "type": "boolean",
+        "store": false,
+        "index": "no",
+        "ignore_malformed": true
+      },
+      "InsertFlag": {
+        "type": "boolean",
+        "store": false,
+        "index": "no",
+        "ignore_malformed": true
+      },
+      "DeleteFlag": {
+        "type": "boolean",
+        "store": false,
+        "index": "no",
+        "ignore_malformed": true
+      },
+      "ValidFlag": {
+        "type": "boolean",
+        "store": false,
+        "ignore_malformed": true
+      },
+      "PPCOnline": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false
+      },
+      "PPCVoice": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false
+      },
+      "CustomerType": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "NowCustomerType": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false
+      },
+      "LocationName": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "LocationDescription": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "LocationType": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "BusinessType": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "Address": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "Area": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "AreaSlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "AreaAggr": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "AreaExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "AreaSynonyms": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "AreaSynonymsExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "City": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "CitySlug": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "CityAggr": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "CitySynonyms": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "PinCode": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "ZonesServed": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "norms": {"enabled": false}
+      },
+      "Zone": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "norms": {"enabled": false}
+      },
+      "State": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "Country": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "LatLong": {
+        "type": "geo_point",
+        "lat_lon": true,
+        "geohash": true,
+        "geohash_precision": "1m",
+        "geohash_prefix": true,
+        "store": true,
+        "normalize": true,
+        "fielddata": {
+          "format": "compressed",
+          "precision": "1m"
+        }
+      },
+      "CompanyID": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": true
+      },
+      "CompanyName": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "CompanyAliases": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "CompanyDescription": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "CompanyKeywords": {
+        "type": "string",
+        "store ": true,
+        "index": "analyzed"
+      },
+      "AdvertiserURL": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "CompanyLogoURL": {
+        "type": "string",
+        "store": true,
+        "include_in_root": true,
+        "index": "no"
+      },
+      "ContactName": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "ContactMobile": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "ContactEmail": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationMobile": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationLandLine": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationEmail": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LocationDIDNumber": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "LastUpdated": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss.SSS",
+        "store": true,
+        "ignore_malformed": false
+      },
+      "Product": {
+        "type": "nested",
+        "include_in_root": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "store": false,
+            "ignore_malformed": false
+          },
+          "name": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "analyzed"
+          },
+          "description": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "analyzed"
+          },
+          "keywords": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "norms": {"enabled": false},
+            "index": "analyzed"
+          },
+          "brand": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "analyzed"
+          },
+          "imageurls": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "no"
+          },
+          "l1category": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "include_in_root": true
+          },
+          "l2category": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "include_in_root": true
+          },
+          "l3category": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l3categoryaggr": {
+            "type": "string",
+            "store": true,
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
+          },
+          "l3categoryexact": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l3categoryslug": {
+            "type": "string",
+            "store": true,
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
+          },
+          "l3categoryid": {
+            "type": "integer",
+            "store": true,
+            "ignore_malformed": true,
+            "include_in_root": true
+          },
+          "categorypath": {
+            "type": "string",
+            "store": true,
+            "index": "not_analyzed"
+          },
+          "categorykeywords": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "categorykeywordsexact": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "stringattribute": {
+            "type": "nested",
+            "include_in_root": true,
+            "properties": {
+              "qaggr": {
+                "type": "string",
+                "store": true,
+                "include_in_root": true,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "question": {
+                "type": "string",
+                "store": false,
+                "norms": {"enabled": false},
+                "index": "analyzed"
+              },
+              "aaggr": {
+                "type": "string",
+                "store": true,
+                "include_in_root": true,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "answer": {
+                "type": "string",
+                "store": false,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "index": "analyzed"
+              }
+            }
+          },
+          "intattribute": {
+            "type": "nested",
+            "include_in_root": true,
+            "properties": {
+              "qaggr": {
+                "type": "string",
+                "store": true,
+                "include_in_root": true,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "question": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed"
+              },
+              "answer": {
+                "type": "integer",
+                "store": true,
+                "include_in_root": true,
+                "ignore_malformed": true,
+                "doc_values": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

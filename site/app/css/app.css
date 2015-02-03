@@ -1,0 +1,145 @@
+/* app css stylesheet */
+
+body {
+  padding-top: 20px;
+  background-color: #003355;
+  color: #eeeeee;
+  font-size: small;
+  font-family: arial,helvetica,sans-serif;
+}
+
+input {
+  color: black;
+  border: solid 1px;
+  border-radius: 3px;
+  padding-left: 1px;
+  text-indent: 2px;
+}
+
+.button {
+  background-color: black;
+  color: white;
+  border: solid 1px;
+  border-radius: 3px;
+  pading-left: 1px;
+}
+
+.row {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 10px;
+  padding-right: 10px; 
+}
+
+.hit-images {
+  background-color: white;
+  width: 450px;
+  height: 450px;
+  overflow: hidden;
+  position: relative;
+  float: left;
+}
+
+.hits {
+  list-style: none;
+}
+
+.angular-leaflet-map {
+  width: 350px;
+  height: 500px;
+}
+
+.thumb {
+  float: left;
+  margin: -0.5em 1em 1.5em 0;
+  padding-bottom: 1em;
+  height: 100px;
+  width: 100px;
+}
+.thumbnail {
+  background-color: black;
+}
+
+.hits div {
+  background-color: black;
+  clear: both;
+  padding-top: 5px;
+  border-radius: 5px;
+  border: solid 1px;
+  width: 100%;
+}
+
+.hits table {
+  background-color: black;
+  clear: both;
+  padding-top: 5px;
+  border-radius: 5px;
+  border: solid 1px;
+  width: 100%;
+}
+
+/** Detail View **/
+img.hit {
+  float: left;
+  margin-right: 3em;
+  margin-bottom: 2em;
+  background-color: white;
+  padding: 2em;
+  height: 400px;
+  width: 400px;
+  display: none;
+}
+
+img.hit:first-child {
+  display: block;
+}
+
+
+ul.hit-thumbs {
+  margin: 0;
+  list-style: none;
+}
+
+ul.hit-thumbs li {
+  border: 1px solid black;
+  display: inline-block;
+  margin: 1em;
+  background-color: white;
+}
+
+ul.hit-thumbs img {
+  height: 100px;
+  width: 100px;
+  padding: 1em;
+}
+
+ul.hit-thumbs img:hover {
+  cursor: pointer;
+}
+
+
+ul.specs {
+  clear: both;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+ul.specs > li{
+  display: inline-block;
+  width: 200px;
+  vertical-align: top;
+}
+
+ul.specs > li > span{
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+ul.specs dt {
+  font-weight: bold;
+}
+
+h1 {
+  border-bottom: 1px solid black;
+}

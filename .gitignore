@@ -4,3 +4,16 @@ third-party
 bin
 build
 /build
+data
+logs
+tmp
+temp
+src/main/resources/application.*
+src/main/resources/environment.*
+env/*/*/build
+env/*/*/bin
+dep/build
+dep/bin
+*.log
+site/node_modules
+site/app/bower_components

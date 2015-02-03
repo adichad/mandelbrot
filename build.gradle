@@ -1,18 +1,15 @@
 apply plugin: 'scala'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
+apply plugin: 'provided-base'
+
 apply from: 'gradle.properties'
-ext {
-  scala_version     = '2.10.4'
-  titan_version     = '0.5.0'
-  algebird_version  = '0.6.0'
-  storehaus_version = '0.9.0'
-  spark_version     = '1.1.0'
-  akka_version      = '2.2.3'
-  hadoop_version    = '2.4.1'
-}
 
 defaultTasks 'go'
+
+ext {
+  hadoop_version    = '2.5.2'
+}
 
 eclipse {
   jdt {
@@ -21,32 +18,100 @@ eclipse {
   }
 }
 
+buildscript {
+  repositories {
+    jcenter()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.+')
+    classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '3.0.1')
+  }
+}
+
+apply plugin: 'com.jfrog.artifactory'
+
+/*
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+    publish {
+        repository {
+            repoKey = 'libs-snapshot-local'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'libs-snapshot'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+        }
+    }
+}
+*/
+
+configurations {
+    provided {
+        dependencies.all { dep ->
+            configurations.runtime.exclude group: dep.group, module: dep.name
+        }
+    }
+    compile.extendsFrom provided
+
+    // exclusions
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
+    compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
+
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
+    testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
+
+    // integTestCompile.extendsFrom testRuntime
+}
+
 task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
   description = 'Start up ' + project.name
 
-  main = 'com.askme.mandelbrot.Launcher'
-  classpath = sourceSets.main.runtimeClasspath
+  classpath(sourceSets.main.runtimeClasspath, configurations.compile)
+
+  systemProperties = System.getProperties()
   standardInput = System.in
-  systemProperty 'log.level', 'INFO'
+  if(System.getProperty('main')!=null) main = System.getProperty('main') else main = 'com.askme.mandelbrot.Launcher'
+
+  jvmArgs+=['-Djava.library.path='+System.getProperty('java.library.path')]
+  jvmArgs+=['-Xmx12g']
+  jvmArgs+=['-Xms2g']
+
+
 }
 
 task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
   def buildName=baseName+'-'+project.version
 
   from(jar.outputs.files) {
-    into buildName
-  }
-  
-  from(configurations.runtime) {
     into buildName+'/lib'
   }
+  
+  //from(configurations.runtime) {
+  //  into buildName+'/lib'
+  //}
   
   from('src/main/scripts/linux') {
     fileMode = 0755
     into buildName+'/bin'
   }
-  
-  from('.') {
+
+  from('src/main/meta') {
+    into buildName+'/meta'
+  }
+
+    from('.') {
     include 'README.md'
     into buildName
   }
@@ -82,100 +147,32 @@ sourceSets {
   }
 }
 
-configurations {
-  // exclusions 
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
-  compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
-
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-core'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-annotations'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-yarn-api'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-yarn-common'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-yarn-server-common'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-yarn-server-web-proxy'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-client'
-  //compile.exclude group: 'org.apache.hadoop',   module: 'hadoop-yarn-client'
-
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
-  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
-
-  // integTestCompile.extendsFrom testRuntime
-}
-
-dependencies {
-  compile     group: 'ch.qos.logback',             name: 'logback-classic',                  version: '1.0.13'           // logging backend
-  compile     group: 'org.clapper',                name: 'grizzled-slf4j_2.10',              version: '1.0.2'            // logging api
- 
-  compile     group: 'io.spray',                   name: 'spray-can',                        version: '1.2.1'            // http serving
-  compile     group: 'io.spray',                   name: 'spray-routing',                    version: '1.2.1'            // http serving
-  
-  compile     group: 'com.typesafe.akka',          name: 'akka-actor_2.10',                  version: akka_version       // http serving
-  compile     group: 'com.typesafe.akka',          name: 'akka-slf4j_2.10',                  version: akka_version       // http serving
-  compile     group: 'com.typesafe.akka',          name: 'akka-remote_2.10',                 version: akka_version       // http serving
-  compile     group: 'com.typesafe.akka',          name: 'akka-zeromq_2.10',                 version: akka_version       // http serving
-  
-  compile     group: 'com.thinkaurelius.titan',    name: 'titan-core',                       version: titan_version      // distributed graph database engine
-  compile     group: 'com.hazelcast',              name: 'hazelcast',                        version: '3.1.5'            // distributed in-memory data grid
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-databind',                 version: '2.3.3'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.3.3'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.3.3'            // json support
-  compile     group: 'io.netty',                   name: 'netty-all',                        version: '4.0.20.Final'     // async high performance network io
-  compile     group: 'org.openstreetmap.osmosis',  name: 'osmosis-pbf2',                     version: '0.43.1'           // openstreetmap
-  compile     group: 'com.twitter',                name: 'algebird-core_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  compile     group: 'com.twitter',                name: 'algebird-util_2.10',               version: algebird_version   // abstract algebra library: monoids, groups, rings
-  compile     group: 'com.twitter',                name: 'algebird-bijection_2.10',          version: algebird_version   // abstract algebra library: monoids, groups, rings
-  
-  compile     group: 'com.twitter',                name: 'storehaus-algebra_2.10',           version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-core_2.10',              version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-memcache_2.10',           version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-mysql_2.10',             version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-hbase_2.10',             version: storehaus_version   // persistence abstractions
-  compile     group: 'com.twitter',                name: 'storehaus-cache_2.10',             version: storehaus_version   // persistence abstractions
-  
-  
-  compile     group: 'org.apache.spark',           name: 'spark-core_2.10',                  version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming_2.10',             version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-kafka_2.10',       version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-zeromq_2.10',      version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-flume_2.10',       version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-twitter_2.10',     version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-streaming-mqtt_2.10',        version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-sql_2.10',                   version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-mllib_2.10',                 version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-graphx_2.10',                version: spark_version      // distributed computation platform
-  compile     group: 'org.apache.spark',           name: 'spark-yarn_2.10',                  version: spark_version      // distributed computation platform
- 
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
-  compile     group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
-  
-  compile     group: 'net.databinder.dispatch',    name: 'dispatch-core_2.10',               version: '0.11.1'
-  
-  testCompile group: 'org.scalatest',              name: 'scalatest_2.10',             version: '1.9.2'            // 
-  testCompile group: 'org.specs2',                 name: 'specs2_2.10',                version: '2.2.2'            // 
-  testCompile group: 'com.twitter',                name: 'algebird-test_2.10',         version: algebird_version   // abstract algebra library: monoids, groups, rings
-  //testCompile group: 'com.twitter',                name: 'storehaus-testing_2.10',           version: storehaus_version   // persistence abstractions
-  
- 
-//integTest 
+project(':') {
+  dependencies {
+    provided    project(':'+project(':').name+'-dep')
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
+    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
+  }
 }
 
 repositories {
-  maven { url "http://maven.twttr.com/" }
+  jcenter()
+  mavenCentral()
+  maven { url "http://jcenter.bintray.com/" }
   maven { url "http://repo.typesafe.com/typesafe/releases/" }
-  maven { url "http://typesafe.artifactoryonline.com/typesafe/repo" }
+  //maven { url "http://typesafe.artifactoryonline.com/typesafe/repo" }
+  maven { url "http://maven.twttr.com/" }
   maven { url "http://maven.restlet.org/" }
   maven { url "http://repo.spray.io/" }
   maven { url "http://repo.akka.io/releases/" }
   maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
   maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
-  //maven { url "http://tomp2p.net/dev/mvn/" }
-  mavenCentral()
+  maven { url "http://conjars.org/repo" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-release/" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-snapshot/" }
 }
-
