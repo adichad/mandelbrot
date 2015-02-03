@@ -24,7 +24,9 @@
             "types": {
                 "type": "string",
                 "store": true,
-                "index": "not_analyzed"
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false}
             },
             "lat_lon": {
                 "type": "geo_point",
