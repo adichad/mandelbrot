@@ -134,7 +134,7 @@ object SearchRequestHandler {
     (new AnalyzeRequestBuilder(esClient.admin.indices, index, text)).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
-  private val searchFields = Map("LocationName" -> 512f,
+  private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
     "Product.l3category" -> 2048f, "BusinessType"->1024f,
     "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f)
 
