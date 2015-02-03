@@ -136,7 +136,7 @@ object SearchRequestHandler {
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
     "Product.l3category" -> 2048f, "BusinessType"->1024f,
-    "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f)
+    "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
