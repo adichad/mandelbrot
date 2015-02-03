@@ -236,8 +236,22 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     val locFilter = boolFilter
     if (area != "") {
       val areas = area.split( """,""").map(_.trim.toLowerCase)
-      areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
-      areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
+      areas.foreach { a =>
+        val terms = analyze(esClient, index, "Area", a)
+          .map(fuzzyQuery("Area", _).prefixLength(1).fuzziness(Fuzziness.TWO))
+          .map(spanMultiTermQueryBuilder)
+        val areaSpan = spanNearQuery.slop(1).inOrder(true)
+        terms.foreach(areaSpan.clause)
+        locFilter.should(queryFilter(areaSpan).cache(true))
+
+        val synTerms = analyze(esClient, index, "Area", a)
+          .map(fuzzyQuery("AreaSynonyms", _).prefixLength(1).fuzziness(Fuzziness.TWO))
+          .map(spanMultiTermQueryBuilder)
+        val synAreaSpan = spanNearQuery.slop(1).inOrder(true)
+        synTerms.foreach(synAreaSpan.clause)
+        locFilter.should(queryFilter(synAreaSpan).cache(true))
+      }
+
       areas.map(a => termFilter("City", a).cache(true)).foreach(locFilter.should)
       areas.map(a => termFilter("CitySynonyms", a).cache(true)).foreach(locFilter.should)
       areas.map(a => termFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
