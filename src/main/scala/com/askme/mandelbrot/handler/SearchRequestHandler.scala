@@ -226,15 +226,15 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     // filters
     if (id != "")
       query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
-    if (city != "")
+    if (city != "") {
       query = filteredQuery(query, termsFilter("City", city.split( """,""").map(_.trim.toLowerCase): _*).cache(true))
+    }
     val locFilter = boolFilter
     if (area != "") {
       val areas = area.split( """,""")
       areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
       areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
-      areas.map(a => termsFilter("AreaSlug", a)).foreach(locFilter.should)
-      areas.map(a => termsFilter("AreaSlug", a+"-")).foreach(locFilter.should)
+      areas.map(a => termsFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
 
     }
 
@@ -252,7 +252,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (pin != "")
       query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
     if (category != "") {
-      query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#""") ++ (category.split("""#""").map(_+"-")): _*)).cache(true))
+      query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#"""): _*)).cache(true))
     }
 
 
