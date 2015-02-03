@@ -227,7 +227,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (id != "")
       query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
     if (city != "") {
-      query = filteredQuery(query, termsFilter("City", city.split( """,""").map(_.trim.toLowerCase): _*).cache(true))
+      val cityFilter = boolFilter
+      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
+      cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
+      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(true))
+      query = filteredQuery(query, cityFilter)
     }
     val locFilter = boolFilter
     if (area != "") {
