@@ -88,7 +88,7 @@ object SearchRequestHandler {
                           condFields: Map[String, Map[String, Set[String]]],
                           w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 2f / 3f).toInt).boost(16384f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(16384f)
     w.foreach {
       word => {
         val wordQuery = boolQuery
@@ -119,7 +119,7 @@ object SearchRequestHandler {
       }
     }
 
-    allQuery.must(boolQuery
+    allQuery.should(boolQuery.boost(1048576f)
       .should(termQuery("CustomerType", "275"))
       .should(termQuery("CustomerType", "300"))
       .should(termQuery("CustomerType", "350"))
@@ -235,10 +235,12 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     }
     val locFilter = boolFilter
     if (area != "") {
-      val areas = area.split( """,""")
+      val areas = area.split( """,""").map(_.trim.toLowerCase)
       areas.map(a => queryFilter(matchPhraseQuery("Area", a).slop(1)).cache(true)).foreach(locFilter.should)
       areas.map(a => queryFilter(matchPhraseQuery("AreaSynonyms", a)).cache(true)).foreach(locFilter.should)
-      areas.map(a => termsFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
+      areas.map(a => termFilter("City", a).cache(true)).foreach(locFilter.should)
+      areas.map(a => termFilter("CitySynonyms", a).cache(true)).foreach(locFilter.should)
+      areas.map(a => termFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
 
     }
 
