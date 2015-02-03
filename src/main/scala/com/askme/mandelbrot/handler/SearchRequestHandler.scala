@@ -153,7 +153,7 @@ object SearchRequestHandler {
 
   private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
-  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "LocationName" -> 1048576f)
+  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "LocationName" -> 1048576f, "CompanyAliases" -> 1048576f)
 
   private val emptyStringArray = new Array[String](0)
 
