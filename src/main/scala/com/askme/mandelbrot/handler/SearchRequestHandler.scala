@@ -88,7 +88,8 @@ object SearchRequestHandler {
                           condFields: Map[String, Map[String, Set[String]]],
                           w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(16384f)
+    val strongQuery = boolQuery.boost(16385f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(16384f)
     w.foreach {
       word => {
         val wordQuery = boolQuery
@@ -119,7 +120,8 @@ object SearchRequestHandler {
       }
     }
 
-    allQuery.should(boolQuery.boost(1048576f)
+    strongQuery.must(allQuery)
+    strongQuery.should(boolQuery.boost(32768f)
       .should(termQuery("CustomerType", "275"))
       .should(termQuery("CustomerType", "300"))
       .should(termQuery("CustomerType", "350"))
