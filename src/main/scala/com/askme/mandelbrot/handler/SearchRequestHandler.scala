@@ -121,10 +121,10 @@ object SearchRequestHandler {
     }
 
     strongQuery.must(allQuery)
-    strongQuery.should(boolQuery.boost(2097158f)
-      .should(termQuery("CustomerType", "275"))
-      .should(termQuery("CustomerType", "300"))
-      .should(termQuery("CustomerType", "350"))
+    strongQuery.should(boolQuery
+      .should(termQuery("CustomerType", "275").boost(2097158f))
+      .should(termQuery("CustomerType", "300").boost(2097158f))
+      .should(termQuery("CustomerType", "350").boost(2097158f))
     )
   }
 
