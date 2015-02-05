@@ -95,7 +95,7 @@ object SearchRequestHandler {
         fields.foreach {
           field =>
             wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(1048576f*field._2)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144f*field._2)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -107,7 +107,7 @@ object SearchRequestHandler {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(termQuery(subField._1, word).boost(1048576f*subField._2))
+                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
