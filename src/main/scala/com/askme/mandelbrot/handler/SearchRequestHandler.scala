@@ -142,7 +142,14 @@ object SearchRequestHandler {
     "Product.stringattribute.question" -> Map(
       "brands" -> Map("Product.stringattribute.answer" -> 1024f),
       "menu" -> Map("Product.stringattribute.answer" -> 512f),
+      "destinations" -> Map("Product.stringattribute.answer" -> 512f),
       "product" -> Map("Product.stringattribute.answer" -> 256f),
+      "tests" -> Map("Product.stringattribute.answer" -> 256f),
+      "courses" -> Map("Product.stringattribute.answer" -> 256f),
+      "mode" -> Map("Product.stringattribute.answer" -> 128f),
+      "fee" -> Map("Product.stringattribute.answer" -> 4f),
+      "range" -> Map("Product.stringattribute.answer" -> 8f),
+      "heads" -> Map("Product.stringattribute.answer" -> 8f),
       "services" -> Map("Product.stringattribute.answer" -> 16f),
       "features" -> Map("Product.stringattribute.answer" -> 2f),
       "facilities" -> Map("Product.stringattribute.answer" -> 4f),
@@ -359,21 +366,21 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import response.searchParams.idx._
       import response.searchParams.req._
       import response.searchParams.view._
+      import response.searchParams.text._
       import response.searchParams.startTime
 
-      val cleanKW = w.mkString(" ")
       val areaWords = analyze(esClient, index, "Area", area)
 
       var slug = ""
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(cleanKW.replaceAll( """\s+""", "-"), "UTF-8"))(
+          .fold("/search/" + URLEncoder.encode(kw.replaceAll( """[^a-zA-Z0-9_]+""", " ").trim.replaceAll("""\s""", "-").toLowerCase, "UTF-8"))(
             k => "/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
 
         val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(areaWords.mkString("-").toLowerCase, "UTF-8"))(
+          .fold("/in/" + URLEncoder.encode(area.replaceAll( """[^a-zA-Z0-9_]+""", " ").trim.replaceAll("""\s""", "-").toLowerCase, "UTF-8"))(
             k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
         slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
