@@ -84,31 +84,30 @@ object SearchRequestHandler {
     nestIfNeeded(field, disMaxQuery.add(fieldQuery1).add(fieldQuery2))
   }
 
-  private def strongMatch(fields: Set[String],
-                          condFields: Map[String, Map[String, Set[String]]],
+  private def strongMatch(fields: Map[String, Float],
+                          condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
 
-    val strongQuery = boolQuery.boost(1048576f)
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(16384f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536f)
     w.foreach {
       word => {
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-            wordQuery.should(nestIfNeeded(field, fuzzyQuery(field, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field, termQuery(field, word).boost(16384f)))
+            wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(1048576f*field._2)))
         }
         condFields.foreach {
-          cond: (String, Map[String, Set[String]]) => {
+          cond: (String, Map[String, Map[String, Float]]) => {
             cond._2.foreach {
-              valField: (String, Set[String]) => {
+              valField: (String, Map[String, Float]) => {
                 val perQuestionQuery = boolQuery
                 perQuestionQuery.must(termQuery(cond._1, valField._1))
                 val answerQuery = boolQuery
                 valField._2.foreach {
-                  subField: String =>
-                    answerQuery.should(fuzzyQuery(subField, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(termQuery(subField, word).boost(16384f))
+                  subField: (String, Float) =>
+                    answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+                    answerQuery.should(termQuery(subField._1, word).boost(1048576f*subField._2))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
@@ -120,11 +119,10 @@ object SearchRequestHandler {
       }
     }
 
-    strongQuery.must(allQuery)
-    strongQuery.should(boolQuery
-      .should(termQuery("CustomerType", "275").boost(2097158f))
-      .should(termQuery("CustomerType", "300").boost(2097158f))
-      .should(termQuery("CustomerType", "350").boost(2097158f))
+    allQuery.must(boolQuery
+      .should(termQuery("CustomerType", "275"))
+      .should(termQuery("CustomerType", "300"))
+      .should(termQuery("CustomerType", "350"))
     )
   }
 
@@ -133,12 +131,12 @@ object SearchRequestHandler {
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    (new AnalyzeRequestBuilder(esClient.admin.indices, index, text)).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
     "Product.l3category" -> 2048f, "BusinessType"->1024f,
-    "Product.categorykeywords" -> 2048f, "Product.l2category" -> 8f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
+    "Product.categorykeywords" -> 2048f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
@@ -152,8 +150,6 @@ object SearchRequestHandler {
       "condition" -> Map("Product.stringattribute.answer" -> 8f)
     )
   )
-
-  private val condFieldSet = condFields.mapValues(v => v.mapValues(sv => sv.keySet))
 
   private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "LocationName" -> 1048576f, "CompanyAliases" -> 1048576f)
 
@@ -219,7 +215,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
-        kwquery.add(strongMatch(searchFields.keySet, condFieldSet, w, fuzzyprefix, fuzzysim))
+        kwquery.add(strongMatch(searchFields, condFields, w, fuzzyprefix, fuzzysim))
 
         query = kwquery
       }
@@ -377,8 +373,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(areaWords.mkString("-"), "UTF-8"))(
-            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
+          .fold("/in/" + URLEncoder.encode(areaWords.mkString("-").toLowerCase, "UTF-8"))(
+            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
         slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
           matchedCat +
