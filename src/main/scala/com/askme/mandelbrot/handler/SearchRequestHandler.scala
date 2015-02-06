@@ -12,14 +12,14 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
-import org.elasticsearch.common.unit.{DistanceUnit, Fuzziness, TimeValue}
+import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.BaseQueryBuilder
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder}
+import org.elasticsearch.search.sort.{SortBuilders, FieldSortBuilder, ScoreSortBuilder, SortOrder}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -33,11 +33,14 @@ import scala.collection.JavaConversions._
 
 object SearchRequestHandler {
 
-  private def addSort(search: SearchRequestBuilder, sort: String): Unit = {
+  private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d): Unit = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.foreach {
       _ match {
         case "_score" => search.addSort(new ScoreSortBuilder().order(SortOrder.DESC))
+        case "_distance" => search.addSort(
+          SortBuilders.scriptSort("geobucket", "number").lang("native")
+            .param("lat", lat).param("lon", lon).order(SortOrder.ASC))
         case x => {
           val pair = x.split( """\.""", 2)
           if (pair.size == 2)
@@ -135,8 +138,8 @@ object SearchRequestHandler {
 
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
-    "Product.l3category" -> 2048f, "BusinessType"->1024f,
-    "Product.categorykeywords" -> 2048f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
+    "Product.l3category" -> 2048f, "LocationType"->1024f, "BusinessType"->1024f,
+    "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
@@ -145,16 +148,7 @@ object SearchRequestHandler {
       "destinations" -> Map("Product.stringattribute.answer" -> 512f),
       "product" -> Map("Product.stringattribute.answer" -> 256f),
       "tests" -> Map("Product.stringattribute.answer" -> 256f),
-      "courses" -> Map("Product.stringattribute.answer" -> 256f),
-      "mode" -> Map("Product.stringattribute.answer" -> 128f),
-      "fee" -> Map("Product.stringattribute.answer" -> 4f),
-      "range" -> Map("Product.stringattribute.answer" -> 8f),
-      "heads" -> Map("Product.stringattribute.answer" -> 8f),
-      "services" -> Map("Product.stringattribute.answer" -> 16f),
-      "features" -> Map("Product.stringattribute.answer" -> 2f),
-      "facilities" -> Map("Product.stringattribute.answer" -> 4f),
-      "material" -> Map("Product.stringattribute.answer" -> 4f),
-      "condition" -> Map("Product.stringattribute.answer" -> 8f)
+      "courses" -> Map("Product.stringattribute.answer" -> 256f)
     )
   )
 
@@ -293,13 +287,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       .setExplain(explain)
       .setFetchSource(source)
 
-    addSort(search, sort)
+    addSort(search, sort, lat, lon)
 
     if (agg) {
       if (city == "")
         search.addAggregation(terms("city").field("CityAggr").size(aggbuckets))
 
-      search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
+      //search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
@@ -315,6 +309,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           )
       )
 */
+      /*
       if (lat != 0.0d || lon != 0.0d)
         search.addAggregation(
           geoDistance("geotarget")
@@ -328,6 +323,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             .addRange("8 to 30 kms", 8d, 30d)
             .addUnboundedFrom("30 kms and beyond", 30d)
         )
+        */
     }
 
 
@@ -365,9 +361,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import response.searchParams.geo._
       import response.searchParams.idx._
       import response.searchParams.req._
-      import response.searchParams.view._
-      import response.searchParams.text._
       import response.searchParams.startTime
+      import response.searchParams.text._
+      import response.searchParams.view._
 
       val areaWords = analyze(esClient, index, "Area", area)
 

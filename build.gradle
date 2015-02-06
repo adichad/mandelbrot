@@ -85,7 +85,7 @@ task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
   if(System.getProperty('main')!=null) main = System.getProperty('main') else main = 'com.askme.mandelbrot.Launcher'
 
   jvmArgs+=['-Djava.library.path='+System.getProperty('java.library.path')]
-  jvmArgs+=['-Xmx12g']
+  jvmArgs+=['-Xmx7g']
   jvmArgs+=['-Xms2g']
 
 

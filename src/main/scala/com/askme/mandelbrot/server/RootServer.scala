@@ -55,6 +55,7 @@ object RootServer {
         .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
         .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
         .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
+        .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
     val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
