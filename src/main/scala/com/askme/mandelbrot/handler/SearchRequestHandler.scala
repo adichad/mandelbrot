@@ -230,6 +230,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
       cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
       cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(true))
+      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(true))
       query = filteredQuery(query, cityFilter)
     }
     val locFilter = boolFilter
