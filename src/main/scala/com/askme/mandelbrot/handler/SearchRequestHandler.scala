@@ -346,6 +346,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
   override def receive = {
     case searchParams: SearchParams =>
+      import searchParams.req._
+      import searchParams.startTime
+
       val search = buildSearch(searchParams)
       val me = context.self
 
@@ -353,7 +356,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         override def onResponse(response: SearchResponse): Unit = {
           me ! WrappedResponse(searchParams, response)
         }
-        override def onFailure(e: Throwable): Unit = throw e
+        override def onFailure(e: Throwable): Unit = {
+          val timeTaken = System.currentTimeMillis - startTime
+          error("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + e.getMessage + ")]")
+          throw e
+        }
       })
       debug("query [" + pretty(render(parse(search.toString))) + "]")
     case response: WrappedResponse =>
