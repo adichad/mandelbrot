@@ -53,7 +53,7 @@ class FileSystemWatcher(val config: Config, serverContext: SearchContext) extend
     if(!registry.containsKey(path)) {
       val name = "loader-" + path.toString.replace("/", "=")
       registry.put(path, context.actorOf(Props(classOf[CSVLoader],
-        config, index, esType, serverContext.batchExecutionContext, serverContext), name))
+        config, index, esType, serverContext), name))
       info("watching path ["+path+"] for index ["+index+"], type ["+esType+"]")
     }
   }
