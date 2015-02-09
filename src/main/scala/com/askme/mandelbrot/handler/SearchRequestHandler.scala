@@ -272,7 +272,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (pin != "")
       query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
     if (category != "") {
-      query = filteredQuery(query, nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#"""): _*)).cache(true))
+      query = filteredQuery(query,
+        nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#"""): _*).cache(true) )
+      )
     }
 
 

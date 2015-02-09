@@ -9,14 +9,13 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.bulk.{BulkRequestBuilder, BulkResponse}
+import org.elasticsearch.action.admin.indices.optimize.OptimizeRequest
+import org.elasticsearch.action.bulk.BulkRequestBuilder
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scala.concurrent._
 import scala.io.{Codec, Source}
 import scala.util.matching.Regex
 
@@ -88,7 +87,7 @@ object CSVLoader {
 }
 
 class CSVLoader(val config: Config, index: String, esType: String,
-                implicit val executionContext: ExecutionContext, searchContext: SearchContext)
+                searchContext: SearchContext)
   extends Actor with Logging with Configurable {
 
   import com.askme.mandelbrot.loader.CSVLoader._
@@ -98,33 +97,72 @@ class CSVLoader(val config: Config, index: String, esType: String,
   class GroupState {
     var id: String = null
     var json: JValue = parse("{}")
+    var count = 0
+    var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
+    val sb = new StringBuilder
   }
 
   //assumes that the result is sorted
-  private val groupFlush: (String, String, String, String, BulkRequestBuilder, GroupState) => Unit = {
-    (id, jsonStr, index, esType, req, groupState) =>
+  private val groupFlush: (String, String, String, String, String, GroupState, Boolean) => Unit = {
+    (id, jsonStr, index, esType, sourcePath, groupState, forceFlush) =>
       if (id == groupState.id) {
         groupState.json = groupState.json merge parse(jsonStr)
       } else {
-        req.add(
-          esClient.prepareIndex(index, esType, groupState.id)
-            .setSource(compact(render(groupState.json)))
-        )
+        if(groupState.id != null) {
+
+          groupState.bulkRequest.add(
+            esClient.prepareIndex(index, esType, groupState.id)
+              .setSource(compact(render(groupState.json)))
+          )
+          groupState.count += 1
+
+          if(groupState.count%innerBatchSize==0||forceFlush) {
+            info("sending indexing request["+groupState.count+"]["+index+"/"+esType+"]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
+            groupState.sb.setLength(0)
+            fireBatch(groupState)
+            info("completed indexing request["+groupState.count+"]["+index+"/"+esType+"]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
+            info("optimizing: "+index)
+            val optResponse = esClient.admin().indices().optimize(new OptimizeRequest(index).maxNumSegments(1).waitForMerge(true)).get()
+            info("optimzied: "+index+", reponse: "+ optResponse.toString)
+
+            groupState.sb.setLength(0)
+            groupState.bulkRequest = esClient.prepareBulk
+          }
+        }
         //info(pretty(render(groupState.json)))
         groupState.id = id
         groupState.json = parse(jsonStr)
       }
+      groupState.sb.setLength(0)
+  }
+
+  private def fireBatch(groupState: GroupState) {
+    import groupState._
+
+    val response = bulkRequest.execute().get()
+    info("failures: " + response.hasFailures)
+    groupState.sb.append("{\"failed\": [")
+    response.getItems.foreach { item =>
+      if (item.isFailed) {
+        groupState.sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
+      }
+    }
+    if (groupState.sb.charAt(groupState.sb.length - 2) == ',')
+      groupState.sb.setLength(groupState.sb.length - 2)
+    groupState.sb.append("]}")
+    info(groupState.sb.toString)
+    groupState.sb.setLength(0)
+
   }
 
   override def receive = {
     case Index(file) => {
       info("input file received: " + file.getAbsolutePath)
-      future {
+
         val input = new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)))
         info("input file opened: " + file.getAbsolutePath)
         val sb = new StringBuilder
-        var count = 0
-        val bulkRequest = esClient.prepareBulk
+
         try {
           val groupState = new GroupState
           Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
@@ -132,45 +170,24 @@ class CSVLoader(val config: Config, index: String, esType: String,
             line => {
               val cells = line.split(fieldDelim, -1)
               //assumes that the result is sorted
-              groupFlush(cells(idPos), sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, bulkRequest, groupState)
-              sb.setLength(0)
-              count += 1
+              groupFlush(cells(idPos), groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState, false)
+
             }
           }
-          groupFlush(null, "{}", index, esType, bulkRequest, groupState)
+          groupFlush(null, "{}", index, esType, file.getAbsolutePath, groupState, true)
+
         } catch {
           case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
         } finally {
           input.close()
           info("input file closed: " + file.getAbsolutePath)
         }
-        info("sending indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
-        bulkRequest.execute(new ActionListener[BulkResponse] {
-          override def onResponse(response: BulkResponse) = {
-            info("failures: " + response.hasFailures)
-            sb.append("{\"failed\": [")
-            response.getItems.foreach { item =>
-              if (item.isFailed) {
-                sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
-              }
-            }
-            if (sb.charAt(sb.length - 2) == ',')
-              sb.setLength(sb.length - 2)
-            sb.append("]}")
-            info(sb.toString)
-            sb.setLength(0)
-          }
 
-          override def onFailure(e: Throwable) = {
-            error(e.getMessage, e)
-          }
 
-        })
-        info("sent indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
-      }
     }
   }
 
+  val innerBatchSize = 500
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
   val mapConf = conf("mappings." + esType + ".fields")
