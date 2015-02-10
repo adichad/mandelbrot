@@ -97,7 +97,7 @@ object SearchRequestHandler {
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-            wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
+            //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
             wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144f*field._2)))
         }
         condFields.foreach {
@@ -109,7 +109,7 @@ object SearchRequestHandler {
                 val answerQuery = boolQuery
                 valField._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+                    //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
                     answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2))
                 }
                 perQuestionQuery.must(answerQuery)
@@ -127,6 +127,43 @@ object SearchRequestHandler {
       .should(termQuery("CustomerType", "300"))
       .should(termQuery("CustomerType", "350"))
     )
+  }
+
+  private def strongMatchNonPaid(fields: Map[String, Float],
+                          condFields: Map[String, Map[String, Map[String, Float]]],
+                          w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
+
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 2f / 3f).toInt).boost(32768f)
+    w.foreach {
+      word => {
+        val wordQuery = boolQuery
+        fields.foreach {
+          field =>
+            //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(131072f*field._2)))
+        }
+        condFields.foreach {
+          cond: (String, Map[String, Map[String, Float]]) => {
+            cond._2.foreach {
+              valField: (String, Map[String, Float]) => {
+                val perQuestionQuery = boolQuery
+                perQuestionQuery.must(termQuery(cond._1, valField._1))
+                val answerQuery = boolQuery
+                valField._2.foreach {
+                  subField: (String, Float) =>
+                    //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2))
+                }
+                perQuestionQuery.must(answerQuery)
+                wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
+              }
+            }
+          }
+        }
+        allQuery.should(wordQuery)
+      }
+    }
+    allQuery
   }
 
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
@@ -152,7 +189,11 @@ object SearchRequestHandler {
     )
   )
 
-  private val exactFields = Map("Product.l3category" -> 4096f, "Product.categorykeywords" -> 4096f, "LocationName" -> 1048576f, "CompanyAliases" -> 1048576f)
+  private val exactFields = Map("Product.categorykeywords" -> 1048576f, "CompanyAliases" -> 1048576f)
+
+  private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
+
+  private val fullFields = Map("Product.l3categoryexact"->262144f, "Product.categorykeywordsexact"->262144f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -208,7 +249,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           }
         }
 
-        exactFields.foreach {
+        exactFirstFields.foreach {
           field: (String, Float) => {
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
@@ -216,8 +257,23 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
+        exactFields.foreach {
+          field: (String, Float) => {
+            val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
+            val nearQuery = spanNearQuery.slop(0).inOrder(true)
+            termsExact.foreach(nearQuery.clause)
+            kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+          }
+        }
+        fullFields.foreach {
+          field: (String, Float) => {
+            val k = w.mkString(" ")
+            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+          }
+        }
         kwquery.add(strongMatch(searchFields, condFields, w, fuzzyprefix, fuzzysim))
 
+        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, fuzzyprefix, fuzzysim))
         query = kwquery
       }
     }
