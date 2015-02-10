@@ -89,7 +89,7 @@ object SearchRequestHandler {
 
   private def strongMatch(fields: Map[String, Float],
                           condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
+                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536f)
     w.foreach {
@@ -121,7 +121,16 @@ object SearchRequestHandler {
         allQuery.should(wordQuery)
       }
     }
-
+    val exactQuery = disMaxQuery
+    fullFields.foreach {
+      field: (String, Float) => {
+        val k = w.mkString(" ")
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+        val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+      }
+    }
+    allQuery.should(exactQuery)
     allQuery.must(boolQuery
       .should(termQuery("CustomerType", "275"))
       .should(termQuery("CustomerType", "300"))
@@ -131,9 +140,9 @@ object SearchRequestHandler {
 
   private def strongMatchNonPaid(fields: Map[String, Float],
                           condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], fuzzyprefix: Int, fuzzysim: Float) = {
+                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 2f / 3f).toInt).boost(32768f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(32768f)
     w.foreach {
       word => {
         val wordQuery = boolQuery
@@ -163,7 +172,18 @@ object SearchRequestHandler {
         allQuery.should(wordQuery)
       }
     }
-    allQuery
+
+    val exactQuery = disMaxQuery
+    fullFields.foreach {
+      field: (String, Float) => {
+        val k = w.mkString(" ")
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+        val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+      }
+    }
+
+    allQuery.should(exactQuery)
   }
 
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
@@ -273,9 +293,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
           }
         }
-        kwquery.add(strongMatch(searchFields, condFields, w, fuzzyprefix, fuzzysim))
+        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim))
 
-        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, fuzzyprefix, fuzzysim))
+        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim))
         query = kwquery
       }
     }
