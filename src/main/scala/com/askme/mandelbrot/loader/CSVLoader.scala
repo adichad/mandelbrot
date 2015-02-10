@@ -173,17 +173,18 @@ class CSVLoader(val config: Config, index: String, esType: String,
             }
           }
           groupFlush(null, "{}", index, esType, file.getAbsolutePath, groupState, true)
-          info("optimizing: "+index)
-          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
-          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
+          //info("optimizing: "+index)
+          //val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
+          //info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
+          esClient.admin.cluster.prepareHealth(index).setWaitForGreenStatus.get
 
         } catch {
           case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
         } finally {
           input.close()
           info("input file closed: " + file.getAbsolutePath)
-          esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "120s").build).get
-          info("re-enabled refresh: 120s")
+          //esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "120s").build).get
+          //info("re-enabled refresh: 120s")
         }
 
 
