@@ -268,7 +268,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         fullFields.foreach {
           field: (String, Float) => {
             val k = w.mkString(" ")
-            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 131072f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
           }
         }
         kwquery.add(strongMatch(searchFields, condFields, w, fuzzyprefix, fuzzysim))
@@ -328,9 +328,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (pin != "")
       query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
     if (category != "") {
-      query = filteredQuery(query,
-        nestedFilter("Product", termsFilter("Product.l3categoryslug", category.split( """#"""): _*).cache(true) )
-      )
+      val cats = category.split("""#""")
+      val b = boolFilter
+      cats.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c)))
+        b.should(termFilter("Product.l3categoryslug", c))
+      }
+      query = filteredQuery(query, nestedFilter("Product", b).cache(true))
     }
 
 
@@ -416,7 +420,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         }
         override def onFailure(e: Throwable): Unit = {
           val timeTaken = System.currentTimeMillis - startTime
-          error("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + e.getMessage + ")]")
+          error("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + timeTaken + "] " + e.getMessage)
           throw e
         }
       })
@@ -437,17 +441,17 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(kw.replaceAll( """[^a-zA-Z0-9_]+""", " ").trim.replaceAll("""\s""", "-").toLowerCase, "UTF-8"))(
-            k => "/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8"))
+          .fold("/search/" + URLEncoder.encode(kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/" + URLEncoder.encode(k.getKey.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
 
         val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(area.replaceAll( """[^a-zA-Z0-9_]+""", " ").trim.replaceAll("""\s""", "-").toLowerCase, "UTF-8"))(
-            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/in/" + URLEncoder.encode(area.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
         slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
           matchedCat +
-          (if (category != "") "/cat/" + URLEncoder.encode(category.trim.toLowerCase.replaceAll("-", " ").replaceAll("&", " ").replaceAll( """\s+""", "-"), "UTF-8") else "") +
+          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
