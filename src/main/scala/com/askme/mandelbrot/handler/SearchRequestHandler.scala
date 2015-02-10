@@ -193,7 +193,7 @@ object SearchRequestHandler {
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
-  private val fullFields = Map("Product.l3categoryexact"->262144f, "Product.categorykeywordsexact"->262144f)
+  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -268,7 +268,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         fullFields.foreach {
           field: (String, Float) => {
             val k = w.mkString(" ")
-            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 131072f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+            val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
           }
         }
         kwquery.add(strongMatch(searchFields, condFields, w, fuzzyprefix, fuzzysim))
