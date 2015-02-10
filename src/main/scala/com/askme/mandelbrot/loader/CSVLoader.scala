@@ -9,8 +9,8 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.elasticsearch.action.admin.indices.optimize.OptimizeRequest
 import org.elasticsearch.action.bulk.BulkRequestBuilder
+import org.elasticsearch.common.settings.ImmutableSettings
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -121,10 +121,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
             groupState.sb.setLength(0)
             fireBatch(groupState)
             info("completed indexing request["+groupState.count+"]["+index+"/"+esType+"]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
-            info("optimizing: "+index)
-            val optResponse = esClient.admin().indices().optimize(new OptimizeRequest(index).maxNumSegments(1).waitForMerge(true)).get()
-            info("optimzied: "+index+", reponse: "+ optResponse.toString)
-
             groupState.sb.setLength(0)
             groupState.bulkRequest = esClient.prepareBulk
           }
@@ -164,6 +160,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
         val sb = new StringBuilder
 
         try {
+          esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "-1").build).get
+          info("disabled refresh")
           val groupState = new GroupState
           Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
             .getLines().foreach {
@@ -175,19 +173,25 @@ class CSVLoader(val config: Config, index: String, esType: String,
             }
           }
           groupFlush(null, "{}", index, esType, file.getAbsolutePath, groupState, true)
+          info("optimizing: "+index)
+          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
+          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
 
         } catch {
           case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
         } finally {
           input.close()
           info("input file closed: " + file.getAbsolutePath)
+          esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "120s").build).get
+          info("re-enabled refresh: 120s")
         }
 
 
     }
   }
 
-  val innerBatchSize = 500
+  val innerBatchSize = 10000
+
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
   val mapConf = conf("mappings." + esType + ".fields")
