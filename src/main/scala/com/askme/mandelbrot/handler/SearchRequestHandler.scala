@@ -131,11 +131,7 @@ object SearchRequestHandler {
       }
     }
     allQuery.should(exactQuery)
-    allQuery.must(boolQuery
-      .should(termQuery("CustomerType", "275"))
-      .should(termQuery("CustomerType", "300"))
-      .should(termQuery("CustomerType", "350"))
-    )
+    allQuery.must(termQuery("CustomerType", "350"))
   }
 
   private def strongMatchNonPaid(fields: Map[String, Float],
