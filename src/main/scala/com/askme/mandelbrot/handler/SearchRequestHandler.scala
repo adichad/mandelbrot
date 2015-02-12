@@ -78,10 +78,12 @@ object SearchRequestHandler {
     val fieldQuery2 = boolQuery
     val termsExact = w.map(spanTermQuery(field, _))
     (1 to Math.min(terms.length, maxShingle)).foreach { len =>
+      var i = 100000
       termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len)
+        val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
         fieldQuery2.should(nearQuery)
+        i /= 10
       }
     }
     nestIfNeeded(field, disMaxQuery.add(fieldQuery1).add(fieldQuery2))
@@ -92,13 +94,15 @@ object SearchRequestHandler {
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536f)
+    var i = 100000
     w.foreach {
       word => {
+        val posBoost = math.max(1, i)
         val wordQuery = boolQuery
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144f*field._2)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144f * field._2 * posBoost)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -110,7 +114,7 @@ object SearchRequestHandler {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2))
+                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2 * posBoost))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
@@ -119,6 +123,7 @@ object SearchRequestHandler {
           }
         }
         allQuery.should(wordQuery)
+        i /= 10
       }
     }
     val exactQuery = disMaxQuery
@@ -139,13 +144,15 @@ object SearchRequestHandler {
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(32768f)
+    var i = 100000
     w.foreach {
       word => {
+        val posBoost = math.max(1, i)
         val wordQuery = boolQuery
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(131072f*field._2)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(131072f * field._2 * posBoost)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -157,7 +164,7 @@ object SearchRequestHandler {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2))
+                    answerQuery.should(termQuery(subField._1, word).boost(2f*subField._2 * posBoost))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
@@ -166,6 +173,7 @@ object SearchRequestHandler {
           }
         }
         allQuery.should(wordQuery)
+        i /= 10
       }
     }
 
