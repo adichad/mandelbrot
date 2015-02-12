@@ -289,12 +289,23 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
+
+        val mw = kw.split( """[^a-zA-Z0-9]+""").map(_.trim.toLowerCase)
         fullFields.foreach {
           field: (String, Float) => {
-            val k = w.mkString(" ")
-            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
-            val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
-            kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+            (1 to w.length).foreach { len =>
+              w.sliding(len).foreach { shingle =>
+                val k = shingle.mkString(" ")
+                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+              }
+            }
+            (1 to mw.length).foreach { len =>
+              mw.sliding(len).foreach { shingle =>
+                val ck = shingle.mkString(" ")
+                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * mw.length * mw.length * (searchFields.size + condFields.values.size + 1))))
+              }
+            }
+
           }
         }
         kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim))
