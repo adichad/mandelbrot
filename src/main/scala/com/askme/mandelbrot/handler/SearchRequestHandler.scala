@@ -93,8 +93,8 @@ object SearchRequestHandler {
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536f)
-    var i = 100000
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(655360f)
+    var i = 1000000
     w.foreach {
       word => {
         val posBoost = math.max(1, i)
@@ -127,12 +127,13 @@ object SearchRequestHandler {
       }
     }
     val exactQuery = disMaxQuery
+    val k = w.mkString(" ")
+    val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
     fullFields.foreach {
       field: (String, Float) => {
-        val k = w.mkString(" ")
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
-        val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * exactBoostFactor)))
       }
     }
     allQuery.should(exactQuery)
@@ -144,7 +145,7 @@ object SearchRequestHandler {
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(32768f)
-    var i = 100000
+    var i = 10000
     w.foreach {
       word => {
         val posBoost = math.max(1, i)
@@ -176,14 +177,14 @@ object SearchRequestHandler {
         i /= 10
       }
     }
-
+    val k = w.mkString(" ")
+    val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
     val exactQuery = disMaxQuery
     fullFields.foreach {
       field: (String, Float) => {
-        val k = w.mkString(" ")
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
-        val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
+        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * exactBoostFactor)))
       }
     }
 

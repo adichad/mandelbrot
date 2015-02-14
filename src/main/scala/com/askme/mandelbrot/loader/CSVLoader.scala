@@ -98,36 +98,68 @@ class CSVLoader(val config: Config, index: String, esType: String,
     var id: String = null
     var json: JValue = parse("{}")
     var count = 0
+    var groupCount = 0
+    var groupDelCount = 0
     var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
     val sb = new StringBuilder
   }
 
   //assumes that the result is sorted
-  private val groupFlush: (String, String, String, String, String, GroupState, Boolean) => Unit = {
-    (id, jsonStr, index, esType, sourcePath, groupState, forceFlush) =>
+  private val groupFlush: (String, Boolean, String, String, String, String, GroupState) => Unit = {
+    (id, del, jsonStr, index, esType, sourcePath, groupState) =>
       if (id == groupState.id) {
-        groupState.json = groupState.json merge parse(jsonStr)
+        groupState.groupCount += 1
+        if(del)
+          groupState.groupDelCount += 1
+        else
+          groupState.json = groupState.json merge parse(jsonStr)
       } else {
-        if(groupState.id != null) {
+        // id changed, start of new group
 
-          groupState.bulkRequest.add(
-            esClient.prepareIndex(index, esType, groupState.id)
-              .setSource(compact(render(groupState.json)))
-          )
+        // if not first row of first group
+        if (groupState.id != null) {
+          // add previous group to request
+          if(groupState.groupDelCount < groupState.groupCount) {
+            groupState.bulkRequest.add(
+              esClient.prepareIndex(index, esType, groupState.id)
+                .setSource(compact(render(groupState.json)))
+            )
+          }
+          else {
+            groupState.bulkRequest.add(
+              esClient.prepareDelete(index, esType, groupState.id)
+            )
+          }
+
+          // increment number of groups processed
           groupState.count += 1
 
-          if(groupState.count%innerBatchSize==0||forceFlush) {
-            info("sending indexing request["+groupState.count+"]["+index+"/"+esType+"]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
+          // if batch size is reached or this is delimiting call, flush.
+          if (groupState.count % innerBatchSize == 0 || id == null) {
+            info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
             groupState.sb.setLength(0)
             fireBatch(groupState)
-            info("completed indexing request["+groupState.count+"]["+index+"/"+esType+"]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
+            info("completed indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
             groupState.sb.setLength(0)
             groupState.bulkRequest = esClient.prepareBulk
           }
         }
+
         //info(pretty(render(groupState.json)))
-        groupState.id = id
-        groupState.json = parse(jsonStr)
+
+        // if this is not delimiting call
+        if(id != null) {
+          // set group id
+          groupState.id = id
+          groupState.groupCount = 1
+          if (del)
+            groupState.groupDelCount = 1
+          else {
+            groupState.json = parse(jsonStr)
+            groupState.groupDelCount = 0
+          }
+        }
+
       }
       groupState.sb.setLength(0)
   }
@@ -168,11 +200,10 @@ class CSVLoader(val config: Config, index: String, esType: String,
             line => {
               val cells = line.split(fieldDelim, -1)
               //assumes that the result is sorted
-              groupFlush(cells(idPos), groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState, false)
-
+              groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
             }
           }
-          groupFlush(null, "{}", index, esType, file.getAbsolutePath, groupState, true)
+          groupFlush(null, false, "{}", index, esType, file.getAbsolutePath, groupState)
           //info("optimizing: "+index)
           //val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
           //info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
@@ -199,6 +230,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
   val targetCharset = Charset.forName(string("mappings." + esType + ".charset.target"))
 
   val idPos = mapConf.getConfig(string("mappings." + esType + ".id")).getInt("pos")
+  val delPos = int("mappings." + esType + ".delete")
   val valMap = new mutable.HashMap[String, (Int, String, String, String)]
 
   private val sb = new StringBuilder
