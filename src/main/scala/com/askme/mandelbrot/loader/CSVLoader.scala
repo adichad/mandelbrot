@@ -141,8 +141,11 @@ class CSVLoader(val config: Config, index: String, esType: String,
             fireBatch(groupState)
             info("completed indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs from input file: " + sourcePath)
             info("optimizing ["+index+"]")
-            val failedShards = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(2).execute().get().getFailedShards
-            info("optimized ["+index+"]: failed shards: "+failedShards)
+            val optFail = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(2).execute().get().getFailedShards
+            info("optimized ["+index+"]: failed shards: "+optFail)
+            val refFail = esClient.admin.indices.prepareRefresh(index).execute().get().getFailedShards
+            Thread.sleep(30000)
+            info("refreshed ["+index+"]: failed shards: "+refFail)
             groupState.sb.setLength(0)
             groupState.bulkRequest = esClient.prepareBulk
           }
@@ -225,7 +228,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     }
   }
 
-  val innerBatchSize = 25000
+  val innerBatchSize = 15000
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
