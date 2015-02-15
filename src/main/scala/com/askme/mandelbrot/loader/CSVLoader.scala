@@ -222,7 +222,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     }
   }
 
-  val innerBatchSize = 1000
+  val innerBatchSize = 500
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
