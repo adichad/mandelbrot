@@ -216,7 +216,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       'aggbuckets.as[Int] ? 10,
                       'maxdocspershard.as[Int] ? 100000,
                       'timeoutms.as[Long] ?
-                        2000l,
+                        1000l,
                       'searchtype.as[String] ?
                         "query_then_fetch") {
                       (kw, city, area, pin, category, id,

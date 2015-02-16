@@ -167,7 +167,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
       groupState.count += 1
 
       // if batch size is reached or this is delimiting call, flush.
-      if (groupState.totalSize >= innerBatchSize || force) {
+      if (groupState.totalSize >= innerBatchSize || groupState.totalSize/groupState.totalCount > 3000|| force) {
         info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
         groupState.totalCount = 0
         groupState.totalSize = 0
