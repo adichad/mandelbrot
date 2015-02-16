@@ -225,7 +225,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
               val cells = line.split(fieldDelim, -1)
 
-              if(cells(3)!="1639452")
                 //assumes that the result is sorted
                 groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
             }
