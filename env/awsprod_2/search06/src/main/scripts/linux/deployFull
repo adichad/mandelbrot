@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cd ~
+rm -f mandelbrot*.tgz
+wget http://10.0.6.9:8080/jenkins/job/mandelbrot/ws/build/distributions/mandelbrot-0.1.0.tgz
+wget http://10.0.6.9:8080/jenkins/job/mandelbrot/ws/dep/build/distributions/mandelbrot-dep-0.1.0.tgz
+wget http://10.0.6.9:8080/jenkins/job/mandelbrot/ws/env/awsprod/search01/build/distributions/mandelbrot-env-awsprod-search01-0.1.0.tgz
+cd /apps
+rm -rf /apps/mandelbrot-0.1.0
+tar -xzvf ~/mandelbrot-0.1.0.tgz 
+tar -xzvf ~/mandelbrot-dep-0.1.0.tgz
+tar -xzvf ~/mandelbrot-env-awsprod-search01-0.1.0.tgz
+
+kill `cat /apps/logs/mandelbrot-awsprod-search01/mandelbrot-awsprod-search01.pid`
+sleep 2
+nohup /usr/bin/java -d64 -javaagent:/apps/newrelic/newrelic.jar -cp /apps/mandelbrot-0.1.0/lib/mandelbrot-0.1.0.jar:/apps/mandelbrot-0.1.0/lib/* -Xms31g -Xmx31g -XX:+UseG1GC -Dlog.level=INFO com.askme.mandelbrot.Launcher > /apps/mandelbrot-0.1.0/mandebrot.out &
+
+sleep 45
+curl -XDELETE 'http://172.30.101.102:9200/askme/place/'
+curl -XDELETE 'http://172.30.101.102:9200/askme/'
+sleep 45
+curl -XPUT 'http://172.30.101.102:9200/askme_a/' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/index.askme_a.json
+curl -XPUT 'http://172.30.101.102:9200/askme_a/_mapping/place' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/mapping.place.json
+
+curl -XPUT 'http://172.30.101.102:9200/askme_b/' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/index.askme_a.json
+curl -XPUT 'http://172.30.101.102:9200/askme_b/_mapping/place' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/mapping.place.json
+
+curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "add" : { "index" : "askme_b", "alias" : "askme" } } ] }'
+curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "add" : { "index" : "askme_a", "alias" : "askme_index" } } ] }'
+
+curl -XPOST 'http://172.30.101.102:9999/watch?dir=/data1/mandeldata&index=askme_index&type=place'
+
+
+

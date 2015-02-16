@@ -218,7 +218,7 @@ object SearchRequestHandler {
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
-  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f)
+  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f, "LocationNameExact"->1248576f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -391,13 +391,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     addSort(search, sort, lat, lon)
 
     if (agg) {
-      if (city == "")
-        search.addAggregation(terms("city").field("CityAggr").size(aggbuckets))
+      //if (city == "")
+      //  search.addAggregation(terms("city").field("CityAggr").size(aggbuckets))
 
       //search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
-        terms("categories").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+        terms("categories").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script("_score"))
       )
 

@@ -10,7 +10,8 @@
       "PlaceID": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "UserID": {
         "type": "integer",
@@ -41,17 +42,6 @@
         "index": "no",
         "ignore_malformed": true
       },
-      "DeleteFlag": {
-        "type": "boolean",
-        "store": false,
-        "index": "no",
-        "ignore_malformed": true
-      },
-      "ValidFlag": {
-        "type": "boolean",
-        "store": false,
-        "ignore_malformed": true
-      },
       "PPCOnline": {
         "type": "integer",
         "store": false,
@@ -65,17 +55,26 @@
       "CustomerType": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "NowCustomerType": {
         "type": "integer",
-        "store": true,
+        "store": false,
         "ignore_malformed": false
       },
       "LocationName": {
         "type": "string",
         "store": true,
         "index": "analyzed"
+      },
+      "LocationNameExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
       },
       "LocationDescription": {
         "type": "string",
@@ -110,7 +109,8 @@
       "AreaAggr": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "AreaExact": {
         "type": "string",
@@ -290,6 +290,14 @@
             "type": "integer",
             "store": false,
             "ignore_malformed": false
+          },
+          "deleteflag": {
+            "type": "boolean",
+            "store": false
+          },
+          "validflag": {
+            "type": "boolean",
+            "store": false
           },
           "name": {
             "type": "string",

@@ -53,8 +53,11 @@ object RootServer {
         .put("indices.cache.query.size", string("es.indices.cache.query.size"))
         .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
         .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
+        .put("indices.memory.min_index_buffer_size",string("es.indices.memory.min_index_buffer_size"))
         .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
+        .put("indices.fielddata.cache.size", string("es.indices.fielddata.cache.size"))
         .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
+        .put("indices.store.throttle.type", string("es.indices.store.throttle.type"))
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
