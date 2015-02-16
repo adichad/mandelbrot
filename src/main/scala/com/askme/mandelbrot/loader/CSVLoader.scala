@@ -100,6 +100,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
     var count = 0
     var groupCount = 0
     var groupDelCount = 0
+    var totalCount = 0
+    var totalSize = 0
     var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
     val sb = new StringBuilder
   }
@@ -109,12 +111,15 @@ class CSVLoader(val config: Config, index: String, esType: String,
   private def groupFlush(id: String, del: Boolean, jsonStr: String, index: String, esType: String,
                          sourcePath: String, groupState: GroupState) {
 
+      groupState.totalCount +=1
       if (id == groupState.id) {
         groupState.groupCount += 1
         if(del)
           groupState.groupDelCount += 1
-        else
+        else {
           groupState.json = groupState.json merge parse(jsonStr)
+          groupState.totalSize += jsonStr.size
+        }
       } else {
         // id changed, start of new group
 
@@ -129,6 +134,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         }
         else {
           groupState.json = parse(jsonStr)
+          groupState.totalSize += jsonStr.size
           groupState.groupDelCount = 0
         }
 
@@ -154,17 +160,18 @@ class CSVLoader(val config: Config, index: String, esType: String,
           )
         }
 
-      info(groupState.id + " subdocs: "+groupState.groupCount + " - "+groupState.groupDelCount)
+
+      info(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
 
       // increment number of groups processed
       groupState.count += 1
 
       // if batch size is reached or this is delimiting call, flush.
-      if (groupState.count % innerBatchSize == 0 || force) {
-
-        info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs")
+      if (groupState.totalSize >= innerBatchSize || force) {
+        info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
+        groupState.totalCount = 0
+        groupState.totalSize = 0
         groupState.sb.setLength(0)
-
 
         val response = bulkRequest.execute().get()
         info("failures: " + response.hasFailures)
@@ -215,10 +222,12 @@ class CSVLoader(val config: Config, index: String, esType: String,
             .getLines().foreach {
             line => {
 
+
               val cells = line.split(fieldDelim, -1)
 
-              //assumes that the result is sorted
-              groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
+              if(cells(3)!="1639452")
+                //assumes that the result is sorted
+                groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
             }
           }
           input.close()
@@ -241,7 +250,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     }
   }
 
-  var innerBatchSize = 100
+  var innerBatchSize = 25000000
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
