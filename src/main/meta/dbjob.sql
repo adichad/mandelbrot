@@ -34,6 +34,25 @@ BEGIN
 	SELECT @RET = REPLACE(@RET, '&', ' ');
 	SELECT @RET = REPLACE(@RET, '"', ' ');
 	SELECT @RET = REPLACE(@RET, '_', ' ');
+	SELECT @RET = REPLACE(@RET, '@', ' ');
+	SELECT @RET = REPLACE(@RET, '(', ' ');
+	SELECT @RET = REPLACE(@RET, ')', ' ');
+	SELECT @RET = REPLACE(@RET, ',', ' ');
+	SELECT @RET = REPLACE(@RET, '"', ' ');
+	SELECT @RET = REPLACE(@RET, '/', ' ');
+	SELECT @RET = REPLACE(@RET, '\', ' ');
+	SELECT @RET = REPLACE(@RET, '[', ' ');
+	SELECT @RET = REPLACE(@RET, ']', ' ');
+	SELECT @RET = REPLACE(@RET, '<', ' ');
+	SELECT @RET = REPLACE(@RET, '>', ' ');
+	SELECT @RET = REPLACE(@RET, '{', ' ');
+	SELECT @RET = REPLACE(@RET, '}', ' ');
+	SELECT @RET = REPLACE(@RET, '@', ' ');
+	SELECT @RET = REPLACE(@RET, '.', ' ');
+	SELECT @RET = REPLACE(@RET, ';', ' ');
+	SELECT @RET = REPLACE(@RET, '%', ' ');
+
+
 	SELECT @RET = REPLACE(@RET, char(0), ' ');
 	SELECT @RET = REPLACE(@RET, char(13), ' ');
 	SELECT @RET = REPLACE(@RET, char(10), ' ');
@@ -207,6 +226,7 @@ SET @FilePrefix = 'bizloc'
 SET @DestPath = 'f:\mandelbrot'
 
 DECLARE @FromBookmarkDT [datetime]
+       ,@MaxSourceDT [datetime]
        ,@ToBookmarkDT [datetime]
 	   ,@NextBookmarkDT [datetime]
 	   ,@FromRowID [bigint]
@@ -217,6 +237,360 @@ DECLARE @FromBookmarkDT [datetime]
 
 -- Fetch last bookmark
 select @FromBookmarkDT = cast(coalesce(max([BookmarkDT]), '2004-01-01 00:00:00') as [DateTime]) from [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]
+
+select @MaxSourceDT = max(upddate) from [10.0.4.43].[FastSynchronization].[eDMS].[GetitFlatfile] a (nolock)
+
+IF @MaxSourceDT > @FromBookmarkDT
+BEGIN
+
+MERGE INTO [eDMS].[GetitFlatfile_static] AS gff
+USING (          select a.* 
+                   from  [10.0.4.43].[FastSynchronization].[eDMS].[GetitFlatfile] a (nolock)
+       right outer join (  select a.yusrid, a.intgen1, a.batvypid, max(a.upddate) as upddate 
+	                         from [10.0.4.43].[FastSynchronization].[eDMS].[GetitFlatfile] a (nolock)
+	                        where a.upddate >= @FromBookmarkDT
+	                     group by a.yusrid, a.intgen1, a.batvypid) b
+	                 on a.yusrid = b.yusrid
+					and a.intgen1 = b.intgen1
+					and a.batvypid = b.batvypid
+				    and a.upddate = b.upddate) as id
+  ON gff.yusrid = id.yusrid
+ AND gff.intgen1 = id.intgen1
+ AND gff.batvypid = id.batvypid
+WHEN MATCHED THEN
+    UPDATE SET
+	gff.[yclttyp] = id.[yclttyp],--
+	gff.[gnyclttyp] = id.[gnyclttyp],--
+	--gff.[yusrid] = id.[yusrid],--
+	gff.[ymtloc] = id.[ymtloc],--
+	gff.[batvycoid] = id.[batvycoid],--
+	gff.[ybstyp] = id.[ybstyp],--
+	gff.[yconam] = id.[yconam],--
+	gff.[cimglogo1] = id.[cimglogo1],--
+	gff.[ysrc] = id.[ysrc],--
+	gff.[ysrcid] = id.[ysrcid],--
+	gff.[deleteflag] = id.[deleteflag],--
+	gff.[yvalid] = id.[yvalid],--
+	gff.[ycodec] = id.[ycodec],--
+	gff.[ypsupkey] = id.[ypsupkey],
+	gff.[yratng] = id.[yratng],
+	gff.[sgen44] = id.[sgen44],
+	gff.[comaprvd] = id.[comaprvd],
+	gff.[yladd] = id.[yladd],
+	gff.[ylbdnam] = id.[ylbdnam],
+	gff.[ydftloc] = id.[ydftloc],
+	gff.[ylem] = id.[ylem],
+	gff.[id] = id.[id],
+	gff.[ylmmilat] = id.[ylmmilat],
+	gff.[lat] = id.[lat],
+	gff.[ylloc] = id.[ylloc],
+	gff.[ylmmilong] = id.[ylmmilong],
+	gff.[lon] = id.[lon],
+	gff.[ypoarsrv] = id.[ypoarsrv],
+	gff.[cpin] = id.[cpin],
+	gff.[comlocdelflag] = id.[comlocdelflag],
+	gff.[ylsloc] = id.[ylsloc],
+	gff.[yltyp] = id.[yltyp],
+	gff.[ccty] = id.[ccty],
+	gff.[ylcry] = id.[ylcry],
+	gff.[cstate] = id.[cstate],
+	gff.[czone] = id.[czone],
+	gff.[ylptcem] = id.[ylptcem],
+	gff.[ylptcmob] = id.[ylptcmob],
+	gff.[ylptcnam] = id.[ylptcnam],
+	gff.[yarsyn] = id.[yarsyn],
+	gff.[ypbrdnam] = id.[ypbrdnam],
+	gff.[ypnam] = id.[ypnam],
+	--[batvypid],
+	gff.[ypdesc] = id.[ypdesc],
+	gff.[prodelflag] = id.[prodelflag],
+	gff.[cimg1] = id.[cimg1],
+	gff.[ypcat3id] = id.[ypcat3id],
+	gff.[ypcat3] = id.[ypcat3],
+	gff.[ypcat2] = id.[ypcat2],
+	gff.[ypcat1] = id.[ypcat1],
+	gff.[ypcat3a19] = id.[ypcat3a19],
+	gff.[ypcat3a20] = id.[ypcat3a20],
+	gff.[ypcat3a1] = id.[ypcat3a1],
+	gff.[ypcat3a10] = id.[ypcat3a10],
+	gff.[ypcat3a11] = id.[ypcat3a11],
+	gff.[ypcat3a12] = id.[ypcat3a12],
+	gff.[ypcat3a13] = id.[ypcat3a13],
+	gff.[ypcat3a14] = id.[ypcat3a14],
+	gff.[ypcat3a15] = id.[ypcat3a15],
+	gff.[ypcat3a16] = id.[ypcat3a16],
+	gff.[ypcat3a17] = id.[ypcat3a17],
+	gff.[ypcat3a18] = id.[ypcat3a18],
+	gff.[ypcat3a2] = id.[ypcat3a2],
+	gff.[ypcat3atr3] = id.[ypcat3atr3],
+	gff.[ypcat3a4] = id.[ypcat3a4],
+	gff.[ypcat3a5] = id.[ypcat3a5],
+	gff.[ypcat3a6] = id.[ypcat3a6],
+	gff.[ypcat3a7] = id.[ypcat3a7],
+	gff.[ypcat3a8] = id.[ypcat3a8],
+	gff.[ypcat3a9] = id.[ypcat3a9],
+	gff.[pvonh] = id.[pvonh],
+	gff.[pvonp] = id.[pvonp],
+	gff.[pvvoh] = id.[pvvoh],
+	gff.[pvvop] = id.[pvvop],
+	gff.[upddate] = id.[upddate],
+	gff.[cmnscat] = id.[cmnscat],
+	gff.[ylmob1] = id.[ylmob1],
+	gff.[ylph1] = id.[ylph1],
+	gff.[ylwst1] = id.[ylwst1],
+	--gff.[ypbusinessid] = id.[ypbusinessid],
+	gff.[ypcat3keys] = id.[ypcat3keys],
+	gff.[ypcat3phr] = id.[ypcat3phr],
+	gff.[ypcat3stwrd] = id.[ypcat3stwrd],
+	gff.[ypcat3syn] = id.[ypcat3syn],
+	gff.[ycat3sepkey] = id.[ycat3sepkey],
+	gff.[igen1] = id.[igen1],
+	gff.[sgen48] = id.[sgen48],
+	gff.[rrvw] = id.[rrvw],
+	gff.[CPLTYPE] = id.[CPLTYPE],
+	gff.[espNew] = id.[espNew],
+	gff.[espUpdate] = id.[espUpdate],
+	gff.[espDelete] = id.[espDelete],
+	gff.[espStatusNM] = id.[espStatusNM],
+	gff.[espUpdDateNM] = id.[espUpdDateNM],
+	gff.[espDbUpdDate] = id.[espDbUpdDate],
+	gff.[espStatusSify] = id.[espStatusSify],
+	gff.[espUpdDateSify] = id.[espUpdDateSify],
+	gff.[strGen1] = id.[strGen1],
+	gff.[gmproducts] = id.[gmproducts],
+	gff.[strGen2] = id.[strGen2],
+	--[intgen1],
+	gff.[fsubdisdet] = id.[fsubdisdet],
+	gff.[gmAmenities] = id.[gmAmenities],
+	gff.[gmcategories] = id.[gmcategories],
+	gff.[flogid] = id.[flogid],
+	gff.[fcatid] = id.[fcatid],
+	gff.[gmbrands] = id.[gmbrands],
+	gff.[strGen3] = id.[strGen3],
+	gff.[Fow] = id.[Fow]
+WHEN NOT MATCHED THEN 
+      INSERT (	[rown],--
+	[yclttyp],--
+	[gnyclttyp],--
+	[yusrid],--
+	[ymtloc],--
+	[batvycoid],--
+	[ybstyp],--
+	[yconam],--
+	[cimglogo1],--
+	[ysrc],--
+	[ysrcid],--
+	[deleteflag],--
+	[yvalid],--
+	[ycodec],--
+	[ypsupkey],
+	[yratng],
+	[sgen44],
+	[comaprvd],
+	[yladd],
+	[ylbdnam],
+	[ydftloc],
+	[ylem],
+	[id],
+	[ylmmilat],
+	[lat],
+	[ylloc],
+	[ylmmilong],
+	[lon],
+	[ypoarsrv],
+	[cpin],
+	[comlocdelflag],
+	[ylsloc],
+	[yltyp],
+	[ccty],
+	[ylcry],
+	[cstate],
+	[czone],
+	[ylptcem],
+	[ylptcmob],
+	[ylptcnam],
+	[yarsyn],
+	[ypbrdnam],
+	[ypnam],
+	[batvypid],
+	[ypdesc],
+	[prodelflag],
+	[cimg1],
+	[ypcat3id],
+	[ypcat3],
+	[ypcat2],
+	[ypcat1],
+	[ypcat3a19],
+	[ypcat3a20],
+	[ypcat3a1],
+	[ypcat3a10],
+	[ypcat3a11],
+	[ypcat3a12],
+	[ypcat3a13],
+	[ypcat3a14],
+	[ypcat3a15],
+	[ypcat3a16],
+	[ypcat3a17],
+	[ypcat3a18],
+	[ypcat3a2],
+	[ypcat3atr3],
+	[ypcat3a4],
+	[ypcat3a5],
+	[ypcat3a6],
+	[ypcat3a7],
+	[ypcat3a8],
+	[ypcat3a9],
+	[pvonh],
+	[pvonp],
+	[pvvoh],
+	[pvvop],
+	[upddate],
+	[cmnscat],
+	[ylmob1],
+	[ylph1],
+	[ylwst1],
+	[ypbusinessid],
+	[ypcat3keys],
+	[ypcat3phr],
+	[ypcat3stwrd],
+	[ypcat3syn],
+	[ycat3sepkey],
+	[igen1],
+	[sgen48],
+	[rrvw],
+	[CPLTYPE],
+	[espNew],
+	[espUpdate],
+	[espDelete],
+	[espStatusNM],
+	[espUpdDateNM],
+	[espDbUpdDate],
+	[espStatusSify],
+	[espUpdDateSify],
+	[strGen1],
+	[gmproducts],
+	[strGen2],
+	[intgen1],
+	[fsubdisdet],
+	[gmAmenities],
+	[gmcategories],
+	[flogid],
+	[fcatid],
+	[gmbrands],
+	[strGen3],
+	[Fow])
+      VALUES (id.[rown],--
+	id.[yclttyp],--
+	id.[gnyclttyp],--
+	id.[yusrid],--
+	id.[ymtloc],--
+	id.[batvycoid],--
+	id.[ybstyp],--
+	id.[yconam],--
+	id.[cimglogo1],--
+	id.[ysrc],--
+	id.[ysrcid],--
+	id.[deleteflag],--
+	id.[yvalid],--
+	id.[ycodec],--
+	id.[ypsupkey],
+	id.[yratng],
+	id.[sgen44],
+	id.[comaprvd],
+	id.[yladd],
+	id.[ylbdnam],
+	id.[ydftloc],
+	id.[ylem],
+	id.[id],
+	id.[ylmmilat],
+	id.[lat],
+	id.[ylloc],
+	id.[ylmmilong],
+	id.[lon],
+	id.[ypoarsrv],
+	id.[cpin],
+	id.[comlocdelflag],
+	id.[ylsloc],
+	id.[yltyp],
+	id.[ccty],
+	id.[ylcry],
+	id.[cstate],
+	id.[czone],
+	id.[ylptcem],
+	id.[ylptcmob],
+	id.[ylptcnam],
+	id.[yarsyn],
+	id.[ypbrdnam],
+	id.[ypnam],
+	id.[batvypid],
+	id.[ypdesc],
+	id.[prodelflag],
+	id.[cimg1],
+	id.[ypcat3id],
+	id.[ypcat3],
+	id.[ypcat2],
+	id.[ypcat1],
+	id.[ypcat3a19],
+	id.[ypcat3a20],
+	id.[ypcat3a1],
+	id.[ypcat3a10],
+	id.[ypcat3a11],
+	id.[ypcat3a12],
+	id.[ypcat3a13],
+	id.[ypcat3a14],
+	id.[ypcat3a15],
+	id.[ypcat3a16],
+	id.[ypcat3a17],
+	id.[ypcat3a18],
+	id.[ypcat3a2],
+	id.[ypcat3atr3],
+	id.[ypcat3a4],
+	id.[ypcat3a5],
+	id.[ypcat3a6],
+	id.[ypcat3a7],
+	id.[ypcat3a8],
+	id.[ypcat3a9],
+	id.[pvonh],
+	id.[pvonp],
+	id.[pvvoh],
+	id.[pvvop],
+	id.[upddate],
+	id.[cmnscat],
+	id.[ylmob1],
+	id.[ylph1],
+	id.[ylwst1],
+	id.[ypbusinessid],
+	id.[ypcat3keys],
+	id.[ypcat3phr],
+	id.[ypcat3stwrd],
+	id.[ypcat3syn],
+	id.[ycat3sepkey],
+	id.[igen1],
+	id.[sgen48],
+	id.[rrvw],
+	id.[CPLTYPE],
+	id.[espNew],
+	id.[espUpdate],
+	id.[espDelete],
+	id.[espStatusNM],
+	id.[espUpdDateNM],
+	id.[espDbUpdDate],
+	id.[espStatusSify],
+	id.[espUpdDateSify],
+	id.[strGen1],
+	id.[gmproducts],
+	id.[strGen2],
+	id.[intgen1],
+	id.[fsubdisdet],
+	id.[gmAmenities],
+	id.[gmcategories],
+	id.[flogid],
+	id.[fcatid],
+	id.[gmbrands],
+	id.[strGen3],
+	id.[Fow]);
+
+
 
 -- Get Delta UL ids and upddates to process
 TRUNCATE TABLE [FastSynchronization].[eDMS].[BizLocSearchID_Staging]
@@ -437,19 +811,19 @@ from (
        inner join [FastSynchronization].[eDMS].[BizLocSearchID_Staging] ids (nolock)
                on ids.BusinessUserID = a.yusrid
               and ids.LocationID = a.intgen1
-  left outer join [GetitOnline].[dbo].[category3] b (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[category3] b (nolock)
                on a.[ypcat3id] = b.[cat3_id]
-  left outer join [GetitOnline].[dbo].[AdditionalInfoTemplate] c (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[AdditionalInfoTemplate] c (nolock)
                on b.[Additionalinfotemplate_id] = c.AdditionalInfoTemplate_id_new
-  left outer join [GetitOnline].[dbo].[TemplateFields] d (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[TemplateFields] d (nolock)
                on c.AdditionalInfoTemplate_id = d.AdditionalInfoTemplate_id
-  left outer join [GetitOnline].[dbo].[BusinessInfo] e (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[BusinessInfo] e (nolock)
                on a.[batvycoid] = e.[business_id]
-  left outer join [GetitOnline].[dbo].[users] f (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[users] f (nolock)
                on e.[user_id] = f.[user_id]
   left outer join [10.0.4.25].[EDMS].[dbo].[DMSMaster] g (nolock)
                on f.[Master_id] = g.[Master_Id]
-  left outer join [GetitOnline].[dbo].[companylocation] h (nolock)
+  left outer join [10.0.4.43].[GetitOnline].[dbo].[companylocation] h (nolock)
                on a.[intgen1] = h.[id]
 			  and a.[yusrid] = h.[user_id]
   left outer join [10.0.4.25].[EDMS].[dbo].[City] i (nolock)
@@ -574,6 +948,8 @@ insert into [FastSynchronization].[eDMS].[BizLocSearch_Bookmark] (
 )
 
 SELECT top 2 * from [FastSynchronization].[eDMS].[BizLocSearch_Bookmark] order by [ID] desc
+
+END
 
 -- select * from [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]
 -- truncate table [FastSynchronization].[eDMS].[BizLocSearch_Bookmark]

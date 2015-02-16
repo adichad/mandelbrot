@@ -208,7 +208,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         Double] ? 20.0d,
                       'source.as[Boolean] ? false, 'explain.as
                         [Boolean] ? false,
-                      'sort ? "_score",
+                      'sort ? "_distance,_score",
                       'select ?
                         "_id",
                       'agg.as[Boolean]
@@ -216,7 +216,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       'aggbuckets.as[Int] ? 10,
                       'maxdocspershard.as[Int] ? 100000,
                       'timeoutms.as[Long] ?
-                        2000l,
+                        1000l,
                       'searchtype.as[String] ?
                         "query_then_fetch") {
                       (kw, city, area, pin, category, id,
@@ -245,7 +245,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                                 TextParams(kw, fuzzyprefix, fuzzysim),
                                 GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                                 FilterParams(category, id),PageParams(size, offset),
-                                ViewParams(source, agg, aggbuckets, explain, sort, select, searchType, slugFlag),
+                                ViewParams(source, agg, aggbuckets, explain, if(lat!=0d || lon!=0d) "_distance,_score" else "_score", select, searchType, slugFlag),
                                 LimitParams(maxdocspershard, timeoutms),
                                 System.currentTimeMillis
                               )

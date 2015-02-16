@@ -9,14 +9,13 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.bulk.{BulkRequestBuilder, BulkResponse}
+import org.elasticsearch.action.bulk.BulkRequestBuilder
+import org.elasticsearch.common.settings.ImmutableSettings
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scala.concurrent._
 import scala.io.{Codec, Source}
 import scala.util.matching.Regex
 
@@ -88,7 +87,7 @@ object CSVLoader {
 }
 
 class CSVLoader(val config: Config, index: String, esType: String,
-                implicit val executionContext: ExecutionContext, searchContext: SearchContext)
+                searchContext: SearchContext)
   extends Actor with Logging with Configurable {
 
   import com.askme.mandelbrot.loader.CSVLoader._
@@ -98,78 +97,159 @@ class CSVLoader(val config: Config, index: String, esType: String,
   class GroupState {
     var id: String = null
     var json: JValue = parse("{}")
+    var count = 0
+    var groupCount = 0
+    var groupDelCount = 0
+    var totalCount = 0
+    var totalSize = 0
+    var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
+    val sb = new StringBuilder
   }
 
+
   //assumes that the result is sorted
-  private val groupFlush: (String, String, String, String, BulkRequestBuilder, GroupState) => Unit = {
-    (id, jsonStr, index, esType, req, groupState) =>
+  private def groupFlush(id: String, del: Boolean, jsonStr: String, index: String, esType: String,
+                         sourcePath: String, groupState: GroupState) {
+
+      groupState.totalCount +=1
       if (id == groupState.id) {
-        groupState.json = groupState.json merge parse(jsonStr)
+        groupState.groupCount += 1
+        if(del)
+          groupState.groupDelCount += 1
+        else {
+          groupState.json = groupState.json merge parse(jsonStr)
+          groupState.totalSize += jsonStr.size
+        }
       } else {
-        req.add(
-          esClient.prepareIndex(index, esType, groupState.id)
-            .setSource(compact(render(groupState.json)))
-        )
+        // id changed, start of new group
+
+        flush(groupState, false)
+
         //info(pretty(render(groupState.json)))
+        // set group id
         groupState.id = id
-        groupState.json = parse(jsonStr)
+        groupState.groupCount = 1
+        if (del) {
+          groupState.groupDelCount = 1
+        }
+        else {
+          groupState.json = parse(jsonStr)
+          groupState.totalSize += jsonStr.size
+          groupState.groupDelCount = 0
+        }
+
       }
+      groupState.sb.setLength(0)
+  }
+
+  private def flush(groupState: GroupState, force: Boolean) {
+    import groupState._
+    // if not first row of first group
+    if (groupState.id != null) {
+
+        // add previous group to request
+        if (groupState.groupDelCount < groupState.groupCount) {
+          groupState.bulkRequest.add(
+            esClient.prepareIndex(index, esType, groupState.id)
+              .setSource(compact(render(groupState.json)))
+          )
+        }
+        else {
+          groupState.bulkRequest.add(
+            esClient.prepareDelete(index, esType, groupState.id)
+          )
+        }
+
+
+      info(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
+
+      // increment number of groups processed
+      groupState.count += 1
+
+      // if batch size is reached or this is delimiting call, flush.
+      if (groupState.totalSize >= innerBatchSize || groupState.totalSize/groupState.totalCount > 3000|| force) {
+        info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
+        groupState.totalCount = 0
+        groupState.totalSize = 0
+        groupState.sb.setLength(0)
+
+        val response = bulkRequest.execute().get()
+        info("failures: " + response.hasFailures)
+        groupState.sb.append("{\"failed\": [")
+        response.getItems.foreach { item =>
+          if (item.isFailed) {
+            groupState.sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
+          }
+        }
+        if (groupState.sb.charAt(groupState.sb.length - 2) == ',')
+          groupState.sb.setLength(groupState.sb.length - 2)
+        groupState.sb.append("]}")
+        info(groupState.sb.toString)
+        groupState.sb.setLength(0)
+
+
+
+          info("completed indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs")
+          info("optimizing [" + index + "]")
+          val optFail = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(2).execute().get().getFailedShards
+          info("optimized [" + index + "]: failed shards: " + optFail)
+          val refFail = esClient.admin.indices.prepareRefresh(index).execute().get().getFailedShards
+          //Thread.sleep(30000)
+          info("refreshed [" + index + "]: failed shards: " + refFail)
+
+
+        groupState.sb.setLength(0)
+        groupState.bulkRequest = esClient.prepareBulk
+      }
+    }
+
   }
 
   override def receive = {
     case Index(file) => {
       info("input file received: " + file.getAbsolutePath)
-      future {
+
         val input = new GZIPInputStream(new BufferedInputStream(new FileInputStream(file)))
         info("input file opened: " + file.getAbsolutePath)
         val sb = new StringBuilder
-        var count = 0
-        val bulkRequest = esClient.prepareBulk
+
+
         try {
+          esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "-1").build).get
+          info("disabled refresh")
           val groupState = new GroupState
           Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
             .getLines().foreach {
             line => {
+
+
               val cells = line.split(fieldDelim, -1)
-              //assumes that the result is sorted
-              groupFlush(cells(idPos), sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, bulkRequest, groupState)
-              sb.setLength(0)
-              count += 1
+
+                //assumes that the result is sorted
+                groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
             }
           }
-          groupFlush(null, "{}", index, esType, bulkRequest, groupState)
+          input.close()
+          info("input file closed: " + file.getAbsolutePath)
+          flush(groupState, true)
+//          info("optimizing: "+index)
+//          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
+//          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
+          //esClient.admin.cluster.prepareHealth(index).setWaitForGreenStatus.get
+
         } catch {
           case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
         } finally {
-          input.close()
-          info("input file closed: " + file.getAbsolutePath)
+
+          //esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "120s").build).get
+          //info("re-enabled refresh: 120s")
         }
-        info("sending indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
-        bulkRequest.execute(new ActionListener[BulkResponse] {
-          override def onResponse(response: BulkResponse) = {
-            info("failures: " + response.hasFailures)
-            sb.append("{\"failed\": [")
-            response.getItems.foreach { item =>
-              if (item.isFailed) {
-                sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
-              }
-            }
-            if (sb.charAt(sb.length - 2) == ',')
-              sb.setLength(sb.length - 2)
-            sb.append("]}")
-            info(sb.toString)
-            sb.setLength(0)
-          }
 
-          override def onFailure(e: Throwable) = {
-            error(e.getMessage, e)
-          }
 
-        })
-        info("sent indexing request: " + bulkRequest.numberOfActions + " docs from input file: " + file.getAbsolutePath)
-      }
     }
   }
+
+  var innerBatchSize = 25000000
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
@@ -177,6 +257,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
   val targetCharset = Charset.forName(string("mappings." + esType + ".charset.target"))
 
   val idPos = mapConf.getConfig(string("mappings." + esType + ".id")).getInt("pos")
+  val delPos = int("mappings." + esType + ".delete")
   val valMap = new mutable.HashMap[String, (Int, String, String, String)]
 
   private val sb = new StringBuilder

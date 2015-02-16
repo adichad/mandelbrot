@@ -10,6 +10,9 @@ import spray.http.StatusCode
 import spray.http.StatusCodes._
 import spray.httpx.Json4sSupport
 import spray.routing.RequestContext
+import scala.concurrent.duration.MILLISECONDS
+
+import scala.concurrent.duration.Duration
 
 
 /**
@@ -23,7 +26,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
   private lazy val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
 
 
-  //context.setReceiveTimeout(Math.min(searchParams.limits.timeoutms, long("timeoutms")+50l) milliseconds)
+  context.setReceiveTimeout(Duration(searchParams.limits.timeoutms+500l, MILLISECONDS))
   target ! searchParams
 
 

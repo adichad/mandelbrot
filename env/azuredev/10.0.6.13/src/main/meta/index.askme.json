@@ -23,6 +23,9 @@
                 "stopword": {
                     "type": "stop",
                     "stopwords": ["a", "an", "the", "and", "or", "with"]
+                },
+                "word_delimiter": {
+                    "type": "word_delimiter"
                 }
             },
             "analyzer": {
@@ -35,7 +38,7 @@
                     "type": "custom",
                     "char_filter": ["mapping_char_filter"],
                     "tokenizer": "standard",
-                    "filter": ["standard", "asciifolding", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
+                    "filter": ["standard", "word_delimiter", "asciifolding", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
                 }
             }
         }
