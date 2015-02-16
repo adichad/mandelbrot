@@ -233,9 +233,9 @@ class CSVLoader(val config: Config, index: String, esType: String,
           input.close()
           info("input file closed: " + file.getAbsolutePath)
           flush(groupState, true)
-          info("optimizing: "+index)
-          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
-          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
+//          info("optimizing: "+index)
+//          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
+//          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
           //esClient.admin.cluster.prepareHealth(index).setWaitForGreenStatus.get
 
         } catch {
