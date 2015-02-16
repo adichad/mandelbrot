@@ -133,6 +133,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         groupState.groupCount = 1
         if (del) {
           groupState.groupDelCount = 1
+          groupState.json = parse("{}")
         }
         else {
           groupState.json = parse(jsonStr)
