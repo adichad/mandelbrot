@@ -165,7 +165,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         }
 
 
-      info(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
+      debug(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
 
       // increment number of groups processed
       groupState.count += 1
