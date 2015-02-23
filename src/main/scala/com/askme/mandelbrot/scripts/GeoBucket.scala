@@ -19,6 +19,9 @@ class GeoBucket extends NativeScriptFactory {
 class GeoBucketScript(lat: Double, lon: Double, buckets: Array[Double]) extends AbstractLongSearchScript {
   override def runAsLong: Long = {
     val dist = doc.get("LatLong").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon)
-    buckets.indexWhere(dist <= _)
+    if(score > 1E+19)
+      0
+    else
+      buckets.indexWhere(dist <= _)
   }
 }
