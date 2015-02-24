@@ -227,15 +227,13 @@ class CSVLoader(val config: Config, index: String, esType: String,
             .getLines().foreach {
             line => {
 
-
               val cells = line.split(fieldDelim, -1)
 
                 //assumes that the result is sorted
                 groupFlush(cells(idPos), cells(delPos).toInt != 0, groupState.sb.appendReplaced(templateTokens, valMap, cells).toString, index, esType, file.getAbsolutePath, groupState)
             }
           }
-          input.close()
-          info("input file closed: " + file.getAbsolutePath)
+
           flush(groupState, true)
 //          info("optimizing: "+index)
 //          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
@@ -245,7 +243,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
         } catch {
           case e: Exception => error("error processing input file: " + file.getAbsolutePath, e)
         } finally {
-
+          input.close()
+          info("input file closed: " + file.getAbsolutePath)
           //esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "120s").build).get
           //info("re-enabled refresh: 120s")
         }
@@ -254,7 +253,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     }
   }
 
-  var innerBatchSize = 50000000
+  var innerBatchSize = 250000000
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
