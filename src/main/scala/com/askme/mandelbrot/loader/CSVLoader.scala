@@ -102,6 +102,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     var groupDelCount = 0
     var totalCount = 0
     var totalSize = 0
+    var totalIndexCount = 0
     var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
     val sb = new StringBuilder
   }
@@ -119,6 +120,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         else {
           groupState.json = groupState.json merge parse(jsonStr)
           groupState.totalSize += jsonStr.size
+          groupState.totalIndexCount += 1
         }
       } else {
         // id changed, start of new group
@@ -131,10 +133,12 @@ class CSVLoader(val config: Config, index: String, esType: String,
         groupState.groupCount = 1
         if (del) {
           groupState.groupDelCount = 1
+          groupState.json = parse("{}")
         }
         else {
           groupState.json = parse(jsonStr)
           groupState.totalSize += jsonStr.size
+          groupState.totalIndexCount += 1
           groupState.groupDelCount = 0
         }
 
@@ -161,16 +165,17 @@ class CSVLoader(val config: Config, index: String, esType: String,
         }
 
 
-      info(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
+      debug(groupState.id + " subdocs: "+(groupState.groupCount - groupState.groupDelCount) + "=("+ groupState.groupCount + "-"+groupState.groupDelCount+")")
 
       // increment number of groups processed
       groupState.count += 1
 
       // if batch size is reached or this is delimiting call, flush.
-      if (groupState.totalSize >= innerBatchSize || groupState.totalSize/groupState.totalCount > 3000|| force) {
+      if (groupState.totalSize >= innerBatchSize || groupState.totalSize/groupState.totalIndexCount > 20000|| force) {
         info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
         groupState.totalCount = 0
         groupState.totalSize = 0
+        groupState.totalIndexCount = 0
         groupState.sb.setLength(0)
 
         val response = bulkRequest.execute().get()
