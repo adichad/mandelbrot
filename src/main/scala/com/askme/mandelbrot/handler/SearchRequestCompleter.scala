@@ -19,6 +19,9 @@ import scala.concurrent.duration.Duration
  * Created by adichad on 08/01/15.
  */
 
+case object TimedOut {
+  val response = "request timed out"
+}
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport {
 
@@ -26,13 +29,13 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
   private lazy val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
 
 
-  context.setReceiveTimeout(Duration(searchParams.limits.timeoutms+500l, MILLISECONDS))
+  context.setReceiveTimeout(Duration(searchParams.limits.timeoutms*3, MILLISECONDS))
   target ! searchParams
 
 
   override def receive = {
     case res: RestMessage => complete(OK, res)
-    case ReceiveTimeout   => complete(GatewayTimeout, "{ \"response\": \"Request timeout\" }")
+    case ReceiveTimeout   => complete(GatewayTimeout, TimedOut)
   }
 
   def complete[T <: AnyRef](status: StatusCode, obj: T) = {

@@ -430,13 +430,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
-        .subAggregation(terms("catkw").field("Product.l3categoryexact").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-        .subAggregation(terms("kw").field("Product.categorykeywordsexact").size(aggbuckets))
+        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+        .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
         .subAggregation(sum("sum_score").script("_score"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
-        .subAggregation(terms("syns").field("AreaSynonymsExact").size(aggbuckets))
+        .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
     }
     search

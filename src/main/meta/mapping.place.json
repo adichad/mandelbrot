@@ -30,18 +30,6 @@
         "store": true,
         "index": "not_analyzed"
       },
-      "UpdateFlag": {
-        "type": "boolean",
-        "store": false,
-        "index": "no",
-        "ignore_malformed": true
-      },
-      "InsertFlag": {
-        "type": "boolean",
-        "store": false,
-        "index": "no",
-        "ignore_malformed": true
-      },
       "PPCOnline": {
         "type": "integer",
         "store": false,
@@ -112,14 +100,6 @@
         "index": "not_analyzed",
         "doc_values": true
       },
-      "AreaExact": {
-        "type": "string",
-        "store": true,
-        "index": "analyzed",
-        "analyzer": "keyword_analyzer",
-        "search_analyzer": "keyword_analyzer",
-        "norms": {"enabled": false}
-      },
       "AreaSynonyms": {
         "type": "string",
         "store": true,
@@ -127,14 +107,11 @@
         "position_offset_gap": 100,
         "norms": {"enabled": false}
       },
-      "AreaSynonymsExact": {
+      "AreaSynonymsAggr": {
         "type": "string",
         "store": true,
-        "index": "analyzed",
-        "analyzer": "keyword_analyzer",
-        "search_analyzer": "keyword_analyzer",
-        "position_offset_gap": 100,
-        "norms": {"enabled": false}
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "City": {
         "type": "string",
@@ -152,7 +129,8 @@
       "CityAggr": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "CitySynonyms": {
         "type": "string",
@@ -198,10 +176,7 @@
         "geohash_prefix": true,
         "store": true,
         "normalize": true,
-        "fielddata": {
-          "format": "compressed",
-          "precision": "1m"
-        }
+        "doc_values": true
       },
       "CompanyID": {
         "type": "integer",
@@ -291,14 +266,6 @@
             "store": false,
             "ignore_malformed": false
           },
-          "deleteflag": {
-            "type": "boolean",
-            "store": false
-          },
-          "validflag": {
-            "type": "boolean",
-            "store": false
-          },
           "name": {
             "type": "string",
             "store": true,
@@ -358,7 +325,7 @@
           },
           "l3categoryexact": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
@@ -376,12 +343,13 @@
             "type": "integer",
             "store": true,
             "ignore_malformed": true,
+            "index": "no",
             "include_in_root": true
           },
           "categorypath": {
             "type": "string",
             "store": true,
-            "index": "not_analyzed"
+            "index": "no"
           },
           "categorykeywords": {
             "type": "string",
@@ -393,12 +361,19 @@
           },
           "categorykeywordsexact": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "position_offset_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "categorykeywordsaggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
             "include_in_root": true
           },
           "stringattribute": {

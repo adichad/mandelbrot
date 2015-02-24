@@ -1,6 +1,6 @@
 {
     "settings" : {
-        "number_of_shards" : 5,
+        "number_of_shards" : 20,
         "number_of_replicas" : 3,
         "index.cache.query.enable": true,
         "refresh_interval": "120s",
@@ -9,6 +9,11 @@
                 "mapping_char_filter": {
                     "type": "mapping",
                     "mappings": ["&=> and "]
+                },
+                "alphanumeric_char_filter": {
+                  "type":"pattern_replace",
+                  "pattern":"[^a-zA-Z0-9]+",
+                  "replacement":" "
                 }
             },
             "filter" : {
@@ -31,6 +36,7 @@
             "analyzer": {
                 "keyword_analyzer": {
                     "type": "custom",
+                    "char_filter": ["alphanumeric_char_filter"],
                     "tokenizer": "keyword",
                     "filter": ["trim", "lowercase"]
                 },
@@ -38,7 +44,7 @@
                     "type": "custom",
                     "char_filter": ["mapping_char_filter"],
                     "tokenizer": "standard",
-                    "filter": ["standard", "word_delimiter", "asciifolding", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
+                    "filter": ["standard", "word_delimiter", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
                 }
             }
         }

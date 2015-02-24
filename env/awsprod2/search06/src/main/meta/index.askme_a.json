@@ -1,46 +1,52 @@
 {
-    "settings" : {
-        "number_of_shards" : 5,
-        "number_of_replicas" : 3,
-        "index.cache.query.enable": true,
-        "refresh_interval": "120s",
-        "analysis": {
-            "char_filter": {
-                "mapping_char_filter": {
-                    "type": "mapping",
-                    "mappings": ["&=> and "]
-                }
-            },
-            "filter" : {
-                "light_stemmer": {
-                    "type": "stemmer",
-                    "name": "light_english"
-                },
-                "possessive_stemmer": {
-                    "type": "stemmer",
-                    "name": "possessive_english"
-                },
-                "stopword": {
-                    "type": "stop",
-                    "stopwords": ["a", "an", "the", "and", "or", "with"]
-                },
-                "word_delimiter": {
-                    "type": "word_delimiter"
-                }
-            },
-            "analyzer": {
-                "keyword_analyzer": {
-                    "type": "custom",
-                    "tokenizer": "keyword",
-                    "filter": ["trim", "lowercase"]
-                },
-                "default": {
-                    "type": "custom",
-                    "char_filter": ["mapping_char_filter"],
-                    "tokenizer": "standard",
-                    "filter": ["standard", "word_delimiter", "asciifolding", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
-                }
-            }
+  "settings" : {
+    "number_of_shards" : 20,
+    "number_of_replicas" : 3,
+    "index.cache.query.enable": true,
+    "refresh_interval": "120s",
+    "analysis": {
+      "char_filter": {
+        "mapping_char_filter": {
+          "type": "mapping",
+          "mappings": ["&=> and "]
+        },
+        "alphanumeric_char_filter": {
+          "type":"pattern_replace",
+          "pattern":"[^a-zA-Z0-9]+",
+          "replacement":" "
         }
+      },
+      "filter" : {
+        "light_stemmer": {
+          "type": "stemmer",
+          "name": "light_english"
+        },
+        "possessive_stemmer": {
+          "type": "stemmer",
+          "name": "possessive_english"
+        },
+        "stopword": {
+          "type": "stop",
+          "stopwords": ["a", "an", "the", "and", "or", "with"]
+        },
+        "word_delimiter": {
+          "type": "word_delimiter"
+        }
+      },
+      "analyzer": {
+        "keyword_analyzer": {
+          "type": "custom",
+          "char_filter": ["alphanumeric_char_filter"],
+          "tokenizer": "keyword",
+          "filter": ["trim", "lowercase"]
+        },
+        "default": {
+          "type": "custom",
+          "char_filter": ["mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "word_delimiter", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
+        }
+      }
     }
+  }
 }
