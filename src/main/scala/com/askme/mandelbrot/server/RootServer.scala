@@ -1,7 +1,5 @@
 package com.askme.mandelbrot.server
 
-import java.util.concurrent.Executors
-
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
@@ -16,7 +14,6 @@ import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
 import spray.can.Http
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 
 object RootServer {
@@ -46,6 +43,7 @@ object RootServer {
         .put("node.name", string("es.node.name"))
         .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
         .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
+        .put("discovery.zen.minimum_master_nodes", string("es.discovery.zen.minimum_master_nodes"))
         .put("network.host", string("es.network.host"))
         .put("path.data", string("es.path.data"))
         .put("path.logs", string("es.path.logs"))
@@ -61,8 +59,8 @@ object RootServer {
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
-    val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
-    val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
+    //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
+    //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
 /*
     // http://spark.apache.org/docs/latest/configuration.html
     private val sparkConf = (new SparkConf)
@@ -79,9 +77,11 @@ object RootServer {
     val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
 */
     private[RootServer] def close() {
+
+      //userExecutionContext.shutdown()
+      //batchExecutionContext.shutdown()
       esClient.close()
       esNode.close()
-      batchExecutionContext.shutdown()
       //sparkContext.stop()
       //hazel.shutdown()
     }

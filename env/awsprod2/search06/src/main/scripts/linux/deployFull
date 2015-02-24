@@ -12,23 +12,18 @@ tar -xzvf ~/mandelbrot-dep-0.1.0.tgz
 tar -xzvf ~/mandelbrot-env-awsprod-search06-0.1.0.tgz
 
 kill `cat /apps/logs/mandelbrot-awsprod-search06/mandelbrot-awsprod-search06.pid`
-sleep 2
-nohup /usr/bin/java -d64 -javaagent:/apps/newrelic/newrelic.jar -cp /apps/mandelbrot-0.1.0/lib/mandelbrot-0.1.0.jar:/apps/mandelbrot-0.1.0/lib/* -Xms31g -Xmx31g -XX:+UseG1GC -Dlog.level=INFO com.askme.mandelbrot.Launcher > /apps/mandelbrot-0.1.0/mandebrot.out &
+sleep 5
+nohup /usr/bin/java -d64 -cp /apps/mandelbrot-0.1.0/lib/mandelbrot-0.1.0.jar:/apps/mandelbrot-0.1.0/lib/* -Xms29g -Xmx29g -Dlog.level=INFO com.askme.mandelbrot.Launcher > /apps/mandelbrot-0.1.0/mandebrot.out &
 
-sleep 45
-curl -XDELETE 'http://172.30.101.102:9200/askme/place/'
-curl -XDELETE 'http://172.30.101.102:9200/askme/'
-sleep 45
-curl -XPUT 'http://172.30.101.102:9200/askme_a/' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/index.askme_a.json
-curl -XPUT 'http://172.30.101.102:9200/askme_a/_mapping/place' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/mapping.place.json
+sleep 60
+curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "remove": { "index": "askme_a", "alias": "askme" }, "add" : { "index" : "askme_b", "alias" : "askme" } } ] }'
+curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "remove": { "index": "askme_a", "alias": "askme_index" }, "add" : { "index" : "askme_b", "alias" : "askme_index" } } ] }'
 
-curl -XPUT 'http://172.30.101.102:9200/askme_b/' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/index.askme_a.json
+curl -XDELETE 'http://172.30.101.102:9200/askme_b/place/'
+curl -XDELETE 'http://172.30.101.102:9200/askme_b/'
+sleep 10
+curl -XPUT 'http://172.30.101.102:9200/askme_b/' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/index.askme.json
 curl -XPUT 'http://172.30.101.102:9200/askme_b/_mapping/place' -H "Content-Type: application/json" --data @/apps/mandelbrot-0.1.0/meta/mapping.place.json
 
-curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "add" : { "index" : "askme_b", "alias" : "askme" } } ] }'
-curl -XPOST 'http://172.30.101.102:9200/_aliases' -d '{ "actions" : [ { "add" : { "index" : "askme_a", "alias" : "askme_index" } } ] }'
-
 curl -XPOST 'http://172.30.101.102:9999/watch?dir=/data1/mandeldata&index=askme_index&type=place'
-
-
-
+curl -XPOST 'http://172.30.101.102:9999/watch?dir=/data1/livemandeldata&index=askme_index&type=place'

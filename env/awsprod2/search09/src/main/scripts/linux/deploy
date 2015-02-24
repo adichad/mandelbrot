@@ -12,7 +12,7 @@ tar -xzvf ~/mandelbrot-dep-0.1.0.tgz
 tar -xzvf ~/mandelbrot-env-awsprod2-search09-0.1.0.tgz
 
 kill `cat /apps/logs/mandelbrot-awsprod2-search09/mandelbrot-awsprod2-search09.pid`
-sleep 2
-nohup /usr/bin/java -d64 -javaagent:/apps/newrelic/newrelic.jar -cp /apps/mandelbrot-0.1.0/lib/mandelbrot-0.1.0.jar:/apps/mandelbrot-0.1.0/lib/* -Xms31g -Xmx31g -XX:+UseG1GC -Dlog.level=INFO com.askme.mandelbrot.Launcher > /apps/mandelbrot-0.1.0/mandebrot.out &
+sleep 5
+nohup /usr/bin/java -d64 -cp /apps/mandelbrot-0.1.0/lib/mandelbrot-0.1.0.jar:/apps/mandelbrot-0.1.0/lib/* -Xms29g -Xmx29g -Dlog.level=INFO com.askme.mandelbrot.Launcher > /apps/mandelbrot-0.1.0/mandebrot.out &
 
 
