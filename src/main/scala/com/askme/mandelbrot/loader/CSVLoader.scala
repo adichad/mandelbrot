@@ -9,8 +9,8 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.elasticsearch.action.bulk.BulkRequestBuilder
-import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.action.ActionListener
+import org.elasticsearch.action.bulk.{BulkRequestBuilder, BulkResponse}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -102,7 +102,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
     var groupDelCount = 0
     var totalCount = 0
     var totalSize = 0
-    var totalIndexCount = 0
     var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
     val sb = new StringBuilder
   }
@@ -120,12 +119,11 @@ class CSVLoader(val config: Config, index: String, esType: String,
         else {
           groupState.json = groupState.json merge parse(jsonStr)
           groupState.totalSize += jsonStr.size
-          groupState.totalIndexCount += 1
         }
       } else {
         // id changed, start of new group
 
-        flush(groupState, false)
+        flush(groupState, false, sourcePath)
 
         //info(pretty(render(groupState.json)))
         // set group id
@@ -138,7 +136,6 @@ class CSVLoader(val config: Config, index: String, esType: String,
         else {
           groupState.json = parse(jsonStr)
           groupState.totalSize += jsonStr.size
-          groupState.totalIndexCount += 1
           groupState.groupDelCount = 0
         }
 
@@ -146,7 +143,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
       groupState.sb.setLength(0)
   }
 
-  private def flush(groupState: GroupState, force: Boolean) {
+  private def flush(groupState: GroupState, force: Boolean, path: String) {
     import groupState._
     // if not first row of first group
     if (groupState.id != null) {
@@ -171,37 +168,41 @@ class CSVLoader(val config: Config, index: String, esType: String,
       groupState.count += 1
 
       // if batch size is reached or this is delimiting call, flush.
-      if (groupState.totalSize >= innerBatchSize || groupState.totalSize/groupState.totalIndexCount > 20000 || force) {
-        info("sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
+      if (groupState.totalSize >= innerBatchSize || force) {
+        info("[" + path + "] " + "sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
         groupState.totalCount = 0
         groupState.totalSize = 0
-        groupState.totalIndexCount = 0
-        groupState.sb.setLength(0)
 
-        val response = bulkRequest.execute().get()
-        info("failures: " + response.hasFailures)
-        groupState.sb.append("{\"failed\": [")
-        response.getItems.foreach { item =>
-          if (item.isFailed) {
-            groupState.sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
+
+        bulkRequest.execute(new ActionListener[BulkResponse] {
+          override def onResponse(response: BulkResponse): Unit = {
+            info( "[" + path + "] " + "failures: " + response.hasFailures)
+            val sb = new StringBuilder
+            sb.append("{\"failed\": [")
+            response.getItems.filter(_.isFailed).take(10).foreach { item =>
+              sb.append("{\"").append(item.getId).append("\": \"").append(item.getFailure.getMessage).append("\"}, ")
+            }
+
+            if (sb.charAt(sb.length - 2) == ',')
+              sb.setLength(sb.length - 2)
+            sb.append("]}")
+            info("[" + path + "] " + sb.toString)
           }
-        }
-        if (groupState.sb.charAt(groupState.sb.length - 2) == ',')
-          groupState.sb.setLength(groupState.sb.length - 2)
-        groupState.sb.append("]}")
-        info(groupState.sb.toString)
-        groupState.sb.setLength(0)
+
+          override def onFailure(e: Throwable): Unit = {
+            error("[" + path + "] exception during bulk indexing", e)
+          }
+        })
 
 
 
-          info("completed indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs")
+          info("[" + path + "] " + "sent indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs")
           //info("optimizing [" + index + "]")
           //val optFail = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(2).execute().get().getFailedShards
           //info("optimized [" + index + "]: failed shards: " + optFail)
           //val refFail = esClient.admin.indices.prepareRefresh(index).execute().get().getFailedShards
           //Thread.sleep(30000)
           //info("refreshed [" + index + "]: failed shards: " + refFail)
-
 
         groupState.sb.setLength(0)
         groupState.bulkRequest = esClient.prepareBulk
@@ -220,8 +221,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
 
         try {
-          esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "-1").build).get
-          info("disabled refresh")
+          //esClient.admin.indices.prepareUpdateSettings(index).setSettings(ImmutableSettings.settingsBuilder.put("refresh_interval", "-1").build).get
+          //info("disabled refresh")
           val groupState = new GroupState
           Source.fromInputStream(input)(Codec.charset2codec(Charset.forName(string("mappings." + esType + ".charset.source"))))
             .getLines().foreach {
@@ -234,7 +235,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
             }
           }
 
-          flush(groupState, true)
+          flush(groupState, true, file.getAbsolutePath)
 //          info("optimizing: "+index)
 //          val optResponse = esClient.admin.indices.prepareOptimize(index).setMaxNumSegments(1).get()
 //          info("optimized: "+index+", failures: "+ optResponse.getShardFailures.toSet.toString)
@@ -253,7 +254,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     }
   }
 
-  var innerBatchSize = 500000000
+  var innerBatchSize = 50000000
 
   val fieldDelim = int("mappings." + esType + ".delimiter.field").toChar.toString
   val elemDelim = int("mappings." + esType + ".delimiter.element").toChar.toString
