@@ -169,11 +169,11 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
       // if batch size is reached or this is delimiting call, flush.
       if (groupState.totalSize >= innerBatchSize || force) {
-        info("[" + path + "] " + "sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
         groupState.totalCount = 0
         groupState.totalSize = 0
 
-
+        esClient.admin().cluster().prepareHealth(index).setWaitForGreenStatus().get()
+        info("[" + path + "] " + "sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             info( "[" + path + "] " + "failures: " + response.hasFailures)
