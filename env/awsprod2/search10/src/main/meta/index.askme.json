@@ -43,13 +43,13 @@
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "alphanumeric_char_filter"],
           "tokenizer": "keyword",
-          "filter": ["lowercase", "ascii_folding", "trim"]
+          "filter": ["lowercase", "asciifolding", "trim"]
         },
         "default": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
-          "filter": ["standard", "lowercase", "stopword", "ascii_folding", "possessive_stemmer", "word_delimiter", "light_stemmer"]
+          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "light_stemmer"]
         }
       }
     }
