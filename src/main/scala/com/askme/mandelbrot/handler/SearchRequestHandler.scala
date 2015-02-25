@@ -33,6 +33,7 @@ import scala.collection.JavaConversions._
 
 object SearchRequestHandler {
 
+  val pat = """(?U)[^\p{alnum}]+"""
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d): Unit = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.foreach {
@@ -482,17 +483,17 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(kw.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/" + URLEncoder.encode(k.getKey.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/search/" + URLEncoder.encode(kw.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
 
         val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(area.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/in/" + URLEncoder.encode(area.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
-        slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
+        slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           matchedCat +
-          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
+          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
