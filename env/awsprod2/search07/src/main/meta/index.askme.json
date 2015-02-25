@@ -14,7 +14,7 @@
         },
         "alphanumeric_char_filter": {
           "type":"pattern_replace",
-          "pattern":"[^a-zA-Z0-9]+",
+          "pattern":"(?U)[^\\p{alnum}]+",
           "replacement":" "
         },
         "html_strip_char_filter": {
@@ -43,13 +43,13 @@
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "alphanumeric_char_filter"],
           "tokenizer": "keyword",
-          "filter": ["trim", "lowercase"]
+          "filter": ["lowercase", "ascii_folding", "trim"]
         },
         "default": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
-          "filter": ["standard", "word_delimiter", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
+          "filter": ["standard", "lowercase", "stopword", "ascii_folding", "possessive_stemmer", "word_delimiter", "light_stemmer"]
         }
       }
     }

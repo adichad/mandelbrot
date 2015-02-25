@@ -278,8 +278,9 @@
           "name": {
             "type": "string",
             "store": true,
-            "include_in_root": true,
-            "index": "analyzed"
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true
           },
           "description": {
             "type": "string",
@@ -290,15 +291,17 @@
           "keywords": {
             "type": "string",
             "store": true,
-            "include_in_root": true,
+            "index": "analyzed",
+            "position_offset_gap": 100,
             "norms": {"enabled": false},
-            "index": "analyzed"
+            "include_in_root": true
           },
           "brand": {
             "type": "string",
             "store": true,
-            "include_in_root": true,
-            "index": "analyzed"
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true
           },
           "imageurls": {
             "type": "string",

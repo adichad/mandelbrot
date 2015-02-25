@@ -200,7 +200,7 @@ object SearchRequestHandler {
 
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
-    "Product.l3category" -> 2048f, "LocationType"->1024f, "BusinessType"->1024f,
+    "Product.l3category" -> 2048f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
@@ -482,17 +482,17 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/" + URLEncoder.encode(k.getKey.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/search/" + URLEncoder.encode(kw.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/" + URLEncoder.encode(k.getKey.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
 
         val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(area.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/in/" + URLEncoder.encode(area.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
+            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
-        slug = (if (city != "") "/" + URLEncoder.encode(city.trim.toLowerCase.replaceAll( """\s+""", "-"), "UTF-8") else "") +
+        slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           matchedCat +
-          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
+          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll("""(?U)[^\\p{alnum}]+""", " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
