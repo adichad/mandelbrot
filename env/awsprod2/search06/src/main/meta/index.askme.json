@@ -1,6 +1,6 @@
 {
     "settings" : {
-        "number_of_shards" : 20,
+        "number_of_shards" : 40,
         "number_of_replicas" : 3,
         "index.cache.query.enable": true,
         "refresh_interval": "120s",
@@ -8,12 +8,17 @@
             "char_filter": {
                 "mapping_char_filter": {
                     "type": "mapping",
-                    "mappings": ["&=> and "]
+                    "mappings": [
+                      "&=> and "
+                    ]
                 },
                 "alphanumeric_char_filter": {
                   "type":"pattern_replace",
                   "pattern":"[^a-zA-Z0-9]+",
                   "replacement":" "
+                },
+                "html_strip_char_filter": {
+                  "type":"html_strip"
                 }
             },
             "filter" : {
@@ -27,7 +32,7 @@
                 },
                 "stopword": {
                     "type": "stop",
-                    "stopwords": ["a", "an", "the", "and", "or", "with"]
+                    "stopwords": ["a", "an", "the"]
                 },
                 "word_delimiter": {
                     "type": "word_delimiter"
@@ -36,13 +41,13 @@
             "analyzer": {
                 "keyword_analyzer": {
                     "type": "custom",
-                    "char_filter": ["alphanumeric_char_filter"],
+                    "char_filter": ["html_strip_char_filter", "alphanumeric_char_filter"],
                     "tokenizer": "keyword",
                     "filter": ["trim", "lowercase"]
                 },
                 "default": {
                     "type": "custom",
-                    "char_filter": ["mapping_char_filter"],
+                    "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
                     "tokenizer": "standard",
                     "filter": ["standard", "word_delimiter", "lowercase", "possessive_stemmer", "light_stemmer", "stopword"]
                 }

@@ -91,7 +91,7 @@ object SearchRequestHandler {
 
   private def strongMatch(fields: Map[String, Float],
                           condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
+                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(655360f)
     var i = 1000000
@@ -128,7 +128,7 @@ object SearchRequestHandler {
     }
     val exactQuery = disMaxQuery
     val k = w.mkString(" ")
-    val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+    val ck = analyze(esClient, index, "LocationNameExact", kw)
     val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
     fullFields.foreach {
       field: (String, Float) => {
@@ -142,7 +142,7 @@ object SearchRequestHandler {
 
   private def strongMatchNonPaid(fields: Map[String, Float],
                           condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float) = {
+                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(32768f)
     var i = 10000
@@ -178,7 +178,7 @@ object SearchRequestHandler {
       }
     }
     val k = w.mkString(" ")
-    val ck = kw.replaceAll("""[^a-zA-Z0-9]+""", " ").trim.toLowerCase
+    val ck = analyze(esClient, index, "LocationNameExact", kw)
     val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
     val exactQuery = disMaxQuery
     fullFields.foreach {
@@ -218,7 +218,7 @@ object SearchRequestHandler {
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
-  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f, "LocationNameExact"->1248576f)
+  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f, "LocationNameExact"->1248576f, "CompanyAliasesExact"->1248576f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -291,8 +291,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           }
         }
 
-        val mw = kw.split( """[^a-zA-Z0-9]+""").map(_.trim.toLowerCase)
+        val mw = analyze(esClient, index, "LocationNameExact", kw)
         fullFields.foreach {
+
           field: (String, Float) => {
             (1 to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
@@ -309,9 +310,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
           }
         }
-        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim))
+        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
 
-        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim))
+        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
       }
     }
@@ -449,6 +450,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import searchParams.req._
       import searchParams.startTime
 
+
       val search = buildSearch(searchParams)
       val me = context.self
 
@@ -472,6 +474,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import response.searchParams.startTime
       import response.searchParams.text._
       import response.searchParams.view._
+      import response.searchParams.limits._
 
       val areaWords = analyze(esClient, index, "Area", area)
 
@@ -493,7 +496,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
-      info("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + result.getTookInMillis + "/" + timeTaken + " (" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + ")]")
+      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
 
       context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, parse(result.toString))
 

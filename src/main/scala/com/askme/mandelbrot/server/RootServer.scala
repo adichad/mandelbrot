@@ -20,6 +20,7 @@ object RootServer {
 
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
+
     /*
     val conf = (new com.hazelcast.config.Config)
       .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
@@ -56,6 +57,10 @@ object RootServer {
         .put("indices.fielddata.cache.size", string("es.indices.fielddata.cache.size"))
         .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
         .put("indices.store.throttle.type", string("es.indices.store.throttle.type"))
+        .put("gateway.recover_after_nodes", string("es.gateway.recover_after_nodes"))
+        .put("gateway.expected_nodes", string("es.gateway.expected_nodes"))
+        .put("gateway.recover_after_time", string("es.gateway.recover_after_time"))
+        .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
@@ -108,8 +113,6 @@ class RootServer(val config: Config) extends Server with Logging {
     serverContext.close()
     system.stop(topActor)
     system.shutdown()
-
-    Thread.sleep(500)
     info("server shutdown complete: " + string("host") + ":" + int("port"))
   }
 

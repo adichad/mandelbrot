@@ -60,6 +60,7 @@ object Launcher extends App with Logging with Configurable {
     Runtime.getRuntime addShutdownHook new Thread {
       override def run() = {
         try {
+          info("jvm killed")
           closeables.foreach(_.close)
         } catch {
           case e: Throwable => error("shutdown hook failure", e)

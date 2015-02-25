@@ -195,6 +195,15 @@
         "position_offset_gap": 100,
         "norms": {"enabled": false}
       },
+      "CompanyAliasesExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
       "CompanyDescription": {
         "type": "string",
         "store": true,
