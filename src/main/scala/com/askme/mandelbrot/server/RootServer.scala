@@ -60,6 +60,9 @@ object RootServer {
         .put("gateway.recover_after_nodes", string("es.gateway.recover_after_nodes"))
         .put("gateway.expected_nodes", string("es.gateway.expected_nodes"))
         .put("gateway.recover_after_time", string("es.gateway.recover_after_time"))
+        .put("threadpool.search.type", string("es.threadpool.search.type"))
+        .put("threadpool.search.size", string("es.threadpool.search.size"))
+        .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
         .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
