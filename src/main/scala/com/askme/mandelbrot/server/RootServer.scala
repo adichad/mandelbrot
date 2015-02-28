@@ -39,9 +39,11 @@ object RootServer {
     */
     //val hazel = Hazelcast.newHazelcastInstance(conf)
 
-    private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false).data(true).settings(
+    private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
+      .data(boolean("es.node.data")).settings(
       ImmutableSettings.settingsBuilder()
         .put("node.name", string("es.node.name"))
+        .put("node.master", string("es.node.master"))
         .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
         .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
         .put("discovery.zen.minimum_master_nodes", string("es.discovery.zen.minimum_master_nodes"))
