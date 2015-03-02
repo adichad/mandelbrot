@@ -19,7 +19,7 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.sort.{SortBuilders, FieldSortBuilder, ScoreSortBuilder, SortOrder}
+import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortBuilders, SortOrder}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -31,7 +31,7 @@ import scala.collection.JavaConversions._
  */
 
 
-object SearchRequestHandler {
+object SearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d): Unit = {
@@ -195,18 +195,60 @@ object SearchRequestHandler {
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
     analyze(esClient, index, field, text).deep == keywords.deep
   }
-/*
-  private def categoryFilter(query: BaseQueryBuilder, kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
-    val
-    val search = esClient.prepareSearch(index.split(","): _*)
-      .setTypes(esType.split(","): _*)
-      .setSearchType(SearchType.COUNT)
-      .setQuery(query)
-      .setTimeout(TimeValue.timeValueMillis(100))
 
-    filteredQuery(query, catQuery)
+  private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+    val filter = boolFilter
+    debug(mw.toSet.toString)
+    val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
+    catFilterFields.foreach {
+      field: (String) => {
+        (1 to mw.length).foreach { len =>
+          mw.sliding(len).foreach { shingle =>
+            val ck = shingle.mkString(" ")
+            filter.should(termFilter(field, ck))
+          }
+        }
+        (1 to xw.length).foreach { len =>
+          xw.sliding(len).foreach { shingle =>
+            val ck = shingle.mkString(" ")
+            filter.should(termFilter(field, ck))
+          }
+        }
+      }
+    }
+
+    if(filter.hasClauses) {
+      val catFilter = boolFilter
+      esClient.prepareSearch(index.split(","): _*)
+        .setTypes(esType.split(","): _*)
+        .setSearchType(SearchType.COUNT)
+        .setQuery(filteredQuery(matchAllQuery, filter))
+        .setTerminateAfter(10000)
+        .setTimeout(TimeValue.timeValueMillis(200))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10))
+        .execute().get()
+        .getAggregations.get("categories").asInstanceOf[Terms]
+        .getBuckets.map(
+          v =>
+            queryFilter(
+              nestIfNeeded("Product.l3categoryexact",
+                termQuery("Product.l3categoryexact",
+                  analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
+                )
+              )
+            )
+        ).foreach(catFilter.should(_))
+
+      debug(catFilter.toString)
+      if (catFilter.hasClauses)
+        filteredQuery(query, catFilter.cache(true))
+      else
+        query
+    }
+    else query
   }
-*/
+
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
@@ -257,6 +299,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
       debug("analyzed keywords: " + w.toList)
+
       if (w.length > 0) {
         val kwquery = disMaxQuery
 
@@ -313,12 +356,14 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
                 kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
               }
             }
+
             (1 to mw.length).foreach { len =>
               mw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
                 kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * mw.length * mw.length * (searchFields.size + condFields.values.size + 1))))
               }
             }
+
 
           }
         }
@@ -390,6 +435,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         b.should(termFilter("Product.l3categoryslug", c))
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(true))
+    } else {
+      query = categoryFilter(query, w, kw, esClient, index, esType)
     }
 
 
@@ -486,11 +533,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import response.searchParams.filters._
       import response.searchParams.geo._
       import response.searchParams.idx._
+      import response.searchParams.limits._
       import response.searchParams.req._
       import response.searchParams.startTime
       import response.searchParams.text._
       import response.searchParams.view._
-      import response.searchParams.limits._
 
       val areaWords = analyze(esClient, index, "Area", area)
 

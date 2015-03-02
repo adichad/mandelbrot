@@ -214,7 +214,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       'agg.as[Boolean]
                         ? true,
                       'aggbuckets.as[Int] ? 10,
-                      'maxdocspershard.as[Int] ? 100000,
+                      'maxdocspershard.as[Int] ? 50000,
                       'timeoutms.as[Long] ?
                         1500l,
                       'searchtype.as[String] ?

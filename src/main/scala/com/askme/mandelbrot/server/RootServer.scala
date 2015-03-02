@@ -16,7 +16,7 @@ import spray.can.Http
 
 import scala.concurrent.duration.DurationInt
 
-object RootServer {
+object RootServer extends Logging {
 
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
@@ -69,6 +69,11 @@ object RootServer {
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
+    info("waiting for green status")
+    info(esClient.admin().cluster.prepareHealth().setWaitForYellowStatus().get())
+    info("optimizing")
+    info(esClient.admin().indices().prepareOptimize().setMaxNumSegments(1).get())
+    info("optimized")
     //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
 /*
