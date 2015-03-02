@@ -195,7 +195,18 @@ object SearchRequestHandler {
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
     analyze(esClient, index, field, text).deep == keywords.deep
   }
+/*
+  private def categoryFilter(query: BaseQueryBuilder, kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+    val
+    val search = esClient.prepareSearch(index.split(","): _*)
+      .setTypes(esType.split(","): _*)
+      .setSearchType(SearchType.COUNT)
+      .setQuery(query)
+      .setTimeout(TimeValue.timeValueMillis(100))
 
+    filteredQuery(query, catQuery)
+  }
+*/
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
@@ -319,6 +330,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     }
 
     // filters
+    //query = categoryFilter(query, kw, esClient)
     if (id != "")
       query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
     if (city != "") {
@@ -329,6 +341,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(true))
       query = filteredQuery(query, cityFilter)
     }
+
+
+
     val locFilter = boolFilter
     if (area != "") {
       val areas = area.split( """,""").map(_.trim.toLowerCase)

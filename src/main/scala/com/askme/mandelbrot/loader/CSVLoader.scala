@@ -169,8 +169,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
 
       // if batch size is reached or this is delimiting call, flush.
       if (groupState.totalSize >= innerBatchSize || force) {
-        groupState.totalCount = 0
-        groupState.totalSize = 0
+
 
         esClient.admin().cluster().prepareHealth(index).setWaitForGreenStatus().get()
         info("[" + path + "] " + "sending indexing request[" + groupState.count + "][" + index + "/" + esType + "]["+groupState.totalSize+" chars]: " + groupState.bulkRequest.numberOfActions + " docs")
@@ -194,6 +193,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
           }
         })
 
+        groupState.totalCount = 0
+        groupState.totalSize = 0
 
 
           info("[" + path + "] " + "sent indexing request[" + groupState.count + "][" + index + "/" + esType + "]: " + groupState.bulkRequest.numberOfActions + " docs")
