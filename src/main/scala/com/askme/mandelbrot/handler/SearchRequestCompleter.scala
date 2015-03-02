@@ -33,11 +33,17 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
 
 
   override def receive = {
-    case res: RestMessage => complete(OK, res)
+    case _: EmptyResponse => {
+      val timeTaken = System.currentTimeMillis - searchParams.startTime
+      warn("[" + timeTaken + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [empty search criteria]")
+      complete(BadRequest, "empty search criteria")
+    }
     case tout: ReceiveTimeout => {
-      warn("[timeout/" + (searchParams.limits.timeoutms*2) + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]")
+      val timeTaken = System.currentTimeMillis - searchParams.startTime
+      warn("[timeout/" + (timeTaken) + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]")
       complete(GatewayTimeout, Timeout(searchParams.limits.timeoutms*2))
     }
+    case res: RestMessage => complete(OK, res)
 
   }
 
@@ -50,6 +56,8 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
   override val supervisorStrategy =
     OneForOneStrategy() {
       case e => {
+        val timeTaken = System.currentTimeMillis - searchParams.startTime
+        error("[" + timeTaken + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]", e)
         complete(InternalServerError, e.getMessage)
         Stop
       }

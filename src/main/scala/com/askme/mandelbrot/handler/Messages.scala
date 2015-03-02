@@ -20,6 +20,6 @@ case class LimitParams(maxdocspershard: Int, timeoutms: Long) extends RestMessag
 case class TextParams(kw: String, fuzzyprefix: Int, fuzzysim: Float) extends RestMessage
 case class RequestParams(httpReq: HttpRequest, clip: RemoteAddress) extends RestMessage
 case class SearchResult(slug: String, `hit-count`: Int, `server-time-ms`: Long, results: JValue) extends RestMessage
-
+case class EmptyResponse(reason: String) extends RestMessage
 
 case class Search(search: SearchRequestBuilder, w: Array[String])

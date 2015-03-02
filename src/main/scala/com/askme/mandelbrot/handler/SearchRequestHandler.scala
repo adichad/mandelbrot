@@ -206,13 +206,15 @@ object SearchRequestHandler extends Logging {
         (1 to mw.length).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            filter.should(termFilter(field, ck))
+            if(ck.trim != "")
+              filter.should(termFilter(field, ck))
           }
         }
         (1 to xw.length).foreach { len =>
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            filter.should(termFilter(field, ck))
+            if(ck.trim != "")
+              filter.should(termFilter(field, ck))
           }
         }
       }
@@ -284,7 +286,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
 
-  private def buildSearch(searchParams: SearchParams) = {
+  private def buildSearch(searchParams: SearchParams):Option[SearchRequestBuilder] = {
     import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
@@ -371,11 +373,28 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
+      } else if(category.trim == "") {
+        context.parent ! EmptyResponse ("empty search criteria")
+        return None
       }
+    } else if(category.trim == "") {
+      context.parent ! EmptyResponse ("empty search criteria")
+      return None
     }
 
     // filters
-    //query = categoryFilter(query, kw, esClient)
+    if (category != "") {
+      val cats = category.split("""#""")
+      val b = boolFilter
+      cats.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c)))
+        b.should(termFilter("Product.l3categoryslug", c))
+      }
+      query = filteredQuery(query, nestedFilter("Product", b).cache(true))
+    } else {
+      query = categoryFilter(query, w, kw, esClient, index, esType)
+    }
+
     if (id != "")
       query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
     if (city != "") {
@@ -427,17 +446,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       query = filteredQuery(query, locFilter)
     if (pin != "")
       query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
-    if (category != "") {
-      val cats = category.split("""#""")
-      val b = boolFilter
-      cats.foreach { c =>
-        b.should(queryFilter(matchPhraseQuery("Product.l3category", c)))
-        b.should(termFilter("Product.l3categoryslug", c))
-      }
-      query = filteredQuery(query, nestedFilter("Product", b).cache(true))
-    } else {
-      query = categoryFilter(query, w, kw, esClient, index, esType)
-    }
+
 
 
     val search = esClient.prepareSearch(index.split(","): _*)
@@ -503,31 +512,32 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
     }
-    search
+    return Some(search)
   }
+
 
   case class WrappedResponse(searchParams: SearchParams, result: SearchResponse)
 
   override def receive = {
     case searchParams: SearchParams =>
-      import searchParams.req._
-      import searchParams.startTime
 
+      val searchOpt = buildSearch(searchParams)
+      searchOpt match {
+      case None=>
+      case Some(search) =>
+        val me = context.self
 
-      val search = buildSearch(searchParams)
-      val me = context.self
+        search.execute(new ActionListener[SearchResponse] {
+          override def onResponse(response: SearchResponse): Unit = {
+            me ! WrappedResponse(searchParams, response)
+          }
 
-      search.execute(new ActionListener[SearchResponse] {
-        override def onResponse(response: SearchResponse): Unit = {
-          me ! WrappedResponse(searchParams, response)
-        }
-        override def onFailure(e: Throwable): Unit = {
-          val timeTaken = System.currentTimeMillis - startTime
-          error("[" + clip.toString + "]->[" + httpReq.uri + "]=[" + timeTaken + "] " + e.getMessage)
-          throw e
-        }
-      })
-      debug("query [" + pretty(render(parse(search.toString))) + "]")
+          override def onFailure(e: Throwable): Unit = {
+            throw e
+          }
+        })
+        debug("query [" + pretty(render(parse(search.toString))) + "]")
+    }
     case response: WrappedResponse =>
       import response.result
       import response.searchParams.filters._
