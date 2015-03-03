@@ -243,8 +243,10 @@ object SearchRequestHandler extends Logging {
         ).foreach(catFilter.should(_))
 
       debug(catFilter.toString)
-      if (catFilter.hasClauses)
+      if (catFilter.hasClauses) {
+        catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)))
         filteredQuery(query, catFilter.cache(true))
+      }
       else
         query
     }
