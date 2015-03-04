@@ -68,7 +68,7 @@
       <pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] [%-5level] [%thread] %msg%n</pattern>
     </encoder>
   </appender>
-  
+
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <!--pattern>[%d{z yyyy-MM-dd EE HH:mm:ss.SSS}] %highlight([%-5level]) %cyan([%thread]) %msg%n</pattern-->
@@ -77,7 +77,7 @@
   </appender>
 
   <root level="${log.level}">
-    <appender-ref ref="STDOUT" />
+    <!--appender-ref ref="STDOUT" /-->
     <appender-ref ref="INFO" />
     <appender-ref ref="ERROR" />
     <appender-ref ref="DEBUG" />
