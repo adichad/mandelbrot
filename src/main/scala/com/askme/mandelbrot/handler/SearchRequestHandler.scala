@@ -239,7 +239,7 @@ object SearchRequestHandler extends Logging {
                   analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
                 )
               )
-            ).cache(true)
+            )
         ).foreach(catFilter.should(_))
 
       debug(catFilter.toString)
@@ -392,7 +392,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         b.should(queryFilter(matchPhraseQuery("Product.l3category", c)))
         b.should(termFilter("Product.l3categoryslug", c))
       }
-      query = filteredQuery(query, nestedFilter("Product", b).cache(true))
+      query = filteredQuery(query, nestedFilter("Product", b))
     } else {
       query = categoryFilter(query, w, kw, esClient, index, esType)
     }
@@ -404,7 +404,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
       cityFilter.should(termsFilter("City", cityParams: _*))
       cityFilter.should(termsFilter("CitySynonyms", cityParams: _*))
-      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(true))
+      cityFilter.should(termsFilter("CitySlug", cityParams: _*))
       query = filteredQuery(query, cityFilter)
     }
 
@@ -431,7 +431,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
       areas.map(a => termFilter("City", a)).foreach(locFilter.should)
       areas.map(a => termFilter("CitySynonyms", a)).foreach(locFilter.should)
-      areas.map(a => termFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
+      areas.map(a => termFilter("AreaSlug", a)).foreach(locFilter.should)
 
     }
 
