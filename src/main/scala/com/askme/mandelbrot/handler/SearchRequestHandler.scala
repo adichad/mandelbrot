@@ -239,13 +239,13 @@ object SearchRequestHandler extends Logging {
                   analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
                 )
               )
-            )
+            ).cache(true)
         ).foreach(catFilter.should(_))
 
       debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)))
-        filteredQuery(query, catFilter.cache(true))
+        filteredQuery(query, catFilter)
       }
       else
         query
@@ -402,8 +402,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (city != "") {
       val cityFilter = boolFilter
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
-      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(true))
+      cityFilter.should(termsFilter("City", cityParams: _*))
+      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*))
       cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(true))
       query = filteredQuery(query, cityFilter)
     }
@@ -419,18 +419,18 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           .map(spanMultiTermQueryBuilder)
         val areaSpan = spanNearQuery.slop(1).inOrder(true)
         terms.foreach(areaSpan.clause)
-        locFilter.should(queryFilter(areaSpan).cache(true))
+        locFilter.should(queryFilter(areaSpan))
 
         val synTerms = analyze(esClient, index, "Area", a)
           .map(fuzzyQuery("AreaSynonyms", _).prefixLength(1).fuzziness(Fuzziness.TWO))
           .map(spanMultiTermQueryBuilder)
         val synAreaSpan = spanNearQuery.slop(1).inOrder(true)
         synTerms.foreach(synAreaSpan.clause)
-        locFilter.should(queryFilter(synAreaSpan).cache(true))
+        locFilter.should(queryFilter(synAreaSpan))
       }
 
-      areas.map(a => termFilter("City", a).cache(true)).foreach(locFilter.should)
-      areas.map(a => termFilter("CitySynonyms", a).cache(true)).foreach(locFilter.should)
+      areas.map(a => termFilter("City", a)).foreach(locFilter.should)
+      areas.map(a => termFilter("CitySynonyms", a)).foreach(locFilter.should)
       areas.map(a => termFilter("AreaSlug", a).cache(true)).foreach(locFilter.should)
 
     }
@@ -442,13 +442,12 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           .from((if (area == "") fromkm else 0.0d) + "km")
           .to((if (area == "") tokm else 10.0d) + "km")
           .optimizeBbox("indexed")
-          .geoDistance(GeoDistance.SLOPPY_ARC).cache(true))
+          .geoDistance(GeoDistance.SLOPPY_ARC))
 
     if (locFilter.hasClauses)
       query = filteredQuery(query, locFilter)
     if (pin != "")
-      query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(true))
-
+      query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*))
 
 
     val search = esClient.prepareSearch(index.split(","): _*)
