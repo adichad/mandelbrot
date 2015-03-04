@@ -63,20 +63,37 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
         requestInstance { (httpReq: HttpRequest) =>
           get {
               jsonpWithParameter("callback") {
-                path("apidocs") {
+                path("apidocs" / Segment / Segment) { (index, esType) =>
                   respondWithMediaType(`application/json`) {
-
                     complete {
-                      """
+                      s"""
                         |{
-                        |  "api": "GET /search/<index>/<type>",
+                        |  "api": "GET /search/$index/$esType",
+                        |  "version": "0.1.0",
+                        |  "comments": {
+                        |    "1": "all parameter-values should be url-encoded",
+                        |    "2": { "when lat-long parameters are specified": [
+                        |             "results are filtered by fromkm-tokm parameters",
+                        |             "sorting changes to relevance within radial distance buckets: 0-1.5km, 1.5-4km, 4-8km, 8-30km, 30km+",
+                        |             "unless exact LocationName is specified in keywords, which are always assigned the top distance bucket (0-1.5km)"
+                        |           ]
+                        |         },
+                        |    "3": "each place may have one or more Products, each assigned a category and a set of attributes. The category filter works accordingly.",
+                        |    "4": "Product/Attribute information is retrievable in its original structure by passing source=true. the select=<field-list> parameter should be used instead when the full response is not needed",
+                        |    "5": "paging is implemented using offset= and size= parameters, paging beyond the 2000th record may timeout and is not recommended, recommendation is to refine your search instead"
+                        |  },
                         |  "parameters": {
                         |    "kw": {
                         |      "type": "String",
                         |      "required": false,
                         |      "default": "",
                         |      "description": "free-form 'keywords'/'text' searched in analyzed fields",
-                        |      "multivalued": false
+                        |      "multivalued": false,
+                        |      "searched-fields": [
+                        |        "LocationName", "CompanyAliases", "Product.l3category", "Product.categorykeywords",
+                        |        "LocationType", "BusinessType", "Product.name", "Product.brand", "Area", "AreaSynonyms",
+                        |        "City", "CitySynonyms", "Product.stringattribute.answer"
+                        |      ]
                         |    },
                         |    "city": {
                         |      "type": "String",
@@ -114,7 +131,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         |      "type": "String",
                         |      "required": false,
                         |      "default": "",
-                        |      "description": "filter by document ids",
+                        |      "description": "filter by document ids, use with source=true for location detail rendering",
                         |      "multivalued": true,
                         |      "seperator": ","
                         |    },
@@ -174,14 +191,14 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         |      "default": true,
                         |      "description": "whether to compute aggregations on the result-set",
                         |      "multivalued": false
-                        |    },,
+                        |    },
                         |    "aggbuckets": {
                         |      "type": "Integer",
                         |      "required": false,
                         |      "default": 10,
                         |      "description": "number of buckets to return for each aggregation",
                         |      "multivalued": false
-                        |    }
+                        |    },
                         |    "source": {
                         |      "type": "Boolean",
                         |      "required": false,
@@ -190,7 +207,131 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         |      "multivalued": false
                         |    }
                         |  },
-                        |  "example": "GET http://138.91.34.100:9999/search/askme/place?kw=building+hardware&city=delhi&select=Area,LocationName,CompanyName,CompanyDescription,Product.cat3,Product.id,LatLong,City,CustomerType&lat=28.6479&lon=77.2342&fromkm=0&tokm=20"
+                        |  "example": {
+                        |    "request": "GET http://search.production.askme.com:9999/search/askme/place?kw=luxury%20spa&city=delhi&select=Area,Address,ContactLandLine,LocationLandLine,ContactMobile,LocationEmail,ContactEmail,LocationName,CompanyDescription,Product.l3category,LatLong,City&lat=28.6679&lon=77.2342&fromkm=0&tokm=20&size=2&agg=false",
+                        |    "response": {
+                        |      "slug": "/delhi/search/luxury-spa",
+                        |      "hit-count": 2,
+                        |      "server-time-ms": 290,
+                        |      "results": {
+                        |      "slug": "/delhi/search/luxury-spa",
+                        |      "hit-count": 2,
+                        |      "server-time-ms": 224,
+                        |      "results": {
+                        |        "took": 114,
+                        |        "timed_out": false,
+                        |        "terminated_early": false,
+                        |        "_shards": {
+                        |            "total": 15,
+                        |            "successful": 15,
+                        |            "failed": 0
+                        |        },
+                        |        "hits": {
+                        |            "total": 990,
+                        |            "max_score": 3068772140000000000,
+                        |            "hits": [
+                        |                {
+                        |                    "_index": "askme_a",
+                        |                    "_type": "place",
+                        |                    "_id": "U2083752905L34715333",
+                        |                    "_score": 4901054,
+                        |                    "fields": {
+                        |                        "Product.l3category": [
+                        |                            "Beauty Parlors & Salons- Unisex"
+                        |                        ],
+                        |                        "LatLong": [
+                        |                            "28.6621041316754,77.2353025979614"
+                        |                        ],
+                        |                        "LocationName": [
+                        |                            "Senzi Salon"
+                        |                        ],
+                        |                        "CompanyDescription": [
+                        |                            ""
+                        |                        ],
+                        |                        "Area": [
+                        |                            "Delhi GPO"
+                        |                        ],
+                        |                        "ContactEmail": [
+                        |                            ""
+                        |                        ],
+                        |                        "Address": [
+                        |                            "H-12 1st Floor Kailash Colony"
+                        |                        ],
+                        |                        "LocationEmail": [
+                        |                            ""
+                        |                        ],
+                        |                        "LocationLandLine": [
+                        |                            "41632746,41632706"
+                        |                        ],
+                        |                        "ContactMobile": [
+                        |                            ""
+                        |                        ],
+                        |                        "City": [
+                        |                            "Delhi"
+                        |                        ]
+                        |                    },
+                        |                    "sort": [
+                        |                        0,
+                        |                        4901054
+                        |                    ]
+                        |                },
+                        |                {
+                        |                    "_index": "askme_a",
+                        |                    "_type": "place",
+                        |                    "_id": "U3433480L6204914",
+                        |                    "_score": 4886159,
+                        |                    "fields": {
+                        |                        "Product.l3category": [
+                        |                            "Beauty Parlors & Salons- Unisex"
+                        |                        ],
+                        |                        "LatLong": [
+                        |                            "28.6755306,77.2232708999999"
+                        |                        ],
+                        |                        "LocationName": [
+                        |                            "Glimmer Unisex Saloon"
+                        |                        ],
+                        |                        "CompanyDescription": [
+                        |                            "We are service Provider for Hair Cutting and Saloon"
+                        |                        ],
+                        |                        "Area": [
+                        |                            "Civil Lines"
+                        |                        ],
+                        |                        "ContactEmail": [
+                        |                            ""
+                        |                        ],
+                        |                        "Address": [
+                        |                            "9 Ground Floor Rajpur Road"
+                        |                        ],
+                        |                        "LocationEmail": [
+                        |                            ""
+                        |                        ],
+                        |                        "LocationLandLine": [
+                        |                            ""
+                        |                        ],
+                        |                        "ContactMobile": [
+                        |                            "9711262333"
+                        |                        ],
+                        |                        "City": [
+                        |                            "Delhi"
+                        |                        ]
+                        |                    },
+                        |                    "sort": [
+                        |                        0,
+                        |                        4886159
+                        |                    ]
+                        |                }
+                        |            ]
+                        |          },
+                        |          "aggregations": {}
+                        |        }
+                        |      }
+                        |    }
+                        |  },
+                        |  "dev-contact": {
+                        |    "name": "adi",
+                        |    "email": "aditya.chadha@getitinfomedia.com",
+                        |    "phone": "+91 81308.02929"
+                        |  }
                         |}
                       """.stripMargin
                     }
