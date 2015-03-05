@@ -207,14 +207,14 @@ object SearchRequestHandler extends Logging {
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "")
-              filter.should(termFilter(field, ck))
+              filter.should(termFilter(field, ck).cache(false))
           }
         }
         (1 to xw.length).foreach { len =>
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "")
-              filter.should(termFilter(field, ck))
+              filter.should(termFilter(field, ck).cache(false))
           }
         }
       }
