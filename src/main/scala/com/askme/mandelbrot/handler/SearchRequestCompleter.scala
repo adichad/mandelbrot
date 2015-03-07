@@ -24,13 +24,24 @@ case class Timeout(val `timeout-ms`: Long)
 
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
-
   val json4sFormats = DefaultFormats
-  private lazy val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
-
-  context.setReceiveTimeout(Duration(searchParams.limits.timeoutms*2, MILLISECONDS))
-  target ! searchParams
-
+  if(searchParams.page.offset < 0 || searchParams.page.offset > 2000) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid offset]")
+    complete(BadRequest, "invalid offset: " + searchParams.page.offset)
+  }
+  else if(searchParams.page.size < 0 || searchParams.page.size > 500) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid page size]")
+    complete(BadRequest, "invalid page size: " + searchParams.page.size)
+  }
+  else if(searchParams.limits.timeoutms>10000) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid timeout requested]")
+    complete(BadRequest, "invalid timeout: " + searchParams.limits.timeoutms)
+  }
+  else {
+    val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
+    context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 2, MILLISECONDS))
+    target ! searchParams
+  }
 
   override def receive = {
     case _: EmptyResponse => {

@@ -198,7 +198,7 @@ object SearchRequestHandler extends Logging {
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
   private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
-    val filter = boolFilter
+    val filter = boolFilter.cache(false)
     debug(mw.toSet.toString)
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
     catFilterFields.foreach {
