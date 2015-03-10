@@ -25,11 +25,11 @@ case class Timeout(val `timeout-ms`: Long)
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
-  if(searchParams.page.offset < 0 || searchParams.page.offset > 2000) {
+  if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid offset]")
     complete(BadRequest, "invalid offset: " + searchParams.page.offset)
   }
-  else if(searchParams.page.size < 0 || searchParams.page.size > 500) {
+  else if(searchParams.page.size < 0 || searchParams.page.size > 100) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid page size]")
     complete(BadRequest, "invalid page size: " + searchParams.page.size)
   }
