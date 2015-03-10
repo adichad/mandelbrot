@@ -37,6 +37,14 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid timeout requested]")
     complete(BadRequest, "invalid timeout: " + searchParams.limits.timeoutms)
   }
+  else if(searchParams.text.kw.length > 200) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid kw length]")
+    complete(BadRequest, "invalid kw parameter size: " + searchParams.text.kw.length)
+  }
+  else if(searchParams.geo.area.length > 100) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid area length]")
+    complete(BadRequest, "invalid area parameter size: " + searchParams.text.kw.length)
+  }
   else {
     val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 2, MILLISECONDS))
