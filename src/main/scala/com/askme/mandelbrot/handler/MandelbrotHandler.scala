@@ -359,7 +359,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       'timeoutms.as[Long] ?
                         3000l,
                       'searchtype.as[String] ?
-                        "query_then_fetch") {
+                        "query_then_fetch",
+                       'client_ip.as[String]?"") {
                       (kw, city, area, pin, category, id,
                        size,
                        offset,
@@ -372,7 +373,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                        select,
                        agg, aggbuckets,
                        maxdocspershard,
-                       timeoutms, searchType) =>
+                       timeoutms, searchType,trueClient) =>
                         val fuzzyprefix = 3
                         val fuzzysim = 1f
                         val slugFlag = true
@@ -381,7 +382,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
                             runSearch(
                               SearchParams(
-                                RequestParams(httpReq, clip),
+                                RequestParams(httpReq, clip, trueClient),
                                 IndexParams(index, esType),
                                 TextParams(kw, fuzzyprefix, fuzzysim),
                                 GeoParams(city, area, pin, lat, lon, fromkm, tokm),

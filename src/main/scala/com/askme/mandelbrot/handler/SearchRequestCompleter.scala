@@ -25,7 +25,11 @@ case class Timeout(val `timeout-ms`: Long)
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
-  if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
+  if(searchParams.req.trueClient.startsWith("42.120.")) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [alibaba sala]")
+    complete(BadRequest, "invalid request source: " + searchParams.req.trueClient)
+  }
+  else if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid offset]")
     complete(BadRequest, "invalid offset: " + searchParams.page.offset)
   }
