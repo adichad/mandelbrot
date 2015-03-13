@@ -61,6 +61,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
     cors {
       clientIP { (clip: RemoteAddress) =>
         requestInstance { (httpReq: HttpRequest) =>
+          httpReq.headers.foreach(h => info(h))
           get {
               jsonpWithParameter("callback") {
                 path("apidocs" / Segment / Segment) { (index, esType) =>
@@ -379,6 +380,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                         val slugFlag = true
                         respondWithMediaType(
                           `application/json`) {
+
 
                             runSearch(
                               SearchParams(
