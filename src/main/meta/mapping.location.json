@@ -1,0 +1,70 @@
+{
+    "location": {
+        "_source": {
+            "enabled": true
+        },
+        "_all": {
+            "enabled": false
+        },
+        "properties": {
+            "id": {
+                "type": "integer",
+                "store": true,
+                "index": "not_analyzed"
+            },
+            "name": {
+                "type": "string",
+                "store": true,
+                "index": "not_analyzed"
+            },
+            "containers": {
+                "type": "integer",
+                "store": true
+            },
+            "types": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false}
+            },
+            "lat_lon": {
+                "type": "geo_point",
+                "lat_lon": true,
+                "geohash": true,
+                "geohash_precision": "1m",
+                "geohash_prefix": true,
+                "store": true,
+                "normalize": true,
+                "fielddata": {
+                    "format": "compressed",
+                    "precision": "1m"
+                }
+             },
+            "bounds": {
+                "type": "geo_shape",
+                "store": true,
+                "precision": "1m"
+            },
+            "synonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false}
+            },
+            "created_on": {
+                "type": "date",
+                "format":  "yyyy-MM-dd HH:mm:ss",
+                "store": true,
+                "index": "not_analyzed"
+            },
+            "updated_on": {
+                "type": "date",
+                "format":  "yyyy-MM-dd HH:mm:ss",
+                "store": true,
+                "index": "not_analyzed"
+            }
+        }
+    }
+}

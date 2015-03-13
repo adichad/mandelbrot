@@ -1,0 +1,106 @@
+apply plugin: 'scala'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'provided-base'
+
+apply from: 'gradle.properties'
+
+defaultTasks 'go'
+
+eclipse {
+  jdt {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+  }
+}
+
+buildscript {
+  repositories { jcenter() }
+
+  dependencies {
+    classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
+  }
+}
+
+task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
+  def buildName=rootProject.name+'-'+project.version
+
+  from(jar.outputs.files) {
+    into buildName+'/lib'
+  }
+  
+  from(configurations.runtime) {
+    into buildName+'/lib'
+  }
+  
+  from('src/main/scripts/linux') {
+    fileMode = 0755
+    into buildName+'/bin'
+  }
+
+  from('src/main/meta') {
+    into buildName+'/meta'
+  }
+  
+  from('.') {
+    include 'README.md'
+    into buildName
+  }
+
+  compression = Compression.GZIP
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir 'src/main/java'
+    }
+    scala {
+      srcDir 'src/main/scala'
+    }
+    resources {
+      srcDir 'src/main/resources'
+    }
+//compileClasspath
+//runtimeClasspath
+  }
+
+  test {
+    java {
+      srcDir 'src/test/java'
+    }
+    scala {
+      srcDir 'src/test/scala'
+    }
+    resources {
+      srcDir 'src/test/resources'
+    }
+  }
+}
+
+configurations {
+  provided {
+    dependencies.all { dep ->
+      configurations.runtime.exclude group: dep.group, module: dep.name
+    }
+  }
+  compile.extendsFrom provided
+
+  // exclusions 
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
+
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
+
+  // integTestCompile.extendsFrom testRuntime
+}
+
+dependencies {
+}
+
+repositories {
+  mavenLocal()
+}
