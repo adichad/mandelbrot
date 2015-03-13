@@ -102,6 +102,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     var groupDelCount = 0
     var totalCount = 0
     var totalSize = 0
+    var totalIndexCount = 0
     var bulkRequest: BulkRequestBuilder = esClient.prepareBulk
     val sb = new StringBuilder
   }
@@ -119,6 +120,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         else {
           groupState.json = groupState.json merge parse(jsonStr)
           groupState.totalSize += jsonStr.size
+          groupState.totalIndexCount += 1
         }
       } else {
         // id changed, start of new group
@@ -136,6 +138,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
         else {
           groupState.json = parse(jsonStr)
           groupState.totalSize += jsonStr.size
+          groupState.totalIndexCount += 1
           groupState.groupDelCount = 0
         }
 
