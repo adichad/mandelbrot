@@ -13,7 +13,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.BaseQueryBuilder
+import org.elasticsearch.index.query.{BoolFilterBuilder, BaseQueryBuilder}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
@@ -197,7 +197,7 @@ object SearchRequestHandler extends Logging {
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
     val cquery = disMaxQuery
     var hasClauses = false
     debug(mw.toSet.toString)
@@ -226,17 +226,17 @@ object SearchRequestHandler extends Logging {
     }
 
     if(hasClauses) {
+
       val catFilter = boolFilter.cache(false)
       esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-        .setQuery(cquery)
+        .setQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery)
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
-        .setTimeout(TimeValue.timeValueMillis(3000))
-        .setTimeout(TimeValue.timeValueMillis(3000))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(100).order(Terms.Order.aggregation("avg_score", false))
-        .subAggregation(avg("avg_score").script("_score")))
+        .setTimeout(TimeValue.timeValueMillis(500))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("max_score", false))
+        .subAggregation(max("max_score").field("_score")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(
@@ -250,9 +250,11 @@ object SearchRequestHandler extends Logging {
             ).cache(false)
         ).foreach(catFilter.should(_))
 
-      debug(catFilter.toString)
+      //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.l3category", 1f, mw, 1, 0.085f, 4)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.categorykeywords", 1f, mw, 1, 0.085f, 4)).cache(false))
         filteredQuery(query, catFilter)
       }
       else
@@ -393,6 +395,18 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     }
 
     // filters
+    val cityFilter = boolFilter.cache(false)
+    if (id != "")
+      query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
+    if (city != "") {
+
+      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
+      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
+      query = filteredQuery(query, cityFilter)
+    }
+
     if (category != "") {
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
@@ -402,21 +416,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      query = categoryFilter(query, w, kw, esClient, index, esType)
+      query = categoryFilter(query, w, kw, cityFilter, esClient, index, esType)
     }
-
-    if (id != "")
-      query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
-    if (city != "") {
-      val cityFilter = boolFilter.cache(false)
-      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
-      query = filteredQuery(query, cityFilter)
-    }
-
-
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
