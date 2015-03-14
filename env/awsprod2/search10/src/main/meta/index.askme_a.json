@@ -1,0 +1,57 @@
+{
+  "settings" : {
+    "number_of_shards" : 15,
+    "number_of_replicas" : 3,
+    "index.cache.query.enable": true,
+    "refresh_interval": "600s",
+    "analysis": {
+      "char_filter": {
+        "mapping_char_filter": {
+          "type": "mapping",
+          "mappings": [
+            "&=> and "
+          ]
+        },
+        "alphanumeric_char_filter": {
+          "type":"pattern_replace",
+          "pattern":"(?U)[^\\p{alnum}]+",
+          "replacement":" "
+        },
+        "html_strip_char_filter": {
+          "type":"html_strip"
+        }
+      },
+      "filter" : {
+        "light_stemmer": {
+          "type": "stemmer",
+          "name": "light_english"
+        },
+        "possessive_stemmer": {
+          "type": "stemmer",
+          "name": "possessive_english"
+        },
+        "stopword": {
+          "type": "stop",
+          "stopwords": ["a", "an", "the"]
+        },
+        "word_delimiter": {
+          "type": "word_delimiter"
+        }
+      },
+      "analyzer": {
+        "keyword_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "alphanumeric_char_filter"],
+          "tokenizer": "keyword",
+          "filter": ["lowercase", "asciifolding", "trim"]
+        },
+        "default": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "light_stemmer"]
+        }
+      }
+    }
+  }
+}

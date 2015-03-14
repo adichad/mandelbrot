@@ -1,0 +1,173 @@
+apply plugin: 'scala'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'provided-base'
+
+apply from: 'gradle.properties'
+
+ext {
+  scala_version     = '2.11.4'
+  titan_version     = '0.5.0'
+  algebird_version  = '0.6.0'
+  storehaus_version = '0.9.0'
+  spark_version     = '1.3.0'
+  hadoop_version    = '2.5.2'
+  es_version        = '1.4.4'
+  lucene_version    = '4.10.3'
+  spray_version     = '1.3.2'
+  akka_version      = '2.3.6'
+}
+
+defaultTasks 'build'
+
+eclipse {
+  jdt {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+  }
+}
+
+buildscript {
+  repositories {
+    jcenter()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.+')
+    classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '3.0.1')
+  }
+}
+
+apply plugin: 'com.jfrog.artifactory'
+
+jar {
+  onlyIf { false }
+}
+
+task dist(dependsOn: ['compileJava', 'compileScala', 'build'], type: Tar) {
+  def buildName=rootProject.name+'-'+project.version
+
+  from(jar.outputs.files) {
+    into buildName+'/lib'
+  }
+  
+  from(configurations.runtime) {
+    into buildName+'/lib'
+  }
+  
+  from('src/main/scripts/linux') {
+    fileMode = 0755
+    into buildName+'/bin'
+  }
+
+  compression = Compression.GZIP
+}
+
+sourceSets {
+}
+
+configurations {
+  provided {
+    dependencies.all { dep ->
+      configurations.runtime.exclude group: dep.group, module: dep.name
+    }
+  }
+  compile.extendsFrom provided
+
+  // exclusions 
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j12'
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-log4j11'
+  compile.exclude group: 'org.slf4j',           module: 'slf4j-jdk14'
+  compile.exclude group: 'org.jboss.netty',     module: 'netty'
+
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j12'
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-log4j11'
+  testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
+
+  // integTestCompile.extendsFrom testRuntime
+}
+
+dependencies {
+  compile     group: 'org.scala-lang',             name: 'scala-library',                    version: scala_version
+  compile     group: 'org.scalaz',                 name: 'scalaz-core_2.10',                 version: '7.1.0'
+  compile     group: 'org.scalaz',                 name: 'scalaz-effect_2.10',               version: '7.1.0'
+
+  compile     group: 'org.elasticsearch',          name: 'elasticsearch',                    version: es_version         // elasticsearch
+  compile     group: 'org.apache.lucene',          name: 'lucene-expressions',               version: lucene_version     // lucene stuff not already included in elasticsearch
+  compile     group: 'com.vividsolutions',         name: 'jts',                              version: '1.13'             // geo_shape type support for elasticsearch
+  compile     group: 'com.spatial4j',              name: 'spatial4j',                        version: '0.3'              // geo_shape type support for elasticsearch
+
+  compile     group: 'ch.qos.logback',             name: 'logback-classic',                  version: '1.1.+'            // logging backend
+  compile     group: 'org.clapper',                name: 'grizzled-slf4j_2.11',              version: '1.0.2'            // logging api
+ 
+  compile     group: 'io.spray',                   name: 'spray-can_2.11',                   version: spray_version      // http serving
+  compile     group: 'io.spray',                   name: 'spray-routing_2.11',               version: spray_version      // http serving
+  compile     group: 'io.spray',                   name: 'spray-json_2.11',                  version: '1.3.1'      // http serving
+
+  compile     group: 'net.maffoo',                 name: 'jsonquote-core_2.11',              version: '0.2.1'             // json serving
+  compile     group: 'net.maffoo',                 name: 'jsonquote-spray_2.11',             version: '0.2.1'             // json serving
+
+  compile     group: 'org.json4s',                 name: 'json4s-native_2.11',               version: '3.2.11'
+  compile     group: 'org.json4s',                 name: 'json4s-ext_2.11',                  version: '3.2.11'
+
+
+  compile     group: 'com.typesafe.akka',          name: 'akka-actor_2.11',                  version: akka_version
+  compile     group: 'com.typesafe.akka',          name: 'akka-remote_2.11',                 version: akka_version
+  compile     group: 'com.typesafe.akka',          name: 'akka-slf4j_2.11',                  version: akka_version
+
+  compile     group: 'edu.stanford.nlp',           name: 'stanford-corenlp',                 version: '3.4.1'
+
+//  compile     group: 'com.thinkaurelius.titan',    name: 'titan-core',                       version: titan_version      // distributed graph database engine
+//  compile     group: 'com.thinkaurelius.titan',    name: 'titan-es',                         version: titan_version      // distributed graph database engine
+  compile     group: 'com.hazelcast',              name: 'hazelcast',                        version: '3.3.1'            // distributed in-memory data grid
+  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-databind',                 version: '2.4.+'            // json support
+  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.4.+'            // json support
+  compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.4.+'            // json support
+
+  //compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
+
+//  compile     group: 'org.openstreetmap.osmosis',  name: 'osmosis-pbf2',                     version: '0.43.1'           // openstreetmap
+
+  compile     group: 'org.apache.spark',           name: 'spark-core_2.11',                  version: spark_version
+  compile     group: 'org.apache.spark',           name: 'spark-sql_2.11',                   version: spark_version
+  compile     group: 'org.apache.spark',           name: 'spark-streaming_2.11',             version: spark_version
+  compile     group: 'org.apache.spark',           name: 'spark-mllib_2.11',                 version: spark_version
+  compile     group: 'org.apache.spark',           name: 'spark-graphx_2.11',                version: spark_version
+
+  compile     group: 'org.elasticsearch',          name: 'elasticsearch-hadoop',             version: '2.0.0'
+
+
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
+  provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
+
+  compile     group: 'net.databinder.dispatch',    name: 'dispatch-core_2.11',               version: '0.11.1'
+
+  testCompile group: 'org.scalatest',              name: 'scalatest_2.11',                   version: '1.9.2'            //
+  testCompile group: 'org.specs2',                 name: 'specs2_2.11',                      version: '2.2.2'            //
+
+ 
+//integTest 
+}
+
+repositories {
+  jcenter()
+  mavenCentral()
+  maven { url "http://jcenter.bintray.com/" }
+  maven { url "http://repo.typesafe.com/typesafe/releases/" }
+  maven { url "http://typesafe.artifactoryonline.com/typesafe/repo" }
+  maven { url "http://maven.twttr.com/" }
+  maven { url "http://maven.restlet.org/" }
+  maven { url "http://repo.spray.io/" }
+  maven { url "http://repo.akka.io/releases/" }
+  maven { url "https://repo.eclipse.org/content/repositories/paho-releases" }
+  maven { url "http://gradle.artifactoryonline.com/gradle/libs/" }
+  maven { url "http://conjars.org/repo" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-release/" }
+  //maven { url "http://10.0.6.11:8081/artifactory/libs-snapshot/" }
+}
