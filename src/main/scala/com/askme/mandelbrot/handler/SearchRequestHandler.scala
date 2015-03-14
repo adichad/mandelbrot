@@ -481,7 +481,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script("_score"))
+          .subAggregation(sum("sum_score").field("_score"))
       )
 
       /*
@@ -515,7 +515,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
         .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
-        .subAggregation(sum("sum_score").script("_score"))
+        .subAggregation(sum("sum_score").field("_score"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
