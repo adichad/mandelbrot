@@ -67,6 +67,7 @@ object RootServer extends Logging {
         .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
         .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
+        .put("script.native.docscore.type", "com.askme.mandelbrot.scripts.DocScore")
     ).node
     val esClient = esNode.client
 

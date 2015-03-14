@@ -236,7 +236,7 @@ object SearchRequestHandler extends Logging {
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
         .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("max_score", false))
-        .subAggregation(max("max_score").field("_score")))
+        .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(
@@ -481,7 +481,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").field("_score"))
+          .subAggregation(sum("sum_score").script("docscore").lang("native"))
       )
 
       /*
@@ -515,7 +515,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
         .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
-        .subAggregation(sum("sum_score").field("_score"))
+        .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
