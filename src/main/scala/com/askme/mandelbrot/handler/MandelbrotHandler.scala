@@ -359,7 +359,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       'timeoutms.as[Long] ?
                         3000l,
                       'searchtype.as[String] ?
-                        "dfs_query_then_fetch",
+                        "query_then_fetch",
                        'client_ip.as[String]?"") {
                       (kw, city, area, pin, category, id,
                        size,

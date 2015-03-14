@@ -230,7 +230,7 @@ object SearchRequestHandler extends Logging {
       val catFilter = boolFilter.cache(false)
       esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
-        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+        .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery)
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
