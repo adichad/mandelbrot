@@ -198,37 +198,43 @@ object SearchRequestHandler extends Logging {
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
   private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
-    val filter = boolFilter.cache(false)
+    val cquery = disMaxQuery
+    var hasClauses = false
     debug(mw.toSet.toString)
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
     catFilterFields.foreach {
       field: (String) => {
-        (Math.min(mw.length, 2) to mw.length).foreach { len =>
+        (1 to mw.length).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            if(ck.trim != "")
-              filter.should(termFilter(field, ck).cache(false))
+            if(ck.trim != "") {
+              cquery.add(termQuery(field, ck).boost(len * 1024))
+              hasClauses = true
+            }
           }
         }
-        (Math.min(mw.length, 2) to xw.length).foreach { len =>
+        (1 to xw.length).foreach { len =>
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            if(ck.trim != "")
-              filter.should(termFilter(field, ck).cache(false))
+            if(ck.trim != "") {
+              cquery.add(termQuery(field, ck).boost(len * 1024))
+              hasClauses = true
+            }
           }
         }
       }
     }
 
-    if(filter.hasClauses) {
+    if(hasClauses) {
       val catFilter = boolFilter.cache(false)
       esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
-        .setSearchType(SearchType.COUNT)
-        .setQuery(filteredQuery(matchAllQuery, filter))
+        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+        .setQuery(cquery)
         .setTerminateAfter(10000)
-        .setTimeout(TimeValue.timeValueMillis(600))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(100).order(Terms.Order.aggregation("avg_score", false))
+        .setFrom(0).setSize(0)
+        .setTimeout(TimeValue.timeValueMillis(300))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("avg_score", false))
         .subAggregation(avg("avg_score").script("_score")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
