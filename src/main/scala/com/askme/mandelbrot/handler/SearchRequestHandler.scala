@@ -233,8 +233,9 @@ object SearchRequestHandler extends Logging {
         .setQuery(cquery)
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
-        .setTimeout(TimeValue.timeValueMillis(300))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("avg_score", false))
+        .setTimeout(TimeValue.timeValueMillis(3000))
+        .setTimeout(TimeValue.timeValueMillis(3000))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(100).order(Terms.Order.aggregation("avg_score", false))
         .subAggregation(avg("avg_score").script("_score")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
@@ -544,7 +545,6 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             throw e
           }
         })
-        debug("query [" + pretty(render(parse(search.toString))) + "]")
     }
     case response: WrappedResponse =>
       import response.result

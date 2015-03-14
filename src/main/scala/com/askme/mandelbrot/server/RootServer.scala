@@ -69,8 +69,6 @@ object RootServer extends Logging {
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
     ).node
     val esClient = esNode.client
-    info("waiting for yellow status")
-    info(esClient.admin().cluster.prepareHealth().setWaitForYellowStatus().get())
 
     //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
