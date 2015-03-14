@@ -203,14 +203,14 @@ object SearchRequestHandler extends Logging {
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
     catFilterFields.foreach {
       field: (String) => {
-        (1 to mw.length).foreach { len =>
+        (Math.min(mw.length, 2) to mw.length).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "")
               filter.should(termFilter(field, ck).cache(false))
           }
         }
-        (1 to xw.length).foreach { len =>
+        (Math.min(mw.length, 2) to xw.length).foreach { len =>
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "")
@@ -227,8 +227,9 @@ object SearchRequestHandler extends Logging {
         .setSearchType(SearchType.COUNT)
         .setQuery(filteredQuery(matchAllQuery, filter))
         .setTerminateAfter(10000)
-        .setTimeout(TimeValue.timeValueMillis(200))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10))
+        .setTimeout(TimeValue.timeValueMillis(600))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(100).order(Terms.Order.aggregation("avg_score", false))
+        .subAggregation(avg("avg_score").script("_score")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(
