@@ -291,8 +291,8 @@ class CSVLoader(val config: Config, index: String, esType: String,
             map.put(placeholder, (
               fconf.getInt("pos"),
               fconf.getString("type"),
-              (if (!fconf.hasPath("cardinality") || fconf.getString("cardinality") == null) "" else fconf.getString("cardinality")).nonEmptyOrElse("one"),
-              (if (!fconf.hasPath("delimiter") || fconf.getInt("delimiter") == null) "" else fconf.getInt("delimiter").toChar.toString).nonEmptyOrElse(elemDelim)
+              (if (!fconf.hasPath("cardinality")) "" else fconf.getString("cardinality")).nonEmptyOrElse("one"),
+              (if (!fconf.hasPath("delimiter")) "" else fconf.getInt("delimiter").toChar.toString).nonEmptyOrElse(elemDelim)
               )
             )
           } else flatten(fconf, sb, map, elemDelim)

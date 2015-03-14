@@ -13,7 +13,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.BaseQueryBuilder
+import org.elasticsearch.index.query.{BoolFilterBuilder, BaseQueryBuilder}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
@@ -197,8 +197,9 @@ object SearchRequestHandler extends Logging {
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
-    val filter = boolFilter.cache(false)
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+    val cquery = disMaxQuery
+    var hasClauses = false
     debug(mw.toSet.toString)
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
     catFilterFields.foreach {
@@ -206,29 +207,36 @@ object SearchRequestHandler extends Logging {
         (1 to mw.length).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            if(ck.trim != "")
-              filter.should(termFilter(field, ck).cache(false))
+            if(ck.trim != "") {
+              cquery.add(termQuery(field, ck).boost(len * 1024))
+              hasClauses = true
+            }
           }
         }
         (1 to xw.length).foreach { len =>
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
-            if(ck.trim != "")
-              filter.should(termFilter(field, ck).cache(false))
+            if(ck.trim != "") {
+              cquery.add(termQuery(field, ck).boost(len * 1024))
+              hasClauses = true
+            }
           }
         }
       }
     }
 
-    if(filter.hasClauses) {
+    if(hasClauses) {
+
       val catFilter = boolFilter.cache(false)
       esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
-        .setSearchType(SearchType.COUNT)
-        .setQuery(filteredQuery(matchAllQuery, filter))
+        .setSearchType(SearchType.QUERY_THEN_FETCH)
+        .setQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery)
         .setTerminateAfter(10000)
-        .setTimeout(TimeValue.timeValueMillis(200))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10))
+        .setFrom(0).setSize(0)
+        .setTimeout(TimeValue.timeValueMillis(500))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("max_score", false))
+        .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(
@@ -242,9 +250,11 @@ object SearchRequestHandler extends Logging {
             ).cache(false)
         ).foreach(catFilter.should(_))
 
-      debug(catFilter.toString)
+      //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.l3category", 1f, mw, 1, 0.085f, 4)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.categorykeywords", 1f, mw, 1, 0.085f, 4)).cache(false))
         filteredQuery(query, catFilter)
       }
       else
@@ -385,6 +395,18 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     }
 
     // filters
+    val cityFilter = boolFilter.cache(false)
+    if (id != "")
+      query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
+    if (city != "") {
+
+      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
+      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
+      query = filteredQuery(query, cityFilter)
+    }
+
     if (category != "") {
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
@@ -394,21 +416,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      query = categoryFilter(query, w, kw, esClient, index, esType)
+      query = categoryFilter(query, w, kw, cityFilter, esClient, index, esType)
     }
-
-    if (id != "")
-      query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
-    if (city != "") {
-      val cityFilter = boolFilter.cache(false)
-      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
-      query = filteredQuery(query, cityFilter)
-    }
-
-
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
@@ -472,7 +481,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script("_score"))
+          .subAggregation(sum("sum_score").script("docscore").lang("native"))
       )
 
       /*
@@ -506,7 +515,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
         .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
-        .subAggregation(sum("sum_score").script("_score"))
+        .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
@@ -537,7 +546,6 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             throw e
           }
         })
-        debug("query [" + pretty(render(parse(search.toString))) + "]")
     }
     case response: WrappedResponse =>
       import response.result

@@ -67,13 +67,10 @@ object RootServer extends Logging {
         .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
         .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
         .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
+        .put("script.native.docscore.type", "com.askme.mandelbrot.scripts.DocScore")
     ).node
     val esClient = esNode.client
-    info("waiting for green status")
-    info(esClient.admin().cluster.prepareHealth().setWaitForYellowStatus().get())
-    info("optimizing")
-    info(esClient.admin().indices().prepareOptimize().setMaxNumSegments(1).get())
-    info("optimized")
+
     //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
 /*
