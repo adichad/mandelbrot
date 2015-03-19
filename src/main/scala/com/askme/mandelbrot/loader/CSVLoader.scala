@@ -283,7 +283,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     mapping.keySet.foreach { field =>
       sb.append("\"").append(field).append("\": ")
       mapConf.getAnyRef(field) match {
-        case x: java.util.Map[String, AnyRef] => {
+        case x: java.util.Map[_, _] => {
           val fconf = mapConf.getConfig(field)
           if (fconf.hasPath("type")) {
             val placeholder = "${" + fconf.getInt("pos") + "}"
@@ -297,7 +297,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
             )
           } else flatten(fconf, sb, map, elemDelim)
         }
-        case x: java.util.List[AnyRef] => {
+        case x: java.util.List[_] => {
           sb.append("[ ")
           mapConf.getConfigList(field).foreach { c =>
             flatten(c, sb, map, elemDelim)

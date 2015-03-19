@@ -10,7 +10,6 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
-import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
 import spray.can.Http
 
@@ -40,36 +39,10 @@ object RootServer extends Logging {
     //val hazel = Hazelcast.newHazelcastInstance(conf)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
-      .data(boolean("es.node.data")).settings(
-      ImmutableSettings.settingsBuilder()
-        .put("node.name", string("es.node.name"))
-        .put("node.master", string("es.node.master"))
-        .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
-        .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
-        .put("discovery.zen.minimum_master_nodes", string("es.discovery.zen.minimum_master_nodes"))
-        .put("network.host", string("es.network.host"))
-        .put("path.data", string("es.path.data"))
-        .put("path.logs", string("es.path.logs"))
-        .put("path.conf", string("es.path.conf"))
-        .put("indices.cache.query.size", string("es.indices.cache.query.size"))
-        .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
-        .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
-        .put("indices.memory.min_index_buffer_size",string("es.indices.memory.min_index_buffer_size"))
-        .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
-        .put("indices.fielddata.cache.size", string("es.indices.fielddata.cache.size"))
-        .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
-        .put("indices.store.throttle.type", string("es.indices.store.throttle.type"))
-        .put("gateway.recover_after_nodes", string("es.gateway.recover_after_nodes"))
-        .put("gateway.expected_nodes", string("es.gateway.expected_nodes"))
-        .put("gateway.recover_after_time", string("es.gateway.recover_after_time"))
-        .put("threadpool.search.type", string("es.threadpool.search.type"))
-        .put("threadpool.search.size", string("es.threadpool.search.size"))
-        .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
-        .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
-        .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
-        .put("script.native.docscore.type", "com.askme.mandelbrot.scripts.DocScore")
-    ).node
+      .data(boolean("es.node.data")).settings(settings("es")).node
     val esClient = esNode.client
+
+    //val kafkaProducer = new KafkaProducer(props("kafka.producer"))
 
     //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
@@ -94,6 +67,7 @@ object RootServer extends Logging {
       //batchExecutionContext.shutdown()
       esClient.close()
       esNode.close()
+      //kafkaProducer.close()
       //sparkContext.stop()
       //hazel.shutdown()
     }

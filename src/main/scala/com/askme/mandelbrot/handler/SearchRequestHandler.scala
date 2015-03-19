@@ -208,7 +208,7 @@ object SearchRequestHandler extends Logging {
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
-              cquery.add(termQuery(field, ck).boost(len * 1024))
+              cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
               hasClauses = true
             }
           }
@@ -217,7 +217,7 @@ object SearchRequestHandler extends Logging {
           xw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
-              cquery.add(termQuery(field, ck).boost(len * 1024))
+              cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
               hasClauses = true
             }
           }
@@ -253,8 +253,7 @@ object SearchRequestHandler extends Logging {
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("Product.l3category", 1f, mw, 1, 0.085f, 4)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("Product.categorykeywords", 1f, mw, 1, 0.085f, 4)).cache(false))
+        catFilter.should(queryFilter(cquery).cache(false))
         filteredQuery(query, catFilter)
       }
       else

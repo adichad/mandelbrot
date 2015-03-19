@@ -6,7 +6,7 @@ apply plugin: 'provided-base'
 apply from: 'gradle.properties'
 
 ext {
-  scala_version     = '2.11.4'
+  scala_version     = '2.11.6'
   titan_version     = '0.5.0'
   algebird_version  = '0.6.0'
   storehaus_version = '0.9.0'
@@ -90,8 +90,8 @@ configurations {
 
 dependencies {
   compile     group: 'org.scala-lang',             name: 'scala-library',                    version: scala_version
-  compile     group: 'org.scalaz',                 name: 'scalaz-core_2.10',                 version: '7.1.0'
-  compile     group: 'org.scalaz',                 name: 'scalaz-effect_2.10',               version: '7.1.0'
+  compile     group: 'org.scalaz',                 name: 'scalaz-core_2.11',                 version: '7.1.0'
+  compile     group: 'org.scalaz',                 name: 'scalaz-effect_2.11',               version: '7.1.0'
 
   compile     group: 'org.elasticsearch',          name: 'elasticsearch',                    version: es_version         // elasticsearch
   compile     group: 'org.apache.lucene',          name: 'lucene-expressions',               version: lucene_version     // lucene stuff not already included in elasticsearch
@@ -124,6 +124,9 @@ dependencies {
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-databind',                 version: '2.4.+'            // json support
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-annotations',              version: '2.4.+'            // json support
   compile     group: 'com.fasterxml.jackson.core', name: 'jackson-core',                     version: '2.4.+'            // json support
+  compile     group: "org.apache.kafka",           name: "kafka-clients",                       version: "0.8.2.1"
+
+
 
   //compile     group: 'com.microsoft.sqlserver',    name: 'sqljdbc4',                         version: '4.0'              // jdbc connectivity to source
 

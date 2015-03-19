@@ -56,6 +56,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   private val fsActor = context.actorOf(Props(classOf[FileSystemWatcher], config, serverContext))
 
+//  private val serverContext.
 
   private val route =
     cors {
@@ -408,6 +409,22 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                   respondWithMediaType(`application/json`) {
                     complete {
                       """{"acknowledged": true}"""
+                    }
+                  }
+                }
+              }
+            } ~
+            post {
+              path("index") {
+                parameters('index.as[String], 'type) { (index, esType) =>
+                  entity(as[String]) { x =>
+                    info("index: " + index + ", type: " + esType)
+                    info(x)
+
+                    respondWithMediaType(`application/json`) {
+                      complete {
+                        """{"acknowledged": true}"""
+                      }
                     }
                   }
                 }
