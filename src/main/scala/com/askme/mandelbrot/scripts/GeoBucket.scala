@@ -3,7 +3,9 @@ package com.askme.mandelbrot.scripts
 import java.util
 
 import org.elasticsearch.index.fielddata.ScriptDocValues
+import org.elasticsearch.index.fielddata.ScriptDocValues.Strings
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
+import scala.collection.JavaConversions._
 
 /**
  * Created by adichad on 06/02/15.
@@ -25,7 +27,7 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], buckets: Arr
   override def runAsLong: Long = {
     val dist = doc.get("LatLong").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon)
 
-    if(areas.contains(doc.get("AreaSlug").asInstanceOf[String]))
+    if(doc.get("AreaSlug").asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
       0
     else
       buckets.indexWhere(dist <= _)
