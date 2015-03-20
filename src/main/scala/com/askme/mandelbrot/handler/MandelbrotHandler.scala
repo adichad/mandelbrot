@@ -416,15 +416,17 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
             } ~
             post {
               path("index") {
-                parameters('index.as[String], 'type) { (index, esType) =>
-                  entity(as[String]) { x =>
-                    info("index: " + index + ", type: " + esType)
-                    info(x)
-
+                parameters('index.as[String], 'type.as[String]) { (index, esType) =>
+                  entity(as[String]) { data =>
                     respondWithMediaType(`application/json`) {
-                      complete {
-                        """{"acknowledged": true}"""
-                      }
+                      runIndexing(
+                        IndexingParams(
+                          RequestParams(httpReq, clip, clip.toString),
+                          IndexParams(index, esType),
+                          RawData(data),
+                          System.currentTimeMillis
+                        )
+                      )
                     }
                   }
                 }
@@ -437,6 +439,10 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
 
   def runSearch(message: RestMessage): Route = {
     ctx => context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, message))
+  }
+
+  def runIndexing(message: RestMessage): Route = {
+    ctx => context.actorOf(Props(classOf[IndexRequestCompleter], config, serverContext, ctx, message))
   }
 
   override def receive: Receive = {

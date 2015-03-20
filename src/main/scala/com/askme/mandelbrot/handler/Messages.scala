@@ -22,4 +22,12 @@ case class RequestParams(httpReq: HttpRequest, clip: RemoteAddress, trueClient: 
 case class SearchResult(slug: String, `hit-count`: Int, `server-time-ms`: Long, results: JValue) extends RestMessage
 case class EmptyResponse(reason: String) extends RestMessage
 
+case class IndexingParams(req: RequestParams, idx: IndexParams, data: RawData, startTime: Long) extends RestMessage
+case class RawData(data: String) extends RestMessage
+
+case class IndexResult(success: Boolean)
+
 case class Search(search: SearchRequestBuilder, w: Array[String])
+
+
+

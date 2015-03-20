@@ -8,6 +8,7 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.MandelbrotHandler
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.node.NodeBuilder
@@ -42,7 +43,7 @@ object RootServer extends Logging {
       .data(boolean("es.node.data")).settings(settings("es")).node
     val esClient = esNode.client
 
-    //val kafkaProducer = new KafkaProducer(props("kafka.producer"))
+    val kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](props("kafka.producer"))
 
     //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
     //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
@@ -67,7 +68,7 @@ object RootServer extends Logging {
       //batchExecutionContext.shutdown()
       esClient.close()
       esNode.close()
-      //kafkaProducer.close()
+      kafkaProducer.close()
       //sparkContext.stop()
       //hazel.shutdown()
     }

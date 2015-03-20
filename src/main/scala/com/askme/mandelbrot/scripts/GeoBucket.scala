@@ -12,14 +12,20 @@ class GeoBucket extends NativeScriptFactory {
   val buckets = Array(1.5d, 4d, 8d, 30d, Double.MaxValue)
 
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
-    new GeoBucketScript(params.get("lat").asInstanceOf[Double], params.get("lon").asInstanceOf[Double], buckets)
+
+    new GeoBucketScript(
+      params.get("lat").asInstanceOf[Double],
+      params.get("lon").asInstanceOf[Double],
+      params.get("areaSlugs").asInstanceOf[String].split("#").toSet,
+      buckets)
   }
 }
 
-class GeoBucketScript(lat: Double, lon: Double, buckets: Array[Double]) extends AbstractLongSearchScript {
+class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], buckets: Array[Double]) extends AbstractLongSearchScript {
   override def runAsLong: Long = {
     val dist = doc.get("LatLong").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon)
-    if(score > 1E+19)
+
+    if(areas.contains(doc.get("AreaSlug").asInstanceOf[String]))
       0
     else
       buckets.indexWhere(dist <= _)

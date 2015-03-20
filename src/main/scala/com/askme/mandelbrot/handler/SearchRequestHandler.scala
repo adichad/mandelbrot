@@ -34,14 +34,14 @@ import scala.collection.JavaConversions._
 object SearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
-  private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d): Unit = {
+  private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = ""): Unit = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.foreach {
       _ match {
         case "_score" => search.addSort(new ScoreSortBuilder().order(SortOrder.DESC))
         case "_distance" => search.addSort(
           SortBuilders.scriptSort("geobucket", "number").lang("native")
-            .param("lat", lat).param("lon", lon).order(SortOrder.ASC))
+            .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC))
         case x => {
           val pair = x.split( """\.""", 2)
           if (pair.size == 2)
@@ -419,22 +419,26 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     }
 
     val locFilter = boolFilter.cache(false)
+    val analyzedAreas = scala.collection.mutable.Set[String]()
     if (area != "") {
       val areas = area.split( """,""").map(_.trim.toLowerCase)
       areas.foreach { a =>
-        val terms = analyze(esClient, index, "Area", a)
+
+        val areaWords = analyze(esClient, index, "Area", a)
+        val terms = areaWords
           .map(fuzzyQuery("Area", _).prefixLength(1).fuzziness(Fuzziness.TWO))
           .map(spanMultiTermQueryBuilder)
         val areaSpan = spanNearQuery.slop(1).inOrder(true)
         terms.foreach(areaSpan.clause)
         locFilter.should(queryFilter(areaSpan).cache(false))
 
-        val synTerms = analyze(esClient, index, "Area", a)
+        val synTerms = areaWords
           .map(fuzzyQuery("AreaSynonyms", _).prefixLength(1).fuzziness(Fuzziness.TWO))
           .map(spanMultiTermQueryBuilder)
         val synAreaSpan = spanNearQuery.slop(1).inOrder(true)
         synTerms.foreach(synAreaSpan.clause)
         locFilter.should(queryFilter(synAreaSpan).cache(false))
+        analyzedAreas += areaWords.mkString("-")
       }
 
       areas.map(a => termFilter("City", a).cache(false)).foreach(locFilter.should)
@@ -442,6 +446,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       areas.map(a => termFilter("AreaSlug", a).cache(false)).foreach(locFilter.should)
 
     }
+    val areaSlugs = analyzedAreas.mkString("#")
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
@@ -470,7 +475,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       .setExplain(explain)
       .setFetchSource(source)
 
-    addSort(search, sort, lat, lon)
+    addSort(search, sort, lat, lon, areaSlugs)
 
     if (agg) {
       //if (city == "")
