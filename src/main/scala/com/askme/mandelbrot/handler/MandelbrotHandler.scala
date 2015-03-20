@@ -415,8 +415,8 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
               }
             } ~
             post {
-              path("index") {
-                parameters('index.as[String], 'type.as[String]) { (index, esType) =>
+              path("index" / Segment / Segment ) { (index, esType) =>
+
                   entity(as[String]) { data =>
                     respondWithMediaType(`application/json`) {
                       runIndexing(
@@ -429,7 +429,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       )
                     }
                   }
-                }
+
               }
             }
         }

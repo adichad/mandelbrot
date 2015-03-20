@@ -30,8 +30,8 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
   }
 
   override def receive = {
-    case res: RestMessage => complete(OK, res)
-
+    case res: IndexSuccessResult => complete(OK, res)
+    case res: IndexFailureResult => complete(NotAcceptable, res)
   }
 
   def complete[T <: AnyRef](status: StatusCode, obj: T) = {
@@ -43,8 +43,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
   override val supervisorStrategy =
     OneForOneStrategy() {
       case e => {
-        val timeTaken = System.currentTimeMillis - indexParams.startTime
-        error("[" + timeTaken + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "]", e)
+        error("InternalServerError", e)
         complete(InternalServerError, e.getMessage)
         Stop
       }

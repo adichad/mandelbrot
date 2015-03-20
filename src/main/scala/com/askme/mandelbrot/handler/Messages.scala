@@ -25,7 +25,8 @@ case class EmptyResponse(reason: String) extends RestMessage
 case class IndexingParams(req: RequestParams, idx: IndexParams, data: RawData, startTime: Long) extends RestMessage
 case class RawData(data: String) extends RestMessage
 
-case class IndexResult(success: Boolean)
+case class IndexFailureResult(response: JValue) extends RestMessage
+case class IndexSuccessResult(response: JValue) extends RestMessage
 
 case class Search(search: SearchRequestBuilder, w: Array[String])
 
