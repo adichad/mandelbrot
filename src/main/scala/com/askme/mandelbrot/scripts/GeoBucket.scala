@@ -27,9 +27,12 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], buckets: Arr
   override def runAsLong: Long = {
     val dist = doc.get("LatLong").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon)
 
-    if(doc.get("AreaSlug").asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
+    val bucket = buckets.indexWhere(dist <= _)
+    if(bucket == 0)
+      0
+    else if(doc.get("AreaSlug").asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
       0
     else
-      buckets.indexWhere(dist <= _)
+      bucket
   }
 }
