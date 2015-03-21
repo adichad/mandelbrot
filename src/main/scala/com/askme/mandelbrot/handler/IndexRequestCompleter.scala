@@ -43,7 +43,8 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
   override val supervisorStrategy =
     OneForOneStrategy() {
       case e => {
-        error("InternalServerError", e)
+        val timeTaken = System.currentTimeMillis - indexParams.startTime
+        error("[indexing] [" + timeTaken + "] [?] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + e.getMessage + "]", e)
         complete(InternalServerError, e.getMessage)
         Stop
       }

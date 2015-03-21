@@ -431,7 +431,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                   }
                 } else {
                   respondWithMediaType(`application/json`) {
-                    complete(StatusCodes.BadRequest, "unsupported operation")
+                    complete(StatusCodes.MethodNotAllowed, "unsupported operation")
                   }
                 }
               }
