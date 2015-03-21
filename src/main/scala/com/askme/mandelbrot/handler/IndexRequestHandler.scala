@@ -48,7 +48,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             try {
-              esClient.admin().indices().prepareRefresh(indexParams.idx.index).execute().get()
+              //esClient.admin().indices().prepareRefresh(indexParams.idx.index).execute().get()
               val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\"PlaceID\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
               val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
               val resp = parse("{\"failed\": " + failures + ", \"successful\": " + success + "}")
@@ -63,7 +63,10 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
                 completer ! IndexSuccessResult(resp)
               }
             } catch {
-              case e: Throwable => throw e
+              case e: Throwable =>
+                val timeTaken = System.currentTimeMillis - indexParams.startTime
+                error("[indexing] [" + reqSize + "] [" + timeTaken + "] [" + e.getMessage + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "]", e)
+                throw e
             }
           }
 
