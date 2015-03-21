@@ -416,7 +416,7 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
             } ~
             post {
               path("index" / Segment / Segment ) { (index, esType) =>
-
+                if(boolean("http.indexing.enabled")) {
                   entity(as[String]) { data =>
                     respondWithMediaType(`application/json`) {
                       runIndexing(
@@ -429,7 +429,11 @@ class MandelbrotHandler(val config: Config, serverContext: SearchContext) extend
                       )
                     }
                   }
-
+                } else {
+                  respondWithMediaType(`application/json`) {
+                    complete(StatusCodes.BadRequest, "unsupported operation")
+                  }
+                }
               }
             }
         }
