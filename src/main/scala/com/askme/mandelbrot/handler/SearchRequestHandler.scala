@@ -197,7 +197,7 @@ object SearchRequestHandler extends Logging {
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
     val cquery = disMaxQuery
     var hasClauses = false
     debug(mw.toSet.toString)
@@ -235,7 +235,7 @@ object SearchRequestHandler extends Logging {
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(10).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(aggBuckets).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
@@ -416,7 +416,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      query = categoryFilter(query, w, kw, cityFilter, esClient, index, esType)
+      query = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType)
     }
 
     val locFilter = boolFilter.cache(false)
