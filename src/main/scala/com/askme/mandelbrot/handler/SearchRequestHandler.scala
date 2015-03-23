@@ -492,7 +492,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setSearchType(SearchType.fromString(searchType))
-      .setQuery(query)
+      .setQuery(filteredQuery(query, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
       .setTrackScores(true)
       .addFields(select.split( ""","""): _*)
       .setFrom(offset).setSize(size)
