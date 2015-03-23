@@ -254,6 +254,7 @@ object SearchRequestHandler extends Logging {
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
         catFilter.should(queryFilter(cquery).cache(false))
+        debug(catFilter.toString)
         filteredQuery(query, catFilter)
       }
       else
