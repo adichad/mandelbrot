@@ -232,7 +232,7 @@ object SearchRequestHandler extends Logging {
       esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
-        .setQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery)
+        .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
