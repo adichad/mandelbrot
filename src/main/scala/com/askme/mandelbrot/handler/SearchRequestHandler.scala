@@ -202,6 +202,7 @@ object SearchRequestHandler extends Logging {
     var hasClauses = false
     debug(mw.toSet.toString)
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
+
     catFilterFields.foreach {
       field: (String) => {
         (1 to mw.length).foreach { len =>
@@ -235,7 +236,7 @@ object SearchRequestHandler extends Logging {
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(aggBuckets).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
@@ -252,7 +253,31 @@ object SearchRequestHandler extends Logging {
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
-        catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
+        //catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
+
+        Seq("LocationNameExact", "CompanyAliasesExact").foreach {
+          field: (String) => {
+            (1 to mw.length).foreach { len =>
+              mw.sliding(len).foreach { shingle =>
+                val ck = shingle.mkString(" ")
+                if(ck.trim != "") {
+                  cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+                  hasClauses = true
+                }
+              }
+            }
+            (1 to xw.length).foreach { len =>
+              xw.sliding(len).foreach { shingle =>
+                val ck = shingle.mkString(" ")
+                if(ck.trim != "") {
+                  cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+                  hasClauses = true
+                }
+              }
+            }
+          }
+        }
+
         catFilter.should(queryFilter(cquery).cache(false))
         debug(catFilter.toString)
         filteredQuery(query, catFilter)
