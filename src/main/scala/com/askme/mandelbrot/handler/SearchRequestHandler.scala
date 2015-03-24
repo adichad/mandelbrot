@@ -62,13 +62,13 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int) = {
+  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
     val terms = w
       .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
       .map(spanMultiTermQueryBuilder)
 
-    (1 to Math.min(terms.length, maxShingle)).foreach { len =>
+    (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       terms.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
         shingle.foreach(nearQuery.clause)
@@ -78,7 +78,7 @@ object SearchRequestHandler extends Logging {
 
     val fieldQuery2 = boolQuery
     val termsExact = w.map(spanTermQuery(field, _))
-    (1 to Math.min(terms.length, maxShingle)).foreach { len =>
+    (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
       termsExact.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len * math.max(1, i))
@@ -253,7 +253,7 @@ object SearchRequestHandler extends Logging {
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
-        //catFilter.should(queryFilter(shingleSpan("LocationName",1f,mw, 1,0.85f,4)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
 
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
