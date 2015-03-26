@@ -424,7 +424,17 @@
                 "store": false,
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
-                "index": "analyzed"
+                "index": "analyzed",
+                "copy_to": "Product.stringattribute.answerexact"
+              },
+              "answerexact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false}
               }
             }
           },

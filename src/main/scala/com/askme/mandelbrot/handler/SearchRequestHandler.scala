@@ -311,7 +311,10 @@ object SearchRequestHandler extends Logging {
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
-  private val fullFields = Map("Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f, "LocationNameExact"->1248576f, "CompanyAliasesExact"->1248576f)
+  private val fullFields = Map(
+    "Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
+    "LocationNameExact"->1248576f, "CompanyAliasesExact"->1248576f,
+    "Product.stringattribute.answerexact"->524288f)
 
   private val emptyStringArray = new Array[String](0)
 
