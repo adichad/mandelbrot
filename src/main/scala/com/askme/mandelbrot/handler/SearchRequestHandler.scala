@@ -70,7 +70,7 @@ object SearchRequestHandler extends Logging {
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * len)
+        val nearQuery = spanNearQuery.slop(math.max(0,math.min(2,len - 3))).inOrder(false).boost(boost * len)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
@@ -81,7 +81,7 @@ object SearchRequestHandler extends Logging {
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
       termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(len - 1).inOrder(false).boost(boost * 2 * len * len * math.max(1, i))
+        val nearQuery = spanNearQuery.slop(math.max(0,math.min(2,len - 3))).inOrder(false).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
         fieldQuery2.should(nearQuery)
         i /= 10
