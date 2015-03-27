@@ -261,7 +261,7 @@ object SearchRequestHandler extends Logging {
               mw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
                 if(ck.trim != "") {
-                  cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+                  cquery.add(nestIfNeeded(field, termQuery(field, ck)))
                   hasClauses = true
                 }
               }
@@ -270,7 +270,7 @@ object SearchRequestHandler extends Logging {
               xw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
                 if(ck.trim != "") {
-                  cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+                  cquery.add(nestIfNeeded(field, termQuery(field, ck)))
                   hasClauses = true
                 }
               }
@@ -313,7 +313,7 @@ object SearchRequestHandler extends Logging {
 
   private val fullFields = Map(
     "Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
-    "LocationNameExact"->1248576f, "CompanyAliasesExact"->1248576f,
+    "LocationNameExact"->1048577f, "CompanyAliasesExact"->1048577f,
     "Product.stringattribute.answerexact"->524288f)
 
   private val emptyStringArray = new Array[String](0)
