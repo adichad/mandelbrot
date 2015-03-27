@@ -236,7 +236,7 @@ object SearchRequestHandler extends Logging {
         .setTerminateAfter(10000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l3categoryexact").size(2).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
