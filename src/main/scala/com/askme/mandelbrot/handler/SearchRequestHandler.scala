@@ -62,7 +62,7 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1) = {
+  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
     val terms = w
       .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
@@ -70,7 +70,7 @@ object SearchRequestHandler extends Logging {
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(math.max(0,math.min(2,len - 3))).inOrder(false).boost(boost * len)
+        val nearQuery = spanNearQuery.slop(if(sloppy)(math.max(0,math.min(2,len - 3))) else 0).inOrder(!sloppy).boost(boost * len)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
@@ -81,7 +81,7 @@ object SearchRequestHandler extends Logging {
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
       termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(math.max(0,math.min(2,len - 3))).inOrder(false).boost(boost * 2 * len * len * math.max(1, i))
+        val nearQuery = spanNearQuery.slop(if(sloppy)(math.max(0,math.min(2,len - 3))) else 0).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
         fieldQuery2.should(nearQuery)
         i /= 10
@@ -254,6 +254,9 @@ object SearchRequestHandler extends Logging {
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.l3category", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
+        catFilter.should(queryFilter(shingleSpan("Product.categorykeywords", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
+        catFilter.should(queryFilter(shingleSpan("Product.name", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
 
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
