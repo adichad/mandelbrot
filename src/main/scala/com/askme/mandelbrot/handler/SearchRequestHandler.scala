@@ -310,7 +310,7 @@ object SearchRequestHandler extends Logging {
     )
   )
 
-  private val exactFields = Map("Product.categorykeywords" -> 1048576f, "CompanyAliases" -> 1048576f)
+  private val exactFields = Map("Product.categorykeywords" -> 1048576f/*, "CompanyAliases" -> 1048576f*/)
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
