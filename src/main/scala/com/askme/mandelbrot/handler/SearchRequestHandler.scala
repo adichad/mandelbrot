@@ -398,14 +398,14 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
             (math.max(1*w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
                 val k = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * w.length * w.length * (searchFields.size + condFields.values.size + 1))))
+                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
               }
             }
 
             (math.max(1*w.length/2, 1) to mw.length).foreach { len =>
               mw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * mw.length * mw.length * (searchFields.size + condFields.values.size + 1))))
+                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
               }
             }
 
