@@ -254,10 +254,10 @@ object SearchRequestHandler extends Logging {
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("Product.l3category", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
-        catFilter.should(queryFilter(shingleSpan("Product.categorykeywords", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
-        catFilter.should(queryFilter(shingleSpan("Product.name", 1f, mw, 1, 0.85f, mw.length, mw.length, false)))
-
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))))
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
