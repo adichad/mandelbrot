@@ -253,11 +253,15 @@ object SearchRequestHandler extends Logging {
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
-        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))))
+        //catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(termQuery("LocationNameExact", xw.mkString(" "))).cache(false))
+        catFilter.should(queryFilter(termQuery("LocationNameExact", xw.mkString(" ")+"s")).cache(false))
+        catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
+        catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" ")+"s")).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))).cache(false))
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
