@@ -16,13 +16,9 @@ import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket
 import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
-import scala.util.parsing.json.JSONArray
 
 
 /**
@@ -139,14 +135,14 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
 
        val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
        val bucks = buckets.drop(offset)
-       val res = new JSONArray(bucks.toList)
+       val res = JObject(bucks.map(x=>JField(x.getKey, JInt(x.getDocCount))).toList)
        val count = buckets.size
        val resCount = bucks.size
 
        val timeTaken = System.currentTimeMillis - startTime
-       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + count + "/" + res.size + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + count + "/" + resCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
 
-       context.parent ! AggregateResult(count, resCount, timeTaken, parse(res.toString))
+       context.parent ! AggregateResult(count, resCount, timeTaken, res)
    }
 
  }
