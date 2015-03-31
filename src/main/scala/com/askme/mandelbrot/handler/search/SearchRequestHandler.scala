@@ -1,9 +1,11 @@
-package com.askme.mandelbrot.handler
+package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.handler.EmptyResponse
+import com.askme.mandelbrot.handler.search.message.{SearchParams, SearchResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -13,9 +15,9 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.{BoolFilterBuilder, BaseQueryBuilder}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.index.query.{BaseQueryBuilder, BoolFilterBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -54,7 +56,7 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[SearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
     val parts = fieldName.split(".")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -62,7 +64,7 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+  private[SearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
     val terms = w
       .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
@@ -328,8 +330,7 @@ object SearchRequestHandler extends Logging {
 }
 
 class SearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
-
-  import com.askme.mandelbrot.handler.SearchRequestHandler._
+  import SearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
 

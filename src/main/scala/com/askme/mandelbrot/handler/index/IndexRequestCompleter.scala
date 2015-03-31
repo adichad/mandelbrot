@@ -1,8 +1,9 @@
-package com.askme.mandelbrot.handler
+package com.askme.mandelbrot.handler.index
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, OneForOneStrategy, Props}
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.handler.{IndexFailureResult, IndexSuccessResult, IndexingParams}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging

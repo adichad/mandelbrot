@@ -1,8 +1,11 @@
-package com.askme.mandelbrot.handler
+package com.askme.mandelbrot.handler.search
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, OneForOneStrategy, Props, ReceiveTimeout}
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.handler.message.{RestMessage, Timeout}
+import com.askme.mandelbrot.handler.EmptyResponse
+import com.askme.mandelbrot.handler.search.message.SearchParams
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -11,16 +14,11 @@ import spray.http.StatusCode
 import spray.http.StatusCodes._
 import spray.httpx.Json4sSupport
 import spray.routing.RequestContext
-import scala.concurrent.duration.MILLISECONDS
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, MILLISECONDS}
 
 
-/**
- * Created by adichad on 08/01/15.
- */
 
-case class Timeout(val `timeout-ms`: Long)
 
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {

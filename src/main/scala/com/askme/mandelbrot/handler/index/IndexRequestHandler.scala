@@ -1,7 +1,8 @@
-package com.askme.mandelbrot.handler
+package com.askme.mandelbrot.handler.index
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.handler.{IndexFailureResult, IndexSuccessResult, IndexingParams}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -9,9 +10,8 @@ import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.bulk.BulkResponse
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import spray.json._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{CompactPrinter, JsArray, JsValue, JsonParser}
+import spray.json.{CompactPrinter, JsArray, JsValue, JsonParser, _}
 
 
 /**
