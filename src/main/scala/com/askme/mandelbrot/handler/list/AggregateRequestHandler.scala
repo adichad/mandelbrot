@@ -16,6 +16,7 @@ import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.json4s._
 
 import scala.collection.JavaConversions._
@@ -99,6 +100,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
        .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
        .addAggregation(terms(agg).field(agg).size(offset+size).shardSize(0))
+       .addAggregation(cardinality("count").field(agg).precisionThreshold(40000))
 
      return Some(search)
    }
@@ -133,10 +135,11 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        import response.aggParams.startTime
        import response.result
 
+
        val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
        val bucks = buckets.drop(offset)
        val res = JObject(bucks.map(x=>JField(x.getKey, JInt(x.getDocCount))).toList)
-       val count = buckets.size
+       val count = result.getAggregations.get("count").asInstanceOf[Cardinality].getValue
        val resCount = bucks.size
 
        val timeTaken = System.currentTimeMillis - startTime
