@@ -136,6 +136,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        import response.result
 
 
+
        val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
        val bucks = buckets.drop(offset)
        val res = JObject(bucks.map(x=>JField(x.getKey, JInt(x.getDocCount))).toList)
@@ -145,7 +146,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        val timeTaken = System.currentTimeMillis - startTime
        info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + count + "/" + resCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
 
-       context.parent ! AggregateResult(count, resCount, timeTaken, res)
+       context.parent ! AggregateResult(count, resCount, timeTaken, result.isTerminatedEarly, result.isTimedOut, res)
    }
 
  }

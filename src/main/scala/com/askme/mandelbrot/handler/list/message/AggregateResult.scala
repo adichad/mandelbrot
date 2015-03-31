@@ -6,4 +6,6 @@ import org.json4s.JsonAST.JValue
 /**
  * Created by adichad on 31/03/15.
  */
-case class AggregateResult (`approx-total-count`: Long, `hit-count`: Int, `server-time-ms`: Long, results: JValue) extends RestMessage
+case class AggregateResult (`approx-total-count`: Long, `hit-count`: Int,
+                            `server-time-ms`: Long, `terminated-early`: Boolean,
+                            `timed-out`: Boolean, results: JValue) extends RestMessage

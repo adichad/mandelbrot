@@ -21,11 +21,11 @@ case object AggregateRouter extends Router {
         jsonpWithParameter("callback") {
           path("aggregate" / Segment / Segment) { (index, esType) =>
             parameters(
-              'city ? "", 'area ? "", 'category ? "",
+              'city ? "", 'loc ? "", 'cat ? "",
               'size.as[Int] ? 1000, 'offset.as[Int] ? 0,
-              'agg.as[String] ? "City",
+              'agg.as[String] ? "city",
               'maxdocspershard.as[Int] ? 500000,
-              'timeoutms.as[Long] ? 3000l,
+              'timeoutms.as[Long] ? 5000l,
               'searchtype.as[String] ? "count", 'client_ip.as[String] ? "") {
               (city, area, category,
                size, offset,
@@ -39,7 +39,11 @@ case object AggregateRouter extends Router {
                       context.actorOf(Props(classOf[AggregateRequestCompleter], config, serverContext, ctx, AggregateParams(
                         RequestParams(httpReq, clip, trueClient),
                         IndexParams(index, esType),
-                        AggregateFilterParams(city, area, category, agg),
+                        AggregateFilterParams(city, area, category,
+                          if(agg.toLowerCase == "city") "CityAggr"
+                          else if(agg.toLowerCase == "loc") "AreaAggr"
+                          else if(agg.toLowerCase == "cat") "Product.l3categoryaggr"
+                          else agg),
                         PageParams(size, offset),
                         LimitParams(maxdocspershard, timeoutms),
                         System.currentTimeMillis
