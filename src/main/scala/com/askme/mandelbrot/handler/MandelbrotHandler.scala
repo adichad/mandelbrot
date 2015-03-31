@@ -36,7 +36,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
   private implicit val service: MandelbrotHandler = this
   private val route =
     cors {
-      get { SearchDocsRouter(this) ~ SearchRouter(this) ~ AggregateRouter(this) } ~
+      get { SearchDocsRouter(this) ~ SearchRouter(this) ~ AggregateRouter(conf("http.aggregate"))(this) } ~
       post { WatchRouter.apply ~ IndexRouter(conf("http.indexing")).apply }
     }
 
