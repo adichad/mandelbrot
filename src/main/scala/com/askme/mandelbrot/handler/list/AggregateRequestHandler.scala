@@ -16,10 +16,13 @@ import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
+import scala.util.parsing.json.JSONArray
 
 
 /**
@@ -135,9 +138,10 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        import response.result
 
        val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
-       val res = buckets.drop(offset)
+       val bucks = buckets.drop(offset)
+       val res = new JSONArray(bucks.toList)
        val count = buckets.size
-       val resCount = res.size
+       val resCount = bucks.size
 
        val timeTaken = System.currentTimeMillis - startTime
        info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + count + "/" + res.size + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
