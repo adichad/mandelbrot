@@ -35,7 +35,7 @@ case object SearchRouter extends Router {
               'agg.as[Boolean]
                 ? true,
               'aggbuckets.as[Int] ? 10,
-              'maxdocspershard.as[Int] ? 50000,
+              'maxdocspershard.as[Int] ? 1000,
               'timeoutms.as[Long] ?
                 3000l,
               'searchtype.as[String] ?
