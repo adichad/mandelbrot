@@ -7,7 +7,7 @@ import akka.actor.{Actor, OneForOneStrategy, Props}
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.helper.CORS
 import com.askme.mandelbrot.handler.index.IndexRouter
-import com.askme.mandelbrot.handler.list.AggregateRouter
+import com.askme.mandelbrot.handler.aggregate.AggregateRouter
 import com.askme.mandelbrot.handler.search.{SearchDocsRouter, SearchRouter}
 import com.askme.mandelbrot.handler.watch.WatchRouter
 import com.askme.mandelbrot.loader.FileSystemWatcher

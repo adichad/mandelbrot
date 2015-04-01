@@ -1,9 +1,9 @@
-package com.askme.mandelbrot.handler.list
+package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, OneForOneStrategy, Props, ReceiveTimeout}
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.list.message.AggregateParams
+import com.askme.mandelbrot.handler.aggregate.message.AggregateParams
 import com.askme.mandelbrot.handler.message.{RestMessage, Timeout}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config

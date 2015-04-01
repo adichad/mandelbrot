@@ -1,8 +1,8 @@
-package com.askme.mandelbrot.handler.list
+package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.list.message.{AggregateParams, AggregateResult}
+import com.askme.mandelbrot.handler.aggregate.message.{AggregateParams, AggregateResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -135,8 +135,6 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        import response.aggParams.startTime
        import response.result
 
-
-
        val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
        val bucks = buckets.drop(offset)
        val res = JObject(bucks.map(x=>JField(x.getKey, JInt(x.getDocCount))).toList)
@@ -144,7 +142,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
        val resCount = bucks.size
 
        val timeTaken = System.currentTimeMillis - startTime
-       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + count + "/" + resCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + resCount + "/" + count + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
 
        context.parent ! AggregateResult(count, resCount, timeTaken, result.isTerminatedEarly, result.isTimedOut, res)
    }

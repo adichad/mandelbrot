@@ -1,8 +1,8 @@
-package com.askme.mandelbrot.handler.list
+package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.Props
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.list.message.{AggregateFilterParams, AggregateParams}
+import com.askme.mandelbrot.handler.aggregate.message.{AggregateFilterParams, AggregateParams}
 import com.askme.mandelbrot.handler.message.IndexParams
 import com.askme.mandelbrot.handler.search.message.{LimitParams, PageParams}
 import com.askme.mandelbrot.handler.{RequestParams, MandelbrotHandler, Router}

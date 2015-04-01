@@ -1,4 +1,4 @@
-package com.askme.mandelbrot.handler.list.message
+package com.askme.mandelbrot.handler.aggregate.message
 
 import com.askme.mandelbrot.handler.message.RestMessage
 import org.json4s.JsonAST.JValue

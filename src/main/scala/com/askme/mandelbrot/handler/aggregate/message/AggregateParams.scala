@@ -1,4 +1,4 @@
-package com.askme.mandelbrot.handler.list.message
+package com.askme.mandelbrot.handler.aggregate.message
 
 import com.askme.mandelbrot.handler.RequestParams
 import com.askme.mandelbrot.handler.message.{IndexParams, RestMessage}

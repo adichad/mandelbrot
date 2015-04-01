@@ -199,7 +199,7 @@ object SearchRequestHandler extends Logging {
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String): BaseQueryBuilder = {
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): BaseQueryBuilder = {
     val cquery = disMaxQuery
     var hasClauses = false
     debug(mw.toSet.toString)
@@ -235,7 +235,7 @@ object SearchRequestHandler extends Logging {
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
-        .setTerminateAfter(10000)
+        .setTerminateAfter(maxdocspershard)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
         .addAggregation(terms("categories").field("Product.l3categoryexact").size(2).order(Terms.Order.aggregation("max_score", false))
@@ -452,7 +452,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      query = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType)
+      query = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
     }
 
     val locFilter = boolFilter.cache(false)

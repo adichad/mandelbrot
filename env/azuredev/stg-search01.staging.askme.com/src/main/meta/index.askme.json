@@ -3,7 +3,7 @@
     "number_of_shards" : 5,
     "number_of_replicas" : 1,
     "index.cache.query.enable": true,
-    "refresh_interval": "600s",
+    "refresh_interval": "10s",
     "analysis": {
       "char_filter": {
         "mapping_char_filter": {
