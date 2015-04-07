@@ -21,13 +21,13 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
           if(boolean("enabled")) {
-            entity(as[Array[Byte]]) { data =>
+            entity(as[String]) { data =>
               respondWithMediaType(`application/json`) {
                 ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                   IndexingParams(
                     RequestParams(httpReq, clip, clip.toString),
                     IndexParams(index, esType),
-                    RawData(new String(data, Charset.forName("cp1252"))),
+                    RawData(new String(data.getBytes("ISO-8859-1"), Charset.forName("UTF-8"))),
                     System.currentTimeMillis
                   )))
               }
