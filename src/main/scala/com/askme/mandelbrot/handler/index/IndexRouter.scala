@@ -27,7 +27,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                   IndexingParams(
                     RequestParams(httpReq, clip, clip.toString),
                     IndexParams(index, esType),
-                    RawData(new String(data, Charset.forName("UTF-8"))),
+                    RawData(new String(data, Charset.forName("cp1252"))),
                     System.currentTimeMillis
                   )))
               }
