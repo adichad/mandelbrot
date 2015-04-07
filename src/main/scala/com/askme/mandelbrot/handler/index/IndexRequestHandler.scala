@@ -28,11 +28,12 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
     case indexParams: IndexingParams =>
       val completer = context.parent
       try {
-        val json = parse (indexParams.data.data)//JsonParser(indexParams.data.data).asInstanceOf[JsArray]
+        val json = parse(indexParams.data.data)//JsonParser(indexParams.data.data).asInstanceOf[JsArray]
 
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
           val id = (doc \ "PlaceID").asInstanceOf[JString].values
+          info((doc\"LocationName").asInstanceOf[JString].values)
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
