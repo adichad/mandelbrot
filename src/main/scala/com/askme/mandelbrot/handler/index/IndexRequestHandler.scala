@@ -11,7 +11,7 @@ import org.elasticsearch.action.bulk.BulkResponse
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import spray.json.DefaultJsonProtocol._
-import spray.json.{CompactPrinter, JsArray, JsValue, JsonParser, _}
+import spray.json._
 
 
 /**
@@ -28,13 +28,14 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
     case indexParams: IndexingParams =>
       val completer = context.parent
       try {
-        val json = JsonParser(indexParams.data.data).asInstanceOf[JsArray]
+        val json = parse (indexParams.data.data)//JsonParser(indexParams.data.data).asInstanceOf[JsArray]
+
         val bulkRequest = esClient.prepareBulk
-        import spray.json.lenses.JsonLenses._
-        for (doc: JsValue <- json.elements) {
+        for (doc: JValue <- json.children) {
+
           bulkRequest.add(
-            esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, doc.extract[String]('PlaceID))
-              .setSource(CompactPrinter(doc))
+            esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, (doc \ "PlaceID").toString)
+              .setSource(compact(render(doc)))
           )
           /*producer.send(
           new ProducerRecord(
