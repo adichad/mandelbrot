@@ -20,12 +20,13 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
         path("index" / Segment / Segment ) { (index, esType) =>
           if(boolean("enabled")) {
             entity(as[Array[Byte]]) { data =>
+              info(data)
               respondWithMediaType(`application/json`) {
                 ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                   IndexingParams(
                     RequestParams(httpReq, clip, clip.toString),
                     IndexParams(index, esType),
-                    RawData(new String(new String(data, "Windows-1252").getBytes("UTF8"), "UTF8")),
+                    RawData(new String(data, "UTF8")),
                     System.currentTimeMillis
                   )))
               }
