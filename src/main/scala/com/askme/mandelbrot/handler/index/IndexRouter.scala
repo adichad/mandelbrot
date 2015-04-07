@@ -18,23 +18,25 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          if(boolean("enabled")) {
-            entity(as[Array[Byte]]) { data =>
-              val d = new String(data, "windows-1252")
-              info(d)
-              respondWithMediaType(`application/json`) {
-                ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
-                  IndexingParams(
-                    RequestParams(httpReq, clip, clip.toString),
-                    IndexParams(index, esType),
-                    RawData(d),
-                    System.currentTimeMillis
-                  )))
+          parameters('charset.as[String] ? "UTF8") { (charset) =>
+            if (boolean("enabled")) {
+              entity(as[Array[Byte]]) { data =>
+                val d = new String(data, charset)
+                info(d)
+                respondWithMediaType(`application/json`) {
+                  ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
+                    IndexingParams(
+                      RequestParams(httpReq, clip, clip.toString),
+                      IndexParams(index, esType),
+                      RawData(d),
+                      System.currentTimeMillis
+                    )))
+                }
               }
-            }
-          } else {
-            respondWithMediaType(`application/json`) {
-              complete(StatusCodes.MethodNotAllowed, "unsupported operation")
+            } else {
+              respondWithMediaType(`application/json`) {
+                complete(StatusCodes.MethodNotAllowed, "unsupported operation")
+              }
             }
           }
         }
