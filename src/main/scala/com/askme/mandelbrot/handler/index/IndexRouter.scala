@@ -20,7 +20,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
         path("index" / Segment / Segment ) { (index, esType) =>
           if(boolean("enabled")) {
             entity(as[Array[Byte]]) { data =>
-              val d = new String(data, "UTF8")
+              val d = new String(data, "windows-1252")
               info(d)
               respondWithMediaType(`application/json`) {
                 ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
