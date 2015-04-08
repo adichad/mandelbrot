@@ -83,6 +83,13 @@ case object SearchDocsRouter extends Router {
              |     "multivalued": true,
              |     "seperator": ","
              |   },
+             |   "userid": {
+             |     "type": "String",
+             |     "required": false,
+             |     "default": "",
+             |     "description": "filter by UserID, to get all places for a User/Company",
+             |     "multivalued": false
+             |   },
              |   "size": {
              |     "type": "Integer",
              |     "required": false,
