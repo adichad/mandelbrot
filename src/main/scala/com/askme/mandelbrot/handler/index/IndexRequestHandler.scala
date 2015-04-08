@@ -28,29 +28,20 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
     case indexParams: IndexingParams =>
       val completer = context.parent
       try {
-        val json = parse(indexParams.data.data)//JsonParser(indexParams.data.data).asInstanceOf[JsArray]
+        val json = parse(indexParams.data.data)
 
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
           val id = (doc \ "PlaceID").asInstanceOf[JString].values
-          info((doc\"LocationName").asInstanceOf[JString].values)
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
           )
-          /*producer.send(
-          new ProducerRecord(
-            indexParams.idx.esType,
-            doc.extract[String]('PlaceID.?).get.getBytes(Charset.forName("UTF-8")),
-            doc.toString.getBytes(Charset.forName("UTF-8"))
-          )
-        )*/
         }
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             try {
-              //esClient.admin().indices().prepareRefresh(indexParams.idx.index).execute().get()
               val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\"PlaceID\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
               val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"

@@ -20,12 +20,9 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          parameters('charset.as[String] ? "UTF8") { (charset) =>
+          parameters('charset.as[String] ? "utf-8") { (charset) =>
             if (boolean("enabled")) {
               extract(_.request.entity.data.asString(Charset.forName(charset))) {data =>
-              //entity(as[Array[Byte]]) { data =>
-                //val d = new String(data, charset)
-                info(data)
                 respondWithMediaType(`application/json`) {
                   ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                     IndexingParams(
