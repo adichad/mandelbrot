@@ -421,11 +421,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
-      } else if(category.trim == "" && id=="") {
+      } else if(category.trim == "" && id=="" && userid == 0) {
         context.parent ! EmptyResponse ("empty search criteria")
         return None
       }
-    } else if(category.trim == "" && id=="") {
+    } else if(category.trim == "" && id=="" && userid == 0) {
       context.parent ! EmptyResponse ("empty search criteria")
       return None
     }
