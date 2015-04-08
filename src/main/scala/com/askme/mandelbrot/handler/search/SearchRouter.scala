@@ -21,8 +21,8 @@ case object SearchRouter extends Router {
             parameters(
               'kw.as[String] ? "", 'city
                 ? "", 'area ? "", 'pin ? "",
-              'category ? "", 'id ? ""
-              ,
+              'category ? "", 'id ? "",
+              'userid.as[Int] ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'lat.as[Double] ? 0.0d, 'lon
                 .as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[
@@ -35,29 +35,30 @@ case object SearchRouter extends Router {
               'agg.as[Boolean]
                 ? true,
               'aggbuckets.as[Int] ? 10,
-              'maxdocspershard.as[Int] ? 50000,
+
               'timeoutms.as[Long] ?
                 3000l,
               'searchtype.as[String] ?
                 "query_then_fetch",
               'client_ip.as[String] ? "") {
-              (kw, city, area, pin, category, id,
+              (kw, city, area, pin, category, id, userid,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain,
                sort, select,
                agg, aggbuckets,
-               maxdocspershard, timeoutms, searchType, trueClient) =>
+               timeoutms, searchType, trueClient) =>
                 val fuzzyprefix = 3
                 val fuzzysim = 1f
                 val slugFlag = true
+                val maxdocspershard = 50000
                 respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, esType),
                     TextParams(kw, fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
-                    FilterParams(category, id), PageParams(size, offset),
+                    FilterParams(category, id, userid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, searchType, slugFlag),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis

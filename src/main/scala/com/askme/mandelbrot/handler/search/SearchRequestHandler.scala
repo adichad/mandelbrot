@@ -434,6 +434,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     val cityFilter = boolFilter.cache(false)
     if (id != "")
       query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
+    if(userid != 0)
+      query = filteredQuery(query, termFilter("UserID", userid))
+
     if (city != "") {
 
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
@@ -515,8 +518,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     addSort(search, sort, lat, lon, areaSlugs)
 
     if (agg) {
-      //if (city == "")
-      //  search.addAggregation(terms("city").field("CityAggr").size(aggbuckets))
+      if (city == ""||city.contains(""","""))
+        search.addAggregation(terms("city").field("CityAggr").size(100))
 
       //search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
