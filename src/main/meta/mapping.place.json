@@ -340,7 +340,7 @@
             "store": true,
             "index": "no",
             "include_in_root": true,
-            "ignore_malformed": true,
+            "ignore_malformed": true
           }
         }
       },
