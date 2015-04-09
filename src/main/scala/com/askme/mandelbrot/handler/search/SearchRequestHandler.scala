@@ -131,8 +131,8 @@ object SearchRequestHandler extends Logging {
     }
     val exactQuery = disMaxQuery
     val k = w.mkString(" ")
-    val ck = analyze(esClient, index, "LocationNameExact", kw)
-    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
+    val ck = analyze(esClient, index, "LocationNameExact", kw).mkString(" ")
+    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     fullFields.foreach {
       field: (String, Float) => {
         exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
@@ -181,8 +181,8 @@ object SearchRequestHandler extends Logging {
       }
     }
     val k = w.mkString(" ")
-    val ck = analyze(esClient, index, "LocationNameExact", kw)
-    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
+    val ck = analyze(esClient, index, "LocationNameExact", kw).mkString(" ")
+    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     val exactQuery = disMaxQuery
     fullFields.foreach {
       field: (String, Float) => {
