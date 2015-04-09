@@ -28,13 +28,13 @@
       "MasterID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": false,
+        "ignore_malformed": true,
         "doc_values": true
       },
       "EDMSLocationID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": false,
+        "ignore_malformed": true,
         "doc_values": true
       },
       "DeleteFlag": {
@@ -50,12 +50,12 @@
       "PPCOnline": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": false
+        "ignore_malformed": true
       },
       "PPCVoice": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": false
+        "ignore_malformed": true
       },
       "CustomerType": {
         "type": "string",
@@ -66,7 +66,7 @@
       "NowCustomerType": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": false
+        "ignore_malformed": true
       },
       "LocationName": {
         "type": "string",
@@ -326,18 +326,21 @@
       "Media": {
         "type": "nested",
         "include_in_root": true,
+        "ignore_malformed": true,
         "properties": {
           "MediaType": {
             "type": "string",
             "store": true,
             "index": "no",
-            "include_in_root": true
+            "include_in_root": true,
+            "ignore_malformed": true
           },
           "MediaName": {
             "type": "string",
             "store": true,
             "index": "no",
-            "include_in_root": true
+            "include_in_root": true,
+            "ignore_malformed": true,
           }
         }
       },
