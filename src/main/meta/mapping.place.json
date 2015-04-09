@@ -25,6 +25,18 @@
         "ignore_malformed": false,
         "doc_values": true
       },
+      "MasterID": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
+      "EDMSLocationID": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
       "DeleteFlag": {
         "type": "boolean",
         "store": true,
@@ -90,6 +102,21 @@
         "store": true,
         "index": "analyzed"
       },
+      "BuildingName": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "LocationAddress": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "Sublocality": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
       "Area": {
         "type": "string",
         "store": true,
@@ -118,6 +145,13 @@
         "store": true,
         "index": "not_analyzed",
         "doc_values": true
+      },
+      "Landmark": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
       },
       "City": {
         "type": "string",
@@ -250,28 +284,62 @@
       "LocationMobile": {
         "type": "string",
         "store": true,
-        "index": "no"
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed"
       },
       "LocationLandLine": {
         "type": "string",
         "store": true,
-        "index": "no"
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed"
       },
       "LocationEmail": {
         "type": "string",
         "store": true,
-        "index": "no"
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer"
       },
       "LocationDIDNumber": {
         "type": "string",
         "store": true,
-        "index": "no"
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed"
+      },
+      "TollFreeNumber": {
+        "type": "string",
+        "store": true,
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed"
       },
       "LastUpdated": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ss.SSS",
         "store": true,
         "ignore_malformed": false
+      },
+      "Media": {
+        "type": "nested",
+        "include_in_root": true,
+        "properties": {
+          "MediaType": {
+            "type": "string",
+            "store": true,
+            "index": "no",
+            "include_in_root": true
+          },
+          "MediaName": {
+            "type": "string",
+            "store": true,
+            "index": "no",
+            "include_in_root": true
+          }
+        }
       },
       "Product": {
         "type": "nested",
