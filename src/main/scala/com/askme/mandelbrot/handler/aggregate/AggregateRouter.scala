@@ -29,7 +29,7 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                 'size.as[String] ? "1000", 'offset.as[String] ? "0",
                 'agg.as[String] ? "city",
                 'maxdocspershard.as[Int] ? 500000,
-                'timeoutms.as[Long] ? 5000l,
+                'timeoutms.as[Long] ? 30000l,
                 'searchtype.as[String] ? "count", 'client_ip.as[String] ? "") {
                 (city, area, category, question, answer,
                  size, offset,
