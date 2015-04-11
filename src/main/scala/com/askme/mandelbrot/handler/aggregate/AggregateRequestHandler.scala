@@ -2,7 +2,7 @@ package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.aggregate.message.{AggregateParams, AggregateResult}
+import com.askme.mandelbrot.handler.aggregate.message.{AggregateParams, AggregateResult, AggSpec}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -15,7 +15,8 @@ import org.elasticsearch.index.query.BaseQueryBuilder
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.aggregations.Aggregations
+import org.elasticsearch.search.aggregations.bucket.terms.{Terms, TermsBuilder}
 import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
 import org.json4s._
 
@@ -33,11 +34,34 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
+  private val aggregables = Map(
+    "city"->"CityAggr",
+    "loc"->"AreaAggr",
+    "cat"->"Product.l3categoryaggr",
+    "question"->"Product.stringattribute.qaggr",
+    "answer"->"Product.stringattribute.aaggr")
+
+  case object Aggregator {
+    def apply(aggSpecs: Seq[AggSpec]) = {
+      var aggDef: TermsBuilder = null
+      aggSpecs.foreach { aggSpec =>
+        val field = aggregables.get(aggSpec.name).getOrElse(aggSpec.name)
+        val currAgg = terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0).
+          subAggregation(cardinality(aggSpec.name+"Count").field(field).precisionThreshold(40000))
+        if(aggDef == null)
+          aggDef = currAgg
+        else
+          aggDef = aggDef.subAggregation(currAgg)
+      }
+      aggDef
+    }
+  }
+
   private def buildSearch(aggParams: AggregateParams):Option[SearchRequestBuilder] = {
     import aggParams.agg._
     import aggParams.idx._
     import aggParams.lim._
-    import aggParams.page._
+    import aggParams.filter._
 
 
     var query: BaseQueryBuilder = matchAllQuery
@@ -52,100 +76,136 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
       query = filteredQuery(query, cityFilter)
     }
 
-     if (category != "") {
-       val cats = category.split("""#""")
-       val b = boolFilter.cache(false)
-       cats.foreach { c =>
-         b.should(queryFilter(matchPhraseQuery("Product.l3category", c)).cache(false))
-         b.should(termFilter("Product.l3categoryslug", c).cache(false))
-       }
-       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
-     }
-
-     val locFilter = boolFilter.cache(false)
-     val analyzedAreas = scala.collection.mutable.Set[String]()
-     if (area != "") {
-       val areas = area.split( """,""").map(_.trim.toLowerCase)
-       areas.foreach { a =>
-
-         val areaWords = analyze(esClient, index, "Area", a)
-         val terms = areaWords
-           .map(spanTermQuery("Area", _))
-         val areaSpan = spanNearQuery.slop(0).inOrder(true)
-         terms.foreach(areaSpan.clause)
-         locFilter.should(queryFilter(areaSpan).cache(false))
-
-         val synTerms = areaWords
-           .map(spanTermQuery("AreaSynonyms", _))
-         val synAreaSpan = spanNearQuery.slop(0).inOrder(true)
-         synTerms.foreach(synAreaSpan.clause)
-         locFilter.should(queryFilter(synAreaSpan).cache(false))
-       }
+    if (category != "") {
+      val cats = category.split("""#""")
+      val b = boolFilter.cache(false)
+      cats.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c)).cache(false))
+        b.should(termFilter("Product.l3categoryslug", c).cache(false))
+      }
+      if(b.hasClauses)
+        query = filteredQuery(query, nestedFilter("Product", b).cache(false))
+    }
 
 
-       areas.map(a => termFilter("AreaSlug", a).cache(false)).foreach(locFilter.should)
+    if (area != "") {
+      val locFilter = boolFilter.cache(false)
+      val analyzedAreas = scala.collection.mutable.Set[String]()
+      val areas = area.split( """,""").map(_.trim.toLowerCase)
+      areas.foreach { a =>
+        val areaWords = analyze(esClient, index, "Area", a)
+        val terms = areaWords
+          .map(spanTermQuery("Area", _))
+        val areaSpan = spanNearQuery.slop(0).inOrder(true)
+        terms.foreach(areaSpan.clause)
+        locFilter.should(queryFilter(areaSpan).cache(false))
 
-     }
-
-     if (locFilter.hasClauses)
-       query = filteredQuery(query, locFilter)
-
-
-     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
-       .setTypes(esType.split(","): _*)
-       .setSearchType(SearchType.COUNT)
-       .setQuery(filteredQuery(query, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
-       .setTrackScores(false)
-       .setFrom(0).setSize(0)
-       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
-       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
-       .addAggregation(terms(agg).field(agg).size(offset+size).shardSize(0))
-       .addAggregation(cardinality("count").field(agg).precisionThreshold(40000))
-
-     return Some(search)
-   }
+        val synTerms = areaWords
+          .map(spanTermQuery("AreaSynonyms", _))
+        val synAreaSpan = spanNearQuery.slop(0).inOrder(true)
+        synTerms.foreach(synAreaSpan.clause)
+        locFilter.should(queryFilter(synAreaSpan).cache(false))
+      }
+      areas.map(a => termFilter("AreaSlug", a).cache(false)).foreach(locFilter.should)
+      if (locFilter.hasClauses)
+        query = filteredQuery(query, locFilter)
+    }
 
 
-   case class WrappedResponse(aggParams: AggregateParams, result: SearchResponse)
+    if(question!="") {
+      val questions = question.split("""#""").map(_.trim.toLowerCase)
+      val filter = boolFilter.cache(false)
+      questions.foreach { q =>
+        filter.should(queryFilter(matchPhraseQuery("Product.stringattribute.question", q)).cache(false))
+        filter.should(queryFilter(matchPhraseQuery("Product.intattribute.question", q)).cache(false))
+      }
+      if(filter.hasClauses)
+        query = filteredQuery(query, nestedFilter("Product", filter).cache(false))
+    }
 
-   override def receive = {
-     case aggParams: AggregateParams =>
 
-       val searchOpt = buildSearch(aggParams)
-       searchOpt match {
-       case None=>
-       case Some(search) =>
-         val me = context.self
+    val aggregator = Aggregator(aggSpecs)
 
-         search.execute(new ActionListener[SearchResponse] {
-           override def onResponse(response: SearchResponse): Unit = {
-             me ! WrappedResponse(aggParams, response)
-           }
+    val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+      .setTypes(esType.split(","): _*)
+      .setSearchType(SearchType.COUNT)
+      .setQuery(filteredQuery(query, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
+      .setTrackScores(false)
+      .setFrom(0).setSize(0)
+      .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
+      .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
+      .addAggregation(aggregator)
 
-           override def onFailure(e: Throwable): Unit = {
-             throw e
-           }
-         })
-     }
-     case response: WrappedResponse =>
-       import response.aggParams.agg._
-       import response.aggParams.lim._
-       import response.aggParams.page._
-       import response.aggParams.req._
-       import response.aggParams.startTime
-       import response.result
+    return Some(search)
+  }
 
-       val buckets = result.getAggregations.get(agg).asInstanceOf[Terms].getBuckets
-       val bucks = buckets.drop(offset)
-       val res = JObject(bucks.map(x=>JField(x.getKey, JInt(x.getDocCount))).toList)
-       val count = result.getAggregations.get("count").asInstanceOf[Cardinality].getValue
-       val resCount = bucks.size
 
-       val timeTaken = System.currentTimeMillis - startTime
-       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + resCount + "/" + count + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+  case class WrappedResponse(aggParams: AggregateParams, result: SearchResponse)
 
-       context.parent ! AggregateResult(count, resCount, timeTaken, result.isTerminatedEarly, result.isTimedOut, res)
-   }
+  override def receive = {
+    case aggParams: AggregateParams =>
+      buildSearch(aggParams) match {
+        case None=>
+        case Some(search) =>
+          val me = context.self
+          search.execute(new ActionListener[SearchResponse] {
+            override def onResponse(response: SearchResponse): Unit = {
+              me ! WrappedResponse(aggParams, response)
+            }
+            override def onFailure(e: Throwable): Unit = {
+              throw e
+            }
+          })
+      }
+      case response: WrappedResponse =>
+        import response.aggParams.lim._
+        import response.aggParams.req._
+        import response.aggParams.startTime
+        import response.result
 
- }
+        val recordCount = result.getHits.totalHits
+        val res = reshape(response)
+
+        val timeTaken = System.currentTimeMillis - startTime
+        info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + recordCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+
+        context.parent ! AggregateResult(recordCount, timeTaken, result.isTerminatedEarly, result.isTimedOut, res)
+  }
+
+  private def reshape(response: WrappedResponse) = {
+    def reshape(result: Aggregations, aggSpecs: Seq[AggSpec]): JObject = {
+      if(aggSpecs.size>0) {
+        val agg = aggSpecs(0)
+        val buckets = result.get(agg.name).asInstanceOf[Terms].getBuckets.drop(agg.offset)
+        val cardinality = result.get(agg.name+"Count").asInstanceOf[Cardinality].getValue
+        JObject(
+          JField(agg.name,
+            JObject(
+              JField("group-count", JInt(buckets.size)),
+              JField("total-group-count", JInt(cardinality)),
+              JField("results",
+                JObject(buckets.map( x=>
+                  JField(x.getKey,
+                    if(aggSpecs.size>1)
+                      JObject(
+                        JField("count", JInt(x.getDocCount)),
+                        JField("sub", reshape(x.getAggregations, aggSpecs.drop(1)))
+                      )
+                    else
+                      JInt(x.getDocCount)
+                  )
+                ).toList)
+              )
+            )
+          )
+        )
+      }
+      else
+        JObject()
+    }
+
+    reshape(response.result.getAggregations, response.aggParams.agg.aggSpecs)
+
+  }
+}
 

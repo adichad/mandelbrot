@@ -2,9 +2,9 @@ package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.Props
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.aggregate.message.{AggregateFilterParams, AggregateParams}
+import com.askme.mandelbrot.handler.aggregate.message._
 import com.askme.mandelbrot.handler.message.IndexParams
-import com.askme.mandelbrot.handler.search.message.{LimitParams, PageParams}
+import com.askme.mandelbrot.handler.search.message.LimitParams
 import com.askme.mandelbrot.handler.{RequestParams, MandelbrotHandler, Router}
 import com.typesafe.config.Config
 import spray.http.{StatusCodes, HttpRequest}
@@ -15,6 +15,7 @@ import spray.http.MediaTypes._
  */
 case class AggregateRouter(val config: Config) extends Router with Configurable {
 
+
   override def apply(implicit service: MandelbrotHandler) = {
     import service._
 
@@ -24,13 +25,13 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
           path("aggregate" / Segment / Segment) { (index, esType) =>
             if(boolean("enabled")) {
               parameters(
-                'city ? "", 'loc ? "", 'cat ? "",
-                'size.as[Int] ? 1000, 'offset.as[Int] ? 0,
+                'city ? "", 'loc ? "", 'cat ? "", 'att ? "",
+                'size.as[String] ? "1000", 'offset.as[String] ? "0",
                 'agg.as[String] ? "city",
                 'maxdocspershard.as[Int] ? 500000,
                 'timeoutms.as[Long] ? 5000l,
                 'searchtype.as[String] ? "count", 'client_ip.as[String] ? "") {
-                (city, area, category,
+                (city, area, category, question,
                  size, offset,
                  agg,
                  maxdocspershard,
@@ -39,15 +40,16 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                     respondWithMediaType(
                       `application/json`) {
                       ctx =>
+                        val aggSpecs = size.split(",").map(_.trim.toInt).zip(
+                          offset.split(",").map(_.trim.toInt)).zip(
+                            agg.split(",").map(_.trim)
+                          ).map(x=>AggSpec(x._2, x._1._2, x._1._1))
+
                         context.actorOf(Props(classOf[AggregateRequestCompleter], service.config, serverContext, ctx, AggregateParams(
                           RequestParams(httpReq, clip, trueClient),
                           IndexParams(index, esType),
-                          AggregateFilterParams(city, area, category,
-                            if (agg.toLowerCase == "city") "CityAggr"
-                            else if (agg.toLowerCase == "loc") "AreaAggr"
-                            else if (agg.toLowerCase == "cat") "Product.l3categoryaggr"
-                            else agg),
-                          PageParams(size, offset),
+                          FilterParams(city, area, category, question),
+                          AggParams(aggSpecs),
                           LimitParams(maxdocspershard, timeoutms),
                           System.currentTimeMillis
                         )))

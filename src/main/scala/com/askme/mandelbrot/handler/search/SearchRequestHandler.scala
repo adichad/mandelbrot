@@ -558,8 +558,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-        .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
-        .subAggregation(sum("sum_score").script("docscore").lang("native"))
+          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
+          .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)

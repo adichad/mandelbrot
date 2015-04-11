@@ -2,7 +2,7 @@ package com.askme.mandelbrot.handler.aggregate.message
 
 import com.askme.mandelbrot.handler.RequestParams
 import com.askme.mandelbrot.handler.message.{IndexParams, RestMessage}
-import com.askme.mandelbrot.handler.search.message.{LimitParams, PageParams}
+import com.askme.mandelbrot.handler.search.message.LimitParams
 
 /**
  * Created by adichad on 31/03/15.
@@ -10,9 +10,9 @@ import com.askme.mandelbrot.handler.search.message.{LimitParams, PageParams}
 case class AggregateParams(
                             req: RequestParams,
                             idx: IndexParams,
-                            agg: AggregateFilterParams,
-                            page: PageParams,
+                            filter: FilterParams,
+                            agg: AggParams,
                             lim: LimitParams,
                             startTime: Long) extends RestMessage
 
-case class AggregateFilterParams(city: String, area: String, category: String, agg: String)
+case class FilterParams(city: String, area: String, category: String, question: String)
