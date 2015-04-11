@@ -34,6 +34,13 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
+  private def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+    val parts = fieldName.split(".")
+    if (parts.length > 1)
+      nestedQuery(parts(0), q).scoreMode("max")
+    else q
+  }
+
   private val aggregables = Map(
     "city"->"CityAggr",
     "loc"->"AreaAggr",
@@ -84,6 +91,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
       }
       if(b.hasClauses)
         query = filteredQuery(query, nestedFilter("Product", b).cache(false))
+
     }
 
 
@@ -110,18 +118,27 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
         query = filteredQuery(query, locFilter)
     }
 
-
     if(question!="") {
-      val questions = question.split("""#""").map(_.trim.toLowerCase)
-      val filter = boolFilter.cache(false)
-      questions.foreach { q =>
-        filter.should(queryFilter(matchPhraseQuery("Product.stringattribute.question", q)).cache(false))
-        filter.should(queryFilter(matchPhraseQuery("Product.intattribute.question", q)).cache(false))
+      val questions = question.split("""#""")
+      val b = boolFilter.cache(false)
+      questions.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.stringattribute.question", c)).cache(false))
       }
-      if(filter.hasClauses)
-        query = filteredQuery(query, nestedFilter("Product", filter).cache(false))
+      if(b.hasClauses)
+        query = filteredQuery(query, b.cache(false))
+      debug(b)
     }
 
+    if(answer!="") {
+      val answers = answer.split("""#""")
+      val b = boolFilter.cache(false)
+      answers.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.stringattribute.answer", c)).cache(false))
+      }
+      if(b.hasClauses)
+        query = filteredQuery(query, b.cache(false))
+      debug(b)
+    }
 
     val aggregator = Aggregator(aggSpecs)
 

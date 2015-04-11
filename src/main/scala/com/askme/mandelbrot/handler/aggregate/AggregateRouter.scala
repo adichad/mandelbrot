@@ -25,13 +25,13 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
           path("aggregate" / Segment / Segment) { (index, esType) =>
             if(boolean("enabled")) {
               parameters(
-                'city ? "", 'loc ? "", 'cat ? "", 'att ? "",
+                'city ? "", 'loc ? "", 'cat ? "", 'question ? "", 'answer ? "",
                 'size.as[String] ? "1000", 'offset.as[String] ? "0",
                 'agg.as[String] ? "city",
                 'maxdocspershard.as[Int] ? 500000,
                 'timeoutms.as[Long] ? 5000l,
                 'searchtype.as[String] ? "count", 'client_ip.as[String] ? "") {
-                (city, area, category, question,
+                (city, area, category, question, answer,
                  size, offset,
                  agg,
                  maxdocspershard,
@@ -48,7 +48,7 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                         context.actorOf(Props(classOf[AggregateRequestCompleter], service.config, serverContext, ctx, AggregateParams(
                           RequestParams(httpReq, clip, trueClient),
                           IndexParams(index, esType),
-                          FilterParams(city, area, category, question),
+                          FilterParams(city, area, category, question, answer),
                           AggParams(aggSpecs),
                           LimitParams(maxdocspershard, timeoutms),
                           System.currentTimeMillis

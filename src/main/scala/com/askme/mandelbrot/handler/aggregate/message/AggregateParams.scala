@@ -15,4 +15,4 @@ case class AggregateParams(
                             lim: LimitParams,
                             startTime: Long) extends RestMessage
 
-case class FilterParams(city: String, area: String, category: String, question: String)
+case class FilterParams(city: String, area: String, category: String, question: String, answer: String)
