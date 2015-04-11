@@ -46,8 +46,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
       var aggDef: TermsBuilder = null
       aggSpecs.foreach { aggSpec =>
         val field = aggregables.get(aggSpec.name).getOrElse(aggSpec.name)
-        val currAgg = terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0).
-          subAggregation(cardinality(aggSpec.name+"Count").field(field).precisionThreshold(40000))
+        val currAgg = terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0)
         if(aggDef == null)
           aggDef = currAgg
         else
@@ -136,6 +135,12 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .addAggregation(aggregator)
 
+    aggSpecs.foreach(s=>
+      search.addAggregation(
+        cardinality(s.name+"Count").field(aggregables.get(s.name).getOrElse(s.name)).precisionThreshold(40000)
+      )
+    )
+
     return Some(search)
   }
 
@@ -173,23 +178,24 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
   }
 
   private def reshape(response: WrappedResponse) = {
-    def reshape(result: Aggregations, aggSpecs: Seq[AggSpec]): JObject = {
+
+    def reshape(result: Aggregations, aggSpecs: Seq[AggSpec], cardinalities: Seq[Long]): JObject = {
       if(aggSpecs.size>0) {
         val agg = aggSpecs(0)
-        val buckets = result.get(agg.name).asInstanceOf[Terms].getBuckets.drop(agg.offset)
-        val cardinality = result.get(agg.name+"Count").asInstanceOf[Cardinality].getValue
+        val currAgg = result.get(agg.name).asInstanceOf[Terms]
+        val buckets = currAgg.getBuckets.drop(agg.offset)
         JObject(
           JField(agg.name,
             JObject(
               JField("group-count", JInt(buckets.size)),
-              JField("total-group-count", JInt(cardinality)),
-              JField("results",
+              JField("total-group-count", JInt(cardinalities(0))),
+              JField("buckets",
                 JObject(buckets.map( x=>
                   JField(x.getKey,
                     if(aggSpecs.size>1)
                       JObject(
                         JField("count", JInt(x.getDocCount)),
-                        JField("sub", reshape(x.getAggregations, aggSpecs.drop(1)))
+                        JField("sub", reshape(x.getAggregations, aggSpecs.drop(1), cardinalities.drop(1)))
                       )
                     else
                       JInt(x.getDocCount)
@@ -204,7 +210,8 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
         JObject()
     }
 
-    reshape(response.result.getAggregations, response.aggParams.agg.aggSpecs)
+    val cardinalities = response.aggParams.agg.aggSpecs.map(s=>response.result.getAggregations.get(s.name+"Count").asInstanceOf[Cardinality].getValue)
+    reshape(response.result.getAggregations, response.aggParams.agg.aggSpecs, cardinalities)
 
   }
 }
