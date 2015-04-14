@@ -57,7 +57,7 @@ object SearchRequestHandler extends Logging {
 
 
   private[SearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
-    val parts = fieldName.split(".")
+    val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
     else q
@@ -611,10 +611,16 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           .fold("/search/" + URLEncoder.encode(kw.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
             k => "/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
 
-        val matchedArea = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
-          .find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords) || (b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))))
-          .fold("/in/" + URLEncoder.encode(area.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+        val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+
+        val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
+          .fold(//look in synonyms if name not found
+            areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
+              c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
+            ).fold("/in/" + URLEncoder.encode(area.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
+              (k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+          )(k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+
 
         slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           matchedCat +
