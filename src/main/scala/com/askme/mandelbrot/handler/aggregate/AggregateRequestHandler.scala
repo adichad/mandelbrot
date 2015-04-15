@@ -2,7 +2,7 @@ package com.askme.mandelbrot.handler.aggregate
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.aggregate.message.{AggregateParams, AggregateResult, AggSpec}
+import com.askme.mandelbrot.handler.aggregate.message.{AggSpec, AggregateParams, AggregateResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -15,10 +15,11 @@ import org.elasticsearch.index.query.BaseQueryBuilder
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.Aggregations
+import org.elasticsearch.search.aggregations.bucket.nested.{Nested, NestedBuilder, ReverseNested, ReverseNestedBuilder}
 import org.elasticsearch.search.aggregations.bucket.terms.{Terms, TermsBuilder}
-import org.elasticsearch.search.aggregations.metrics.cardinality.Cardinality
+import org.elasticsearch.search.aggregations.{Aggregation, AggregationBuilder, Aggregations}
 import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
 
@@ -50,24 +51,68 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
 
   case object Aggregator {
     def apply(aggSpecs: Seq[AggSpec]) = {
-      var aggDef: TermsBuilder = null
-      aggSpecs.foreach { aggSpec =>
+      var path = ""
+
+      type AB = AggregationBuilder[_ >: TermsBuilder with NestedBuilder with ReverseNestedBuilder <: AggregationBuilder[_ >: TermsBuilder with NestedBuilder with ReverseNestedBuilder]]
+
+      var aggDef: AB = null
+      var prev: AB = null
+      aggSpecs.foreach { aggSpec: AggSpec =>
         val field = aggregables.get(aggSpec.name).getOrElse(aggSpec.name)
-        val currAgg = terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0)
+        val newpath = nestPath(field)
+
+        val lcpp = longestCommonPathPrefix(newpath, path)
+        val curr = currAgg(aggSpec, field)
+        val agg = (
+          if (lcpp == path) if(newpath==path) curr else nested(aggSpec.name).path(newpath).subAggregation(curr)
+          else reverseNested(aggSpec.name).path(lcpp).subAggregation(nested(aggSpec.name).path(newpath).subAggregation(curr))
+          )
+        path = newpath
         if(aggDef == null)
-          aggDef = currAgg
-        else
-          aggDef = aggDef.subAggregation(currAgg)
+          aggDef = agg
+        else {
+          prev.subAggregation(agg)
+          //prev.subAggregation(currCountAgg(aggSpec, field))
+        }
+        prev = curr
+
       }
       aggDef
     }
+
+    def longestCommonPathPrefix(a: String, b: String) = {
+      a.split("""\.""").zip(b.split("""\.""")).takeWhile(x=>x._1==x._2).map(x=>x._1).mkString(".")
+    }
+
+    def currCountAgg(aggSpec: AggSpec, field: String) = {
+      cardinality(aggSpec.name).field(field).precisionThreshold(40000)
+    }
+    def currAgg(aggSpec: AggSpec, field: String) =
+      terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0)
+
+    def nestPath(field: String) = {
+      val parts = field.split("""\.""")
+      parts.take(math.max(0,parts.length-1)).mkString(".")
+    }
+    def nestPath(aggSpec: AggSpec) = {
+      val parts = aggregables.get(aggSpec.name).getOrElse(aggSpec.name).split("""\.""")
+      parts.take(math.max(0, parts.length - 1)).mkString(".")
+    }
+    def nestPath(aggSpecs: Seq[AggSpec]) = {
+      val parts = aggSpecs.filter(s => aggregables.get(s.name).getOrElse(s.name).contains("."))
+        .map(s => aggregables.get(s.name).getOrElse(s.name)).headOption.getOrElse("").split("""\.""")
+
+      parts.take(parts.length - 1).mkString(".")
+    }
   }
+
+
 
   private def buildSearch(aggParams: AggregateParams):Option[SearchRequestBuilder] = {
     import aggParams.agg._
+    import aggParams.filter._
     import aggParams.idx._
     import aggParams.lim._
-    import aggParams.filter._
 
 
     var query: BaseQueryBuilder = matchAllQuery
@@ -152,6 +197,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .addAggregation(aggregator)
 
+    //TODO: nested?
     aggSpecs.foreach(s=>
       search.addAggregation(
         cardinality(s.name+"Count").field(aggregables.get(s.name).getOrElse(s.name)).precisionThreshold(40000)
@@ -190,29 +236,39 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
 
         val timeTaken = System.currentTimeMillis - startTime
         info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + recordCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
-
+        parse(response.result.toString)
         context.parent ! AggregateResult(recordCount, timeTaken, result.isTerminatedEarly, result.isTimedOut, res)
   }
 
   private def reshape(response: WrappedResponse) = {
 
-    def reshape(result: Aggregations, aggSpecs: Seq[AggSpec], cardinalities: Seq[Long]): JObject = {
+    def reshape(result: Aggregations, aggSpecs: Seq[AggSpec]): JObject = {
       if(aggSpecs.size>0) {
         val agg = aggSpecs(0)
-        val currAgg = result.get(agg.name).asInstanceOf[Terms]
+        var res: Aggregation = result.get(agg.name)
+        while(res.isInstanceOf[Nested]||res.isInstanceOf[ReverseNested]) {
+          if(res.isInstanceOf[Nested])
+            res = res.asInstanceOf[Nested].getAggregations.get(agg.name)
+          else
+            res = res.asInstanceOf[ReverseNested].getAggregations.get(agg.name)
+        }
+
+        val currAgg = res.asInstanceOf[Terms]
+
+        error(currAgg.toString)
         val buckets = currAgg.getBuckets.drop(agg.offset)
         JObject(
           JField(agg.name,
             JObject(
               JField("group-count", JInt(buckets.size)),
-              JField("total-group-count", JInt(cardinalities(0))),
+              //JField("total-group-count", JInt(cardinalities(0))),
               JField("buckets",
                 JObject(buckets.map( x=>
                   JField(x.getKey,
                     if(aggSpecs.size>1)
                       JObject(
                         JField("count", JInt(x.getDocCount)),
-                        JField("sub", reshape(x.getAggregations, aggSpecs.drop(1), cardinalities.drop(1)))
+                        JField("sub", reshape(x.getAggregations, aggSpecs.drop(1)))
                       )
                     else
                       JInt(x.getDocCount)
@@ -227,8 +283,8 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
         JObject()
     }
 
-    val cardinalities = response.aggParams.agg.aggSpecs.map(s=>response.result.getAggregations.get(s.name+"Count").asInstanceOf[Cardinality].getValue)
-    reshape(response.result.getAggregations, response.aggParams.agg.aggSpecs, cardinalities)
+    //val cardinalities = response.aggParams.agg.aggSpecs.map(s=>response.result.getAggregations.get(s.name+"Count").asInstanceOf[Cardinality].getValue)
+    reshape(response.result.getAggregations, response.aggParams.agg.aggSpecs)
 
   }
 }

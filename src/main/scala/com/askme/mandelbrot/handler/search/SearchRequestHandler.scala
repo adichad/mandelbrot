@@ -231,7 +231,7 @@ object SearchRequestHandler extends Logging {
     if(hasClauses) {
 
       val catFilter = boolFilter.cache(false)
-      esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
+      val bucks = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
@@ -242,16 +242,19 @@ object SearchRequestHandler extends Logging {
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
-        .getBuckets.map(
-          v =>
-            queryFilter(
-              nestIfNeeded("Product.l3categoryexact",
-                termQuery("Product.l3categoryexact",
-                  analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
-                )
+        .getBuckets
+
+      val topcat = bucks.headOption.getOrElse("")
+      bucks.map(
+        v =>
+          queryFilter(
+            nestIfNeeded("Product.l3categoryexact",
+              termQuery("Product.l3categoryexact",
+                analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
               )
-            ).cache(false)
-        ).foreach(catFilter.should(_))
+            )
+          ).cache(false)
+      ).foreach(catFilter.should(_))
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
@@ -558,7 +561,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets))
+          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets*3))
           .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
