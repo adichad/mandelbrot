@@ -26,6 +26,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 
 /**
@@ -57,10 +58,12 @@ object SearchRequestHandler extends Logging {
 
 
   private[SearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
-    val parts = fieldName.split("""\.""")
+    /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
-    else q
+    else
+    */
+    q
   }
 
 
@@ -244,13 +247,14 @@ object SearchRequestHandler extends Logging {
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets
 
-      val topcat = bucks.headOption.getOrElse("")
-      bucks.map(
+      val matchedCats: mutable.Buffer[String] = bucks.map(v=>v.getKey)
+
+      matchedCats.map(
         v =>
           queryFilter(
             nestIfNeeded("Product.l3categoryexact",
               termQuery("Product.l3categoryexact",
-                analyze(esClient, index, "Product.l3categoryexact", v.getKey).mkString(" ")
+                analyze(esClient, index, "Product.l3categoryexact", v).mkString(" ")
               )
             )
           ).cache(false)
