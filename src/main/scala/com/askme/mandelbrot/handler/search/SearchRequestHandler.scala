@@ -26,7 +26,6 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 
 
 /**
@@ -234,31 +233,19 @@ object SearchRequestHandler extends Logging {
     if(hasClauses) {
 
       val catFilter = boolFilter.cache(false)
-      val bucks = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
+      esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
         .setTerminateAfter(maxdocspershard)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryexact").size(2).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets
-
-      val matchedCats: mutable.Buffer[String] = bucks.map(v=>v.getKey)
-
-      matchedCats.map(
-        v =>
-          queryFilter(
-            nestIfNeeded("Product.l3categoryexact",
-              termQuery("Product.l3categoryexact",
-                analyze(esClient, index, "Product.l3categoryexact", v).mkString(" ")
-              )
-            )
-          ).cache(false)
-      ).foreach(catFilter.should(_))
+        .map(_.getKey).map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {

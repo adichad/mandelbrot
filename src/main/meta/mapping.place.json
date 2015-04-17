@@ -125,7 +125,8 @@
       "AreaSlug": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "AreaAggr": {
         "type": "string",
@@ -164,7 +165,8 @@
       "CitySlug": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "CityAggr": {
         "type": "string",
@@ -184,12 +186,14 @@
       "PinCode": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "ZonesServed": {
         "type": "string",
         "store": true,
         "index": "analyzed",
+        "position_offset_gap": 100,
         "norms": {"enabled": false}
       },
       "Zone": {
@@ -201,12 +205,14 @@
       "State": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "Country": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "LatLong": {
         "type": "geo_point",
@@ -221,7 +227,8 @@
       "CompanyID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": true
+        "ignore_malformed": true,
+        "doc_values": true
       },
       "CompanyName": {
         "type": "string",
