@@ -431,7 +431,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if(userid != 0)
       query = filteredQuery(query, termFilter("UserID", userid))
     if(locid != "") {
-      query = filteredQuery(query, termsFilter("LocationID", locid.split(""",""").map(_.trim.toInt) :_*))
+      query = filteredQuery(query, termsFilter("EDMSLocationID", locid.split(""",""").map(_.trim.toInt) :_*))
     }
 
     if (city != "") {
