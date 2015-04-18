@@ -74,7 +74,7 @@ object SearchRequestHandler extends Logging {
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)(math.max(0,math.min(2,len - 3))) else 0).inOrder(!sloppy).boost(boost * len)
+        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * len)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
@@ -85,7 +85,7 @@ object SearchRequestHandler extends Logging {
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
       termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)(math.max(0,math.min(2,len - 3))) else 0).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
+        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
         fieldQuery2.should(nearQuery)
         i /= 10
@@ -198,6 +198,11 @@ object SearchRequestHandler extends Logging {
 
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
     analyze(esClient, index, field, text).deep == keywords.deep
+  }
+
+  private def weakMatchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
+    val textWords = analyze(esClient, index, field, text)
+    if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
@@ -554,16 +559,15 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
-        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets)
           .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets*3))
-          .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
         .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
     }
-    return Some(search)
+    Some(search)
   }
 
 
@@ -602,16 +606,25 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val areaWords = analyze(esClient, index, "Area", area)
 
       var slug = ""
+      var bestCatSlug = ""
       if (slugFlag) {
-        val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+        val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+        val matchedCat = catBucks
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", urlize(b.getKey), w)
           || matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
-          || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w))))
-          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
+          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w)))
+          .fold(catBucks
+          .find(b => weakMatchAnalyzed(esClient, index, "Product.l3category", urlize(b.getKey), w)
+          || weakMatchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
+          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => weakMatchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w)))
+          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey)))(k => "/" + urlize(k.getKey))
+
+        val bestCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+          .headOption.fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
 
         val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
-        def matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
+        val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
           .fold(//look in synonyms if name not found
             areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
               c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
@@ -622,11 +635,16 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           matchedCat +
           (if (category != "") "/cat/" + urlize(category) else "") +
           (if (area != "") matchedArea else "")
+
+        bestCatSlug = (if (city != "") "/" + urlize(city) else "") +
+          bestCat +
+          (if (category != "") "/cat/" + urlize(category) else "") +
+          (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
 
-      context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, parse(result.toString))
+      context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, timeTaken, parse(result.toString))
 
   }
 
