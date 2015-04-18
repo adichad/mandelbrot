@@ -415,11 +415,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
-      } else if(category.trim == "" && id=="" && userid == 0) {
+      } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
         return None
       }
-    } else if(category.trim == "" && id=="" && userid == 0) {
+    } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
       context.parent ! EmptyResponse ("empty search criteria")
       return None
     }
@@ -427,9 +427,12 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     // filters
     val cityFilter = boolFilter.cache(false)
     if (id != "")
-      query = filteredQuery(query, idsFilter(esType).addIds(id.split( ""","""): _*))
+      query = filteredQuery(query, idsFilter(esType).addIds(id.split( """,""").map(_.trim): _*))
     if(userid != 0)
       query = filteredQuery(query, termFilter("UserID", userid))
+    if(locid != "") {
+      query = filteredQuery(query, termsFilter("LocationID", locid.split(""",""").map(_.trim.toInt) :_*))
+    }
 
     if (city != "") {
 

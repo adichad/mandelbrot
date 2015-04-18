@@ -22,14 +22,13 @@ case object SearchRouter extends Router {
               'kw.as[String] ? "", 'city
                 ? "", 'area ? "", 'pin ? "",
               'category ? "", 'id ? "",
-              'userid.as[Int] ? 0,
+              'userid.as[Int] ? 0, 'locid.as[String]? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'lat.as[Double] ? 0.0d, 'lon
                 .as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[
                 Double] ? 20.0d,
               'source.as[Boolean] ? false, 'explain.as
                 [Boolean] ? false,
-              'sort ? "_distance,_score",
               'select ?
                 "_id",
               'agg.as[Boolean]
@@ -41,24 +40,25 @@ case object SearchRouter extends Router {
               'searchtype.as[String] ?
                 "query_then_fetch",
               'client_ip.as[String] ? "") {
-              (kw, city, area, pin, category, id, userid,
+              (kw, city, area, pin, category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain,
-               sort, select,
+               select,
                agg, aggbuckets,
                timeoutms, searchType, trueClient) =>
                 val fuzzyprefix = 3
                 val fuzzysim = 1f
                 val slugFlag = true
                 val maxdocspershard = 50000
-                respondWithMediaType(`application/json`) { ctx =>
+                val sort = "_distance,_score"
+              respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, esType),
                     TextParams(kw, fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
-                    FilterParams(category, id, userid), PageParams(size, offset),
+                    FilterParams(category, id, userid, locid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, searchType, slugFlag),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
