@@ -447,7 +447,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
       cats.foreach { c =>
-        b.should(queryFilter(matchPhraseQuery("Product.l3category", c)).cache(false))
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(false))
         b.should(termFilter("Product.l3categoryslug", c).cache(false))
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
@@ -610,7 +610,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
-        val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
+        def matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
           .fold(//look in synonyms if name not found
             areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
               c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
@@ -618,10 +618,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
               (k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
           )(k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
 
-
         slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
           matchedCat +
-          (if (category != "") "/cat/" + URLEncoder.encode(category.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
+          (if (category != "") "/cat/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", category).mkString("-"), "UTF-8") else "") +
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
