@@ -605,8 +605,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
           .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(kw.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))(
-            k => "/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
+          .fold("/search/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", kw.getKey).mkString("-"), "UTF-8"))(
+            k => "/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", k.getKey).mkString("-"), "UTF-8"))
 
         val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
