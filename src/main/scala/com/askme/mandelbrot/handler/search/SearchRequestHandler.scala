@@ -604,9 +604,10 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       var slug = ""
       if (slugFlag) {
         val matchedCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-          .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w) || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w))))
-          .fold("/search/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", kw).mkString("-"), "UTF-8"))(
-            k => "/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", k.getKey).mkString("-"), "UTF-8"))
+          .find(b => matchAnalyzed(esClient, index, "Product.l3category", urlize(b.getKey), w)
+          || matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
+          || (b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w))))
+          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
 
         val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
@@ -614,13 +615,12 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           .fold(//look in synonyms if name not found
             areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
               c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
-            ).fold("/in/" + URLEncoder.encode(area.replaceAll(pat, " ").trim.replaceAll("""\s+""", "-").toLowerCase, "UTF-8"))
-              (k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
-          )(k => "/in/" + URLEncoder.encode(k.getKey.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8"))
+            ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKey))
+          )(k => "/in/" + urlize(k.getKey))
 
-        slug = (if (city != "") "/" + URLEncoder.encode(city.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8") else "") +
+        slug = (if (city != "") "/" + urlize(city) else "") +
           matchedCat +
-          (if (category != "") "/cat/" + URLEncoder.encode(analyze(esClient, index, "Product.l3category", category).mkString("-"), "UTF-8") else "") +
+          (if (category != "") "/cat/" + urlize(category) else "") +
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
@@ -629,6 +629,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, parse(result.toString))
 
   }
+
+  def urlize(k: String) =
+    URLEncoder.encode(k.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8")
 
 }
 
