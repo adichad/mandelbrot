@@ -6,6 +6,7 @@ import com.askme.mandelbrot.handler.message.IndexParams
 import com.askme.mandelbrot.handler.search.message._
 import spray.http.MediaTypes._
 import spray.http.{HttpRequest, RemoteAddress}
+import com.askme.mandelbrot.util.Utils._
 
 /**
  * Created by adichad on 31/03/15.
@@ -56,7 +57,7 @@ case object SearchRouter extends Router {
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, esType),
-                    TextParams(kw, fuzzyprefix, fuzzysim),
+                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, searchType, slugFlag),
