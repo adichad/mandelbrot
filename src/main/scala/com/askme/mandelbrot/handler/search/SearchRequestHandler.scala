@@ -69,7 +69,7 @@ object SearchRequestHandler extends Logging {
   private[SearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
     val terms = w
-      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
       .map(spanMultiTermQueryBuilder)
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
@@ -559,8 +559,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
-        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets)
+        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets*3))
+          .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
