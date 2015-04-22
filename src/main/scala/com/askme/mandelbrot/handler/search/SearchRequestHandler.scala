@@ -206,10 +206,12 @@ object SearchRequestHandler extends Logging {
   }
 
   private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): BaseQueryBuilder = {
+
+  private case class CategoryFilter(query: BaseQueryBuilder, cats: Seq[String])
+
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
     val cquery = disMaxQuery
     var hasClauses = false
-    debug(mw.toSet.toString)
     val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
 
     catFilterFields.foreach {
@@ -238,7 +240,7 @@ object SearchRequestHandler extends Logging {
     if(hasClauses) {
 
       val catFilter = boolFilter.cache(false)
-      esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
+      val cats = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
@@ -249,8 +251,9 @@ object SearchRequestHandler extends Logging {
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
-        .getBuckets
-        .map(_.getKey).map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
+        .getBuckets.map(_.getKey)
+
+      cats.map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
@@ -287,13 +290,12 @@ object SearchRequestHandler extends Logging {
         }
 
         catFilter.should(queryFilter(cquery).cache(false))
-        debug(catFilter.toString)
-        filteredQuery(query, catFilter)
+        CategoryFilter(filteredQuery(query, catFilter), cats)
       }
       else
-        query
+        CategoryFilter(query, Seq[String]())
     }
-    else query
+    else CategoryFilter(query, Seq[String]())
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
@@ -333,7 +335,9 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
 
-  private def buildSearch(searchParams: SearchParams):Option[SearchRequestBuilder] = {
+  private case class WrappedRequest(search: Option[SearchRequestBuilder], cats: Seq[String])
+
+  private def buildSearch(searchParams: SearchParams): WrappedRequest = {
     import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
@@ -422,11 +426,11 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
-        return None
+        return WrappedRequest(None,Seq())
       }
     } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
       context.parent ! EmptyResponse ("empty search criteria")
-      return None
+      return WrappedRequest(None,Seq())
     }
 
     // filters
@@ -448,6 +452,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       query = filteredQuery(query, cityFilter)
     }
 
+    var cats = Seq[String]()
+
     if (category != "") {
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
@@ -457,7 +463,10 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      query = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
+      val matchedCats = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
+      query = matchedCats.query
+      cats = matchedCats.cats
+
     }
 
     val locFilter = boolFilter.cache(false)
@@ -568,16 +577,18 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
         .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
     }
-    Some(search)
+    WrappedRequest(Some(search), cats)
   }
 
 
-  case class WrappedResponse(searchParams: SearchParams, result: SearchResponse)
+  case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, cats: Seq[String])
 
   override def receive = {
     case searchParams: SearchParams =>
 
-      val searchOpt = buildSearch(searchParams)
+      val wreq = buildSearch(searchParams)
+      val searchOpt = wreq.search
+      val cats = wreq.cats
       searchOpt match {
       case None=>
       case Some(search) =>
@@ -585,7 +596,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            me ! WrappedResponse(searchParams, response)
+            me ! WrappedResponse(searchParams, response, cats)
           }
 
           override def onFailure(e: Throwable): Unit = {
@@ -603,6 +614,8 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       import response.searchParams.startTime
       import response.searchParams.text._
       import response.searchParams.view._
+
+      val cats = response.cats.toList
 
       val areaWords = analyze(esClient, index, "Area", area)
 
@@ -643,7 +656,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           (if (area != "") matchedArea else "")
       }
       val timeTaken = System.currentTimeMillis - startTime
-      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
 
       context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, timeTaken, parse(result.toString))
 
