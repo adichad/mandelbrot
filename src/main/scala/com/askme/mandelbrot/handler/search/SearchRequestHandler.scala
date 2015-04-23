@@ -262,10 +262,10 @@ object SearchRequestHandler extends Logging {
         catFilter.should(queryFilter(termQuery("LocationNameExact", xw.mkString(" ")+"s")).cache(false))
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" ")+"s")).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))).cache(true))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(true))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))).cache(true))
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
@@ -446,7 +446,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
     if (city != "") {
 
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
       cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
       cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
       query = filteredQuery(query, cityFilter)
@@ -458,7 +458,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
       cats.foreach { c =>
-        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(false))
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(true))
         b.should(termFilter("Product.l3categoryslug", c).cache(false))
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
@@ -501,7 +501,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
-        geoDistanceRangeFilter("LatLong").cache(false)
+        geoDistanceRangeFilter("LatLong").cache(true)
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
           .to((if (area == "") tokm else 10.0d) + "km")

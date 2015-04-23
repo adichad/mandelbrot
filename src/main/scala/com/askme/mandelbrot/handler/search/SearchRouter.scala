@@ -37,7 +37,7 @@ case object SearchRouter extends Router {
               'aggbuckets.as[Int] ? 10,
 
               'timeoutms.as[Long] ?
-                3000l,
+                1500l,
               'searchtype.as[String] ?
                 "query_then_fetch",
               'client_ip.as[String] ? "") {
