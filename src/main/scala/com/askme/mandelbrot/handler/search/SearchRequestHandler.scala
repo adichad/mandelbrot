@@ -1,6 +1,8 @@
 package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -655,11 +657,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           (if (category != "") "/cat/" + urlize(category) else "") +
           (if (area != "") matchedArea else "")
       }
-      val timeTaken = System.currentTimeMillis - startTime
+      val formatter = new SimpleDateFormat("z yyyy.MM.dd EEE HH:mm:ss.SSS")
+      val startdt = formatter.format(new Date(startTime))
+      val endTime = System.currentTimeMillis
+      val enddt = formatter.format(new Date(endTime))
+      val timeTaken = endTime - startTime
       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
-
-      context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, timeTaken, parse(result.toString))
-
+      context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, startdt, enddt, timeTaken, parse(result.toString))
   }
 
   def urlize(k: String) =
