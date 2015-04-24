@@ -16,7 +16,7 @@ import spray.http.MediaTypes._
 case class AggregateRouter(val config: Config) extends Router with Configurable {
 
 
-  override def apply(implicit service: MandelbrotHandler) = {
+  override def apply(implicit service: MandelbrotHandler, startTime: Long) = {
     import service._
 
     clientIP { clip =>
@@ -51,7 +51,7 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                           FilterParams(city, area, category, question, answer),
                           AggParams(aggSpecs),
                           LimitParams(maxdocspershard, timeoutms),
-                          System.currentTimeMillis
+                          startTime
                         )))
 
 

@@ -24,6 +24,9 @@ import scala.concurrent.duration._
 class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
   extends HttpService with Actor with Logging with Configurable with CORS {
 
+  private val aggRouter = AggregateRouter(conf("http.aggregate"))
+  private val indexRouter = IndexRouter(conf("http.indexing"))
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: IOException ⇒ Resume
@@ -34,11 +37,21 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
   val fsActor = context.actorOf(Props(classOf[FileSystemWatcher], config, serverContext))
 
   private implicit val service: MandelbrotHandler = this
-  private val route =
+  private val route = {
+    val startTime = System.currentTimeMillis()
     cors {
-      get { SearchDocsRouter(this) ~ SearchRouter(this) ~ AggregateRouter(conf("http.aggregate"))(this) } ~
-      post { WatchRouter.apply ~ IndexRouter(conf("http.indexing")).apply }
+      compressResponse() {
+        decompressRequest() {
+          get {
+            SearchDocsRouter(this, startTime) ~ SearchRouter(this, startTime) ~ aggRouter(this, startTime)
+          } ~
+            post {
+              WatchRouter(this, startTime) ~ indexRouter(this, startTime)
+            }
+        }
+      }
     }
+  }
 
   override final def receive: Receive = {
     runRoute(route)

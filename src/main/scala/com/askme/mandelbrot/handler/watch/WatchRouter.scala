@@ -11,7 +11,7 @@ import spray.http.MediaTypes._
  */
 case object WatchRouter extends Router {
 
-  override def apply(implicit service: MandelbrotHandler) = {
+  override def apply(implicit service: MandelbrotHandler, startTime: Long) = {
     import service._
     path("watch") {
       anyParams('dir, 'index, 'type) { (dir, index, esType) =>

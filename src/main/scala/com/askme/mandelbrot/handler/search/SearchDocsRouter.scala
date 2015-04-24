@@ -8,7 +8,7 @@ import spray.http.MediaTypes._
  */
 case object SearchDocsRouter extends Router {
 
-  override def apply(implicit service: MandelbrotHandler) = {
+  override def apply(implicit service: MandelbrotHandler, startTime: Long) = {
     import service._
     jsonpWithParameter("callback") {
       path("apidocs" / Segment / Segment) { (index, esType) =>
