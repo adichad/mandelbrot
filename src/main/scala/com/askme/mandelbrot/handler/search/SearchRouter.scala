@@ -13,7 +13,7 @@ import com.askme.mandelbrot.util.Utils._
  */
 case object SearchRouter extends Router {
 
-  override def apply(implicit service: MandelbrotHandler, startTime: Long) = {
+  override def apply(implicit service: MandelbrotHandler) = {
     import service._
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
@@ -62,7 +62,7 @@ case object SearchRouter extends Router {
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, searchType, slugFlag),
                     LimitParams(maxdocspershard, timeoutms),
-                    startTime
+                    System.currentTimeMillis
                   )))
                 }
             }

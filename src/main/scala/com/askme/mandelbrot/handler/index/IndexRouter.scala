@@ -15,7 +15,7 @@ import spray.http.{HttpRequest, RemoteAddress, StatusCodes}
  */
 case class IndexRouter(val config: Config) extends Router with Configurable {
 
-  override def apply(implicit service: MandelbrotHandler, startTime: Long) = {
+  override def apply(implicit service: MandelbrotHandler) = {
     import service._
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
@@ -29,7 +29,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                       RequestParams(httpReq, clip, clip.toString),
                       IndexParams(index, esType),
                       RawData(data),
-                      startTime
+                      System.currentTimeMillis
                     )))
                 }
               }

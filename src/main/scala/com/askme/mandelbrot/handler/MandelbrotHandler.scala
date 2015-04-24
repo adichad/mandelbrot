@@ -38,15 +38,14 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
 
   private implicit val service: MandelbrotHandler = this
   private val route = {
-    val startTime = System.currentTimeMillis()
     cors {
       compressResponse() {
         decompressRequest() {
           get {
-            SearchDocsRouter(this, startTime) ~ SearchRouter(this, startTime) ~ aggRouter(this, startTime)
+            SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this)
           } ~
             post {
-              WatchRouter(this, startTime) ~ indexRouter(this, startTime)
+              WatchRouter(this) ~ indexRouter(this)
             }
         }
       }
