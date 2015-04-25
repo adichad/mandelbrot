@@ -39,7 +39,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
   private implicit val service: MandelbrotHandler = this
   private val route = {
     cors {
-      compressResponse() {
+      compressResponseIfRequested() {
         decompressRequest() {
           get {
             SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this)
