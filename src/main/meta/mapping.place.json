@@ -120,7 +120,8 @@
       "Area": {
         "type": "string",
         "store": true,
-        "index": "analyzed"
+        "index": "analyzed",
+        "copy_to": "AreaAggr"
       },
       "AreaSlug": {
         "type": "string",
@@ -139,7 +140,8 @@
         "store": true,
         "index": "analyzed",
         "position_offset_gap": 100,
-        "norms": {"enabled": false}
+        "norms": {"enabled": false},
+        "copy_to": "AreaSynonymsAggr"
       },
       "AreaSynonymsAggr": {
         "type": "string",
@@ -160,7 +162,8 @@
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
-        "norms": {"enabled": false}
+        "norms": {"enabled": false},
+        "copy_to": "CityAggr"
       },
       "CitySlug": {
         "type": "string",
@@ -411,11 +414,12 @@
             "store": true,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "include_in_root": true,
+            "copy_to": ["Product.l3categoryaggr", "Product.l3categoryexact"]
           },
           "l3categoryaggr": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "not_analyzed",
             "include_in_root": true,
             "doc_values": true
@@ -454,7 +458,8 @@
             "index": "analyzed",
             "position_offset_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true
+            "include_in_root": true,
+            "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr"]
           },
           "categorykeywordsexact": {
             "type": "string",
@@ -488,7 +493,8 @@
                 "type": "string",
                 "store": false,
                 "norms": {"enabled": false},
-                "index": "analyzed"
+                "index": "analyzed",
+                "copy_to": "Product.stringattribute.qaggr"
               },
               "aaggr": {
                 "type": "string",
@@ -503,7 +509,7 @@
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
                 "index": "analyzed",
-                "copy_to": "Product.stringattribute.answerexact"
+                "copy_to": ["Product.stringattribute.answerexact", "Product.stringattribute.aaggr"]
               },
               "answerexact": {
                 "type": "string",
@@ -530,7 +536,8 @@
               "question": {
                 "type": "string",
                 "store": false,
-                "index": "analyzed"
+                "index": "analyzed",
+                "copy_to": "Product.intattribute.qaggr"
               },
               "answer": {
                 "type": "integer",
