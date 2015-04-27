@@ -223,6 +223,7 @@ object SearchRequestHandler extends Logging {
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
               cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+              cquery.add(nestIfNeeded(field, termQuery(field, ck+"s").boost(len * 1024)))
               hasClauses = true
             }
           }
@@ -232,6 +233,7 @@ object SearchRequestHandler extends Logging {
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
               cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+              cquery.add(nestIfNeeded(field, termQuery(field, ck+"s").boost(len * 1024)))
               hasClauses = true
             }
           }
