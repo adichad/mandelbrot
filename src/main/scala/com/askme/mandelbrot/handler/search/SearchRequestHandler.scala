@@ -1,8 +1,6 @@
 package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
-import java.text.SimpleDateFormat
-import java.util.Date
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -135,12 +133,10 @@ object SearchRequestHandler extends Logging {
     }
     val exactQuery = disMaxQuery
     val k = w.mkString(" ")
-    val ck = analyze(esClient, index, "LocationNameExact", kw).mkString(" ")
     val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     fullFields.foreach {
       field: (String, Float) => {
         exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * exactBoostFactor)))
       }
     }
     allQuery.should(exactQuery)
@@ -185,13 +181,11 @@ object SearchRequestHandler extends Logging {
       }
     }
     val k = w.mkString(" ")
-    val ck = analyze(esClient, index, "LocationNameExact", kw).mkString(" ")
     val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     val exactQuery = disMaxQuery
     fullFields.foreach {
       field: (String, Float) => {
         exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * exactBoostFactor)))
       }
     }
 
@@ -211,10 +205,9 @@ object SearchRequestHandler extends Logging {
 
   private case class CategoryFilter(query: BaseQueryBuilder, cats: Seq[String])
 
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], kw: String, cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
+  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
     val cquery = disMaxQuery
     var hasClauses = false
-    val xw: Array[String] = analyze(esClient,index, "Product.l3categoryexact",kw).flatMap(x=>x.split("""\s+"""))
 
     catFilterFields.foreach {
       field: (String) => {
@@ -223,17 +216,6 @@ object SearchRequestHandler extends Logging {
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
               cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
-              cquery.add(nestIfNeeded(field, termQuery(field, ck+"s").boost(len * 1024)))
-              hasClauses = true
-            }
-          }
-        }
-        (1 to xw.length).foreach { len =>
-          xw.sliding(len).foreach { shingle =>
-            val ck = shingle.mkString(" ")
-            if(ck.trim != "") {
-              cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
-              cquery.add(nestIfNeeded(field, termQuery(field, ck+"s").boost(len * 1024)))
               hasClauses = true
             }
           }
@@ -248,7 +230,7 @@ object SearchRequestHandler extends Logging {
         .setTypes(esType.split(","): _*)
         .setSearchType(SearchType.QUERY_THEN_FETCH)
         .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
-        .setTerminateAfter(maxdocspershard)
+        .setTerminateAfter(5000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
         .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
@@ -262,14 +244,9 @@ object SearchRequestHandler extends Logging {
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
         //catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(termQuery("LocationNameExact", xw.mkString(" "))).cache(false))
-        catFilter.should(queryFilter(termQuery("LocationNameExact", xw.mkString(" ")+"s")).cache(false))
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
-        catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" ")+"s")).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")+"s"))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(true))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")+"s"))).cache(true))
         catFilter.should(termsFilter("LocationName", mw:_*))
         catFilter.should(termsFilter("CompanyAliases", mw:_*))
 
@@ -277,15 +254,6 @@ object SearchRequestHandler extends Logging {
           field: (String) => {
             (1 to mw.length).foreach { len =>
               mw.sliding(len).foreach { shingle =>
-                val ck = shingle.mkString(" ")
-                if(ck.trim != "") {
-                  cquery.add(nestIfNeeded(field, termQuery(field, ck)))
-                  hasClauses = true
-                }
-              }
-            }
-            (1 to xw.length).foreach { len =>
-              xw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
                 if(ck.trim != "") {
                   cquery.add(nestIfNeeded(field, termQuery(field, ck)))
@@ -358,7 +326,6 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
 
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
-      debug("analyzed keywords: " + w.toList)
 
       if (w.length > 0) {
         val kwquery = disMaxQuery
@@ -406,9 +373,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           }
         }
 
-        val mw = analyze(esClient, index, "LocationNameExact", kw)
         fullFields.foreach {
-
           field: (String, Float) => {
             (math.max(1*w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
@@ -416,15 +381,6 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
                 kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
               }
             }
-
-            (math.max(1*w.length/2, 1) to mw.length).foreach { len =>
-              mw.sliding(len).foreach { shingle =>
-                val ck = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
-              }
-            }
-
-
           }
         }
         kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
@@ -470,7 +426,7 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
     } else {
-      val matchedCats = categoryFilter(query, w, kw, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
+      val matchedCats = categoryFilter(query, w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
       query = matchedCats.query
       cats = matchedCats.cats
 
@@ -631,17 +587,13 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
       if (slugFlag) {
         val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
         val matchedCat = catBucks
-          .find(b => matchAnalyzed(esClient, index, "Product.l3category", urlize(b.getKey), w)
-          || matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
-          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w)))
-          .fold(catBucks
-          .find(b => weakMatchAnalyzed(esClient, index, "Product.l3category", urlize(b.getKey), w)
-          || weakMatchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
-          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => weakMatchAnalyzed(esClient, index, "Product.categorykeywords", urlize(c.getKey), w)))
-          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey)))(k => "/" + urlize(k.getKey))
+          .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
+          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
+          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
 
-        val bestCat = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-          .headOption.fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
+        val bestCat = ""
+        //result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+        //  .headOption.fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
 
         val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
@@ -657,18 +609,16 @@ class SearchRequestHandler(val config: Config, serverContext: SearchContext) ext
           (if (category != "") "/cat/" + urlize(category) else "") +
           (if (area != "") matchedArea else "")
 
-        bestCatSlug = (if (city != "") "/" + urlize(city) else "") +
-          bestCat +
-          (if (category != "") "/cat/" + urlize(category) else "") +
-          (if (area != "") matchedArea else "")
+        bestCatSlug = ""
+        //(if (city != "") "/" + urlize(city) else "") +
+        //  bestCat +
+        //  (if (category != "") "/cat/" + urlize(category) else "") +
+        //  (if (area != "") matchedArea else "")
       }
-      val formatter = new SimpleDateFormat("z yyyy.MM.dd EEE HH:mm:ss.SSS")
-      val startdt = formatter.format(new Date(startTime))
       val endTime = System.currentTimeMillis
-      val enddt = formatter.format(new Date(endTime))
       val timeTaken = endTime - startTime
       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
-      context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, startdt, enddt, timeTaken, parse(result.toString))
+      context.parent ! SearchResult(slug, bestCatSlug, result.getHits.hits.length, timeTaken, parse(result.toString))
   }
 
   def urlize(k: String) =
