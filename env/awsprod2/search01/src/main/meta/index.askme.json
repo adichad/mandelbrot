@@ -32,26 +32,57 @@
         },
         "stopword": {
           "type": "stop",
-          "stopwords": ["a", "an", "the"]
+          "stopwords": ["a", "an", "the", "in", "of"]
         },
         "word_delimiter": {
           "type": "word_delimiter"
+        },
+        "synonym" : {
+          "type" : "synonym",
+          "synonyms" : [
+            "i-pod, i pod => ipod",
+            "i-phone, i phone => iphone",
+            "iwatch, i-watch => apple watch",
+            "appartment, aptt => apartment",
+            "macdonald => mcdonald",
+            "restorent, restorant, restraunt, restaurent, restuarnt, restro => restaurant",
+            "motorcycle, motorbike => bike",
+            "tire => tyre",
+            "sonytv => sony tv",
+            "choco, choclat, choclate => chocolate"
+          ]
+        },
+        "plural_stem": {
+          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "stemmer": "plural",
+          "min-len": 3,
+          "exclude": ["ins"]
+        },
+        "participle_stem": {
+          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "stemmer": "participle",
+          "min-len": 5,
+          "exclude": ["inning"]
+        },
+        "recombine": {
+          "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
         }
       },
       "analyzer": {
         "keyword_analyzer": {
           "type": "custom",
-          "char_filter": ["html_strip_char_filter", "alphanumeric_char_filter"],
-          "tokenizer": "keyword",
-          "filter": ["lowercase", "asciifolding", "trim"]
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine"]
         },
         "default": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
-          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "light_stemmer"]
+          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym"]
         }
       }
     }
   }
 }
+
