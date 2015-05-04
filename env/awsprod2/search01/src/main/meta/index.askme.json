@@ -1,6 +1,6 @@
 {
   "settings" : {
-    "number_of_shards" : 15,
+    "number_of_shards" : 30,
     "number_of_replicas" : 3,
     "index.cache.query.enable": true,
     "refresh_interval": "10s",
