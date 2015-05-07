@@ -32,7 +32,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
 
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
-          val id = (doc \ "PlaceID").asInstanceOf[JString].values
+          val id = (doc \ string("mappings."+indexParams.idx.esType+".id")).asInstanceOf[JString].values
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))

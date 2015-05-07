@@ -107,7 +107,7 @@ object SearchRequestHandler extends Logging {
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144f * field._2 * posBoost)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(26214400f * field._2 * posBoost)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -133,7 +133,7 @@ object SearchRequestHandler extends Logging {
     }
     val exactQuery = disMaxQuery
     val k = w.mkString(" ")
-    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
+    val exactBoostFactor = 26214400f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     fullFields.foreach {
       field: (String, Float) => {
         exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))

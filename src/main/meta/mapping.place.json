@@ -459,7 +459,7 @@
             "position_offset_gap": 100,
             "norms": {"enabled": false},
             "include_in_root": true,
-            "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr"]
+            "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr", "Product.categorykeywordsshingle"]
           },
           "categorykeywordsexact": {
             "type": "string",
@@ -468,6 +468,16 @@
             "position_offset_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "categorykeywordsshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
             "include_in_root": true
           },
