@@ -1,6 +1,6 @@
 {
   "settings" : {
-    "number_of_shards" : 15,
+    "number_of_shards" : 20,
     "number_of_replicas" : 1,
     "index.cache.query.enable": true,
     "refresh_interval": "10s",
@@ -37,6 +37,12 @@
         "word_delimiter": {
           "type": "word_delimiter"
         },
+        "pre-synonym" : {
+          "type" : "synonym",
+          "synonyms" : [
+            "li'l => little"
+          ]
+        },
         "synonym" : {
           "type" : "synonym",
           "synonyms" : [
@@ -49,7 +55,13 @@
             "motorcycle, motorbike => bike",
             "tire => tyre",
             "sonytv => sony tv",
-            "choco, choclat, choclate => chocolate"
+            "choco, choclat, choclate => chocolate",
+            "pvt ltd => private limited",
+            "ltd => limited",
+            "path lab, patho lab, path laboratory, patho laboratory, pathology lab => pathology laboratory",
+            "women => woman",
+            "men => man",
+            "kidz => kid"
           ]
         },
         "plural_stem": {
@@ -66,6 +78,13 @@
         },
         "recombine": {
           "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
+        },
+        "shingle": {
+          "type": "shingle",
+          "max_shingle_size": 3,
+          "min_shingle_size": 2,
+          "output_unigrams": false,
+          "output_unigrams_if_no_shingles": true
         }
       },
       "analyzer": {
@@ -73,13 +92,19 @@
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
-          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine"]
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine"]
+        },
+        "shingle_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle"]
         },
         "default": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
-          "filter": ["standard", "lowercase", "stopword", "asciifolding", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym"]
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym"]
         }
       }
     }
