@@ -90,14 +90,14 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       if (w.length > 0) {
         val kwquery = disMaxQuery
 
-        searchFields.foreach {
+/*        searchFields.foreach {
           field: (String, Float) => {
             kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim,
               math.min(4, w.length), //max-shingle
               math.max(1, math.min(w.length/2, math.min(4, w.length))))) //min-shingle
           }
         }
-
+*/
         fullFields.foreach {
           field: (String, Float) => {
             (math.max(w.length/2, 1) to w.length).foreach { len =>
@@ -128,7 +128,6 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setSearchType(SearchType.fromString(searchType))
       .setQuery(query)
       .setTrackScores(false)
-      //.addFields(select.split( ""","""): _*)
       .setFrom(offset).setSize(size)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
