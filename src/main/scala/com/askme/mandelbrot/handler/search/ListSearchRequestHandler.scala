@@ -119,13 +119,13 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
         fullFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleFull(field._1, field._2, w, 2, math.min(4, w.length), 2))
+            kwquery.add(shingleFull(field._1, field._2, w, 2, 5, 1))
           }
         }
 
         shingleFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleFull(field._1, field._2, w, 2, math.min(4, w.length), 2))
+            kwquery.add(shingleFull(field._1, field._2, w, 2, 3, 1))
           }
         }
         query = kwquery
