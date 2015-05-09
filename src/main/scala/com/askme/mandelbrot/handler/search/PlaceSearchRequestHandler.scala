@@ -33,7 +33,7 @@ import scala.collection.JavaConversions._
  */
 
 
-object SearchRequestHandler extends Logging {
+object PlaceSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = ""): Unit = {
@@ -56,7 +56,7 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private[SearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[PlaceSearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
     /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -66,7 +66,7 @@ object SearchRequestHandler extends Logging {
   }
 
 
-  private[SearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+  private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
     val terms = w
       .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
@@ -305,8 +305,8 @@ object SearchRequestHandler extends Logging {
 
 }
 
-class SearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
-  import SearchRequestHandler._
+class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+  import PlaceSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
 

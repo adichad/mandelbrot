@@ -48,7 +48,11 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     complete(BadRequest, "invalid area parameter size: " + searchParams.text.kw.length)
   }
   else {
-    val target = context.actorOf(Props(classOf[SearchRequestHandler], config, serverContext))
+    val target = searchParams.idx.esType match {
+      case "list" => context.actorOf(Props(classOf[ListSearchRequestHandler], config, serverContext))
+      case "place" => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
+      case _ => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
+    }
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 2, MILLISECONDS))
     target ! searchParams
   }

@@ -90,8 +90,8 @@
             "index": "analyzed",
             "include_in_root": true,
             "copy_to": [
-              "item.titleexact",
-              "item.titleshingle"
+              "content.titleexact",
+              "content.titleshingle"
             ]
           },
           "titleexact": {
@@ -135,9 +135,9 @@
             "norms": {"enabled": false},
             "include_in_root": true,
             "copy_to": [
-              "item.keywordsexact",
-              "item.keywordsaggr",
-              "item.keywordsshingle"
+              "content.keywordsexact",
+              "content.keywordsaggr",
+              "content.keywordsshingle"
             ]
           },
           "keywordsexact": {
