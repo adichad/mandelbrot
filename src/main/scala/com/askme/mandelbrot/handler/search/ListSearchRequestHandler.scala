@@ -38,7 +38,7 @@ object ListSearchRequestHandler extends Logging {
 
 
   private[ListSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("80%")
+    val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
 
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length > 3)
@@ -60,7 +60,7 @@ object ListSearchRequestHandler extends Logging {
   }
 
   private[ListSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery = boolQuery.minimumShouldMatch("67%")
+    val fieldQuery = boolQuery
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       w.sliding(len).foreach { shingle =>
         val x = shingle.mkString(" ")
