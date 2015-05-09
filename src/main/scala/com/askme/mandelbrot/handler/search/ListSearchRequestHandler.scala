@@ -11,7 +11,7 @@ import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.BaseQueryBuilder
+import org.elasticsearch.index.query.{SpanQueryBuilder, BaseQueryBuilder}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.sort.SortOrder
 import org.json4s.jackson.JsonMethods._
@@ -40,12 +40,16 @@ object ListSearchRequestHandler extends Logging {
   private[ListSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("80%")
 
-    val terms = w
-      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
-      .map(spanMultiTermQueryBuilder)
-
+    val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
+      if(x.length > 3)
+        spanMultiTermQueryBuilder(
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 6) Fuzziness.TWO else Fuzziness.ONE))
+      else
+        spanTermQuery(field, x)
+    )
+    
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      val slop = if(sloppy)math.max(0,len - 3) else 0
+      val slop = if(sloppy)math.max(0, len - 2) else 0
       terms.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy)
         shingle.foreach(nearQuery.clause)
@@ -90,12 +94,10 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       if (w.length > 0) {
         val kwquery = disMaxQuery
 
-        if(w.length > 3) {
+        if(w.length > 1) {
           searchFields.foreach {
             field: (String, Float) => {
-              kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim,
-                math.min(4, w.length), //max-shingle
-                math.max(1, math.min(w.length / 2, math.min(4, w.length))))) //min-shingle
+              kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim, math.min(4, w.length), 2))
             }
           }
         }
