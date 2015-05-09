@@ -59,6 +59,21 @@ object ListSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery1)
   }
 
+  private[ListSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+    val fieldQuery = boolQuery.minimumShouldMatch("67%")
+    (minShingle to math.min(maxShingle, w.length)).foreach { len =>
+      w.sliding(len).foreach { shingle =>
+        val x = shingle.mkString(" ")
+        fieldQuery.should(
+          if(x.length > 3)
+            fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>6) Fuzziness.TWO else Fuzziness.ONE)
+          else
+            termQuery(field, x))
+      }
+    }
+    nestIfNeeded(field, fieldQuery)
+  }
+
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
@@ -104,23 +119,13 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
         fullFields.foreach {
           field: (String, Float) => {
-            (math.max(w.length/2, 1) to w.length).foreach { len =>
-              w.sliding(len).foreach { shingle =>
-                kwquery.add(nestIfNeeded(field._1,
-                  fuzzyQuery(field._1, shingle.mkString(" ")).prefixLength(1).fuzziness(Fuzziness.TWO)))
-              }
-            }
+            kwquery.add(shingleFull(field._1, field._2, w, 2, math.min(4, w.length), 2))
           }
         }
 
         shingleFields.foreach {
           field: (String, Float) => {
-            (math.max(w.length/2, 1) to w.length).foreach { len =>
-              w.sliding(len).foreach { shingle =>
-                kwquery.add(nestIfNeeded(field._1,
-                  fuzzyQuery(field._1, shingle.mkString(" ")).prefixLength(1).fuzziness(Fuzziness.TWO)))
-              }
-            }
+            kwquery.add(shingleFull(field._1, field._2, w, 2, math.min(4, w.length), 2))
           }
         }
         query = kwquery
