@@ -41,13 +41,13 @@ object ListSearchRequestHandler extends Logging {
     val fieldQuery1 = boolQuery.minimumShouldMatch("80%")
 
     val terms = w
-      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
+      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
       .map(spanMultiTermQueryBuilder)
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      val slop = if(sloppy)math.max(0,len - 2) else 0
+      val slop = if(sloppy)math.max(0,len - 3) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(1,len - 3)) else 0).inOrder(!sloppy)
+        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
@@ -90,20 +90,22 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       if (w.length > 0) {
         val kwquery = disMaxQuery
 
-/*        searchFields.foreach {
-          field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim,
-              math.min(4, w.length), //max-shingle
-              math.max(1, math.min(w.length/2, math.min(4, w.length))))) //min-shingle
+        if(w.length > 3) {
+          searchFields.foreach {
+            field: (String, Float) => {
+              kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim,
+                math.min(4, w.length), //max-shingle
+                math.max(1, math.min(w.length / 2, math.min(4, w.length))))) //min-shingle
+            }
           }
         }
-*/
+
         fullFields.foreach {
           field: (String, Float) => {
             (math.max(w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
-                val k = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k)))
+                kwquery.add(nestIfNeeded(field._1,
+                  fuzzyQuery(field._1, shingle.mkString(" ")).prefixLength(1).fuzziness(Fuzziness.TWO)))
               }
             }
           }
@@ -113,8 +115,8 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
           field: (String, Float) => {
             (math.max(w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
-                val k = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k)))
+                kwquery.add(nestIfNeeded(field._1,
+                  fuzzyQuery(field._1, shingle.mkString(" ")).prefixLength(1).fuzziness(Fuzziness.TWO)))
               }
             }
           }
