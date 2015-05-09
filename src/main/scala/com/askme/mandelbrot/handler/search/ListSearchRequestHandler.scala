@@ -38,31 +38,21 @@ object ListSearchRequestHandler extends Logging {
 
 
   private[ListSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
+    val fieldQuery1 = boolQuery.minimumShouldMatch("80%")
+
     val terms = w
       .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
       .map(spanMultiTermQueryBuilder)
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
+      val slop = if(sloppy)math.max(0,len - 2) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * len)
+        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(1,len - 3)) else 0).inOrder(!sloppy)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
     }
-
-    val fieldQuery2 = boolQuery
-    val termsExact = w.map(spanTermQuery(field, _))
-    (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      var i = 100000
-      termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
-        shingle.foreach(nearQuery.clause)
-        fieldQuery2.should(nearQuery)
-        i /= 10
-      }
-    }
-    nestIfNeeded(field, disMaxQuery.add(fieldQuery1).add(fieldQuery2))
+    nestIfNeeded(field, fieldQuery1)
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
@@ -102,13 +92,15 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4))
+            kwquery.add(shingleSpan(field._1, field._2, w, 2, fuzzysim,
+              math.min(4, w.length), //max-shingle
+              math.max(1, math.min(w.length/2, math.min(4, w.length))))) //min-shingle
           }
         }
 
         fullFields.foreach {
           field: (String, Float) => {
-            (math.max(1*w.length/2, 1) to w.length).foreach { len =>
+            (math.max(w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
                 val k = shingle.mkString(" ")
                 kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k)))
@@ -119,7 +111,7 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
         shingleFields.foreach {
           field: (String, Float) => {
-            (math.max(1*w.length/2, 1) to w.length).foreach { len =>
+            (math.max(w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
                 val k = shingle.mkString(" ")
                 kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k)))
@@ -141,7 +133,7 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setFetchSource(source).addSort("id", SortOrder.ASC)
+      .setFetchSource(select.split(""","""), null).addSort("id", SortOrder.ASC)
   }
 
 
