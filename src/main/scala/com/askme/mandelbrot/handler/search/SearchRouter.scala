@@ -53,6 +53,7 @@ case object SearchRouter extends Router {
                 val slugFlag = true
                 val maxdocspershard = 50000
                 val sort = "_distance,_score"
+                val unselect = "keywords"
               respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
@@ -60,7 +61,7 @@ case object SearchRouter extends Router {
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
-                    ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, searchType, slugFlag),
+                    ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, unselect, searchType, slugFlag),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
                   )))

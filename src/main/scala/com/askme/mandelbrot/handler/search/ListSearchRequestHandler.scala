@@ -127,13 +127,13 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setTypes(esType.split(","): _*)
       .setSearchType(SearchType.fromString(searchType))
       .setQuery(query)
-      .setTrackScores(true)
-      .addFields(select.split( ""","""): _*)
+      .setTrackScores(false)
+      //.addFields(select.split( ""","""): _*)
       .setFrom(offset).setSize(size)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setFetchSource(select.split(""","""), null).addSort("id", SortOrder.ASC)
+      .setFetchSource(select.split(""","""), unselect.split(""",""")).addSort("id", SortOrder.ASC)
   }
 
 

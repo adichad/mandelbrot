@@ -19,8 +19,6 @@ import spray.json._
  */
 class IndexRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Logging with Configurable {
 
-  //private val producer = serverContext.kafkaProducer
-
   private val esClient = serverContext.esClient
 
 
@@ -32,7 +30,13 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
 
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
-          val id = (doc \ string("mappings."+indexParams.idx.esType+".id")).asInstanceOf[JString].values
+          val idraw = doc \ string("mappings."+indexParams.idx.esType+".id")
+          val id: String = string("mappings."+indexParams.idx.esType+".idType").toLowerCase match {
+            case "int" => idraw.asInstanceOf[JInt].values.toString
+            case "string" => idraw.asInstanceOf[JString].values
+            case _ => idraw.asInstanceOf[JString].values
+          }
+
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
