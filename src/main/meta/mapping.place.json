@@ -72,7 +72,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "copy_to": "LocationNameExact"
+        "copy_to": ["LocationNameExact", "LocationNameAggr", "LocationNameShingle"]
       },
       "LocationNameExact": {
         "type": "string",
@@ -80,6 +80,20 @@
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "LocationNameAggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "LocationNameShingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
       },
       "LocationDescription": {
@@ -244,7 +258,7 @@
         "index": "analyzed",
         "position_offset_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": "CompanyAliasesExact"
+        "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle"]
       },
       "CompanyAliasesExact": {
         "type": "string",
@@ -253,6 +267,15 @@
         "position_offset_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "CompanyAliasesShingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
       },
       "CompanyDescription": {
@@ -407,6 +430,33 @@
             "type": "string",
             "store": true,
             "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "copy_to": ["Product.l2categoryaggr", "Product.l2categoryexact", "Product.l2categoryshingle"]
+          },
+          "l2categoryaggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
+          },
+          "l2categoryexact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l2categoryshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "norms": {"enabled": false},
             "include_in_root": true
           },
           "l3category": {
@@ -415,7 +465,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
-            "copy_to": ["Product.l3categoryaggr", "Product.l3categoryexact"]
+            "copy_to": ["Product.l3categoryaggr", "Product.l3categoryexact", "Product.l3categoryshingle"]
           },
           "l3categoryaggr": {
             "type": "string",
@@ -430,6 +480,15 @@
             "index": "analyzed",
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l3categoryshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
             "include_in_root": true
           },
@@ -519,7 +578,7 @@
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
                 "index": "analyzed",
-                "copy_to": ["Product.stringattribute.answerexact", "Product.stringattribute.aaggr"]
+                "copy_to": ["Product.stringattribute.answerexact", "Product.stringattribute.aaggr", "Product.stringattribute.answershingle"]
               },
               "answerexact": {
                 "type": "string",
@@ -528,6 +587,15 @@
                 "position_offset_gap": 100,
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false}
+              },
+              "answershingle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "norms": {"enabled": false}
               }
             }

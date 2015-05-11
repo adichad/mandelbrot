@@ -98,7 +98,7 @@ object PlaceSearchRequestHandler extends Logging {
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(655360f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f)
     var i = 1000000
     w.foreach {
       word => {
@@ -107,7 +107,7 @@ object PlaceSearchRequestHandler extends Logging {
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(26214400f * field._2 * posBoost)))
+            wordQuery.should(nestIfNeeded(field._1, termQuery(field._1, word).boost(262144000f * field._2 * posBoost)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -133,7 +133,7 @@ object PlaceSearchRequestHandler extends Logging {
     }
     val exactQuery = disMaxQuery
     val k = w.mkString(" ")
-    val exactBoostFactor = 26214400f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
+    val exactBoostFactor = 262144000f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
     fullFields.foreach {
       field: (String, Float) => {
         exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
@@ -201,7 +201,10 @@ object PlaceSearchRequestHandler extends Logging {
     if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
   }
 
-  private val catFilterFields = Set("Product.l3categoryexact", "Product.categorykeywordsexact")
+  private val catFilterFields = Set("Product.l3categoryexact" -> 1024f, "Product.categorykeywordsexact" -> 1024f, "Product.l2categoryexact" -> 128f)
+
+  private val catFilterFieldsShingle = Set("Product.l3categoryshingle" -> 64f, "Product.categorykeywordsshingle" -> 64f, "Product.l2categoryshingle" -> 8f)
+
 
   private case class CategoryFilter(query: BaseQueryBuilder, cats: Seq[String])
 
@@ -210,12 +213,26 @@ object PlaceSearchRequestHandler extends Logging {
     var hasClauses = false
 
     catFilterFields.foreach {
-      field: (String) => {
+      field: (String, Float) => {
         (1 to mw.length).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
-              cquery.add(nestIfNeeded(field, termQuery(field, ck).boost(len * 1024)))
+              cquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * len)))
+              hasClauses = true
+            }
+          }
+        }
+      }
+    }
+
+    catFilterFieldsShingle.foreach {
+      field: (String, Float) => {
+        (1 to math.min(3, mw.length)).foreach { len =>
+          mw.sliding(len).foreach { shingle =>
+            val ck = shingle.mkString(" ")
+            if(ck.trim != "") {
+              cquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * len)))
               hasClauses = true
             }
           }
@@ -278,7 +295,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
-    "Product.l3category" -> 2048f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
+    "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
@@ -292,12 +309,12 @@ object PlaceSearchRequestHandler extends Logging {
     )
   )
 
-  private val exactFields = Map("Product.categorykeywords" -> 1048576f/*, "CompanyAliases" -> 1048576f*/)
+  private val exactFields = Map("Product.categorykeywords" -> 1048576f, "CompanyAliases" -> 1048576f)
 
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
   private val fullFields = Map(
-    "Product.l3categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
+    "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
     "LocationNameExact"->1048577f, "CompanyAliasesExact"->1048577f,
     "Product.stringattribute.answerexact"->524288f)
 

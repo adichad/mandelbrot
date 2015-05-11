@@ -1,9 +1,9 @@
 {
   "settings" : {
-    "number_of_shards" : 40,
+    "number_of_shards" : 18,
     "number_of_replicas" : 2,
     "index.cache.query.enable": true,
-    "refresh_interval": "10s",
+    "refresh_interval": "60s",
     "analysis": {
       "char_filter": {
         "mapping_char_filter": {
