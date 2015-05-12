@@ -48,7 +48,7 @@ case object SearchRouter extends Router {
                select,
                agg, aggbuckets,
                timeoutms, searchType, trueClient) =>
-                val fuzzyprefix = 3
+                val fuzzyprefix = 2
                 val fuzzysim = 1f
                 val slugFlag = true
                 val maxdocspershard = 50000
