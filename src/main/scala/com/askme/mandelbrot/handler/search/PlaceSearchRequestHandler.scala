@@ -69,7 +69,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
+    val fieldQuery1 = boolQuery.minimumShouldMatch("20%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length > 3)
         spanMultiTermQueryBuilder(
