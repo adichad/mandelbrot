@@ -257,9 +257,10 @@ object PlaceSearchRequestHandler extends Logging {
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
-        //catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, math.max(mw.length/2, 1), mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, 0.85f, math.max(mw.length/2, 1), mw.length)).cache(false))
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(true))
         catFilter.should(termsFilter("LocationName", mw:_*))
         catFilter.should(termsFilter("CompanyAliases", mw:_*))
