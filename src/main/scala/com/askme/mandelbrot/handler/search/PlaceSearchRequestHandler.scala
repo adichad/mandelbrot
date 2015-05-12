@@ -225,7 +225,7 @@ object PlaceSearchRequestHandler extends Logging {
 
     catFilterFieldsShingle.foreach {
       field: (String, Float) => {
-        (1 to math.min(3, mw.length)).foreach { len =>
+        (math.min(2, mw.length) to math.min(3, mw.length)).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
@@ -247,13 +247,13 @@ object PlaceSearchRequestHandler extends Logging {
         .setTerminateAfter(5000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l2categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(_.getKey)
 
-      cats.map(termFilter("Product.l2categoryaggr", _).cache(false)).foreach(catFilter.should(_))
+      cats.map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
