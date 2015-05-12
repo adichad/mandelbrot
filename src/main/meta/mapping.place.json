@@ -198,7 +198,14 @@
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "position_offset_gap": 100,
-        "norms": {"enabled": false}
+        "norms": {"enabled": false},
+        "copy_to": ["CitySynonymsAggr"]
+      },
+      "CitySynonymsAggr": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "PinCode": {
         "type": "string",

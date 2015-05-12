@@ -547,13 +547,17 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(aggbuckets*3))
+          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(100))
           .subAggregation(sum("sum_score").script("docscore").lang("native"))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
         .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
+
+      /*search.addAggregation(terms("citysyns").field("CityAggr").size(aggbuckets)
+        .subAggregation(terms("syns").field("CitySynonymsAggr").size(aggbuckets))
+      )*/
     }
     WrappedRequest(Some(search), cats)
   }
