@@ -37,6 +37,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = ""): Unit = {
+    //if()
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.foreach {
       _ match {
@@ -44,6 +45,7 @@ object PlaceSearchRequestHandler extends Logging {
         case "_distance" => search.addSort(
           SortBuilders.scriptSort("geobucket", "number").lang("native")
             .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC))
+        case "_ct" => search.addSort(SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC))
         case x => {
           val pair = x.split( """\.""", 2)
           if (pair.size == 2)
@@ -77,27 +79,16 @@ object PlaceSearchRequestHandler extends Logging {
     )
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      val slop = if(sloppy)math.max(0, len - 2) else 0
-      terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * len)
-        shingle.foreach(nearQuery.clause)
-        fieldQuery1.should(nearQuery)
-      }
-    }
-
-    val fieldQuery2 = boolQuery
-    val termsExact = w.map(spanTermQuery(field, _))
-    (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
       val slop = if(sloppy)math.max(0, len - 2) else 0
-      termsExact.sliding(len).foreach { shingle =>
+      terms.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
-        fieldQuery2.should(nearQuery)
+        fieldQuery1.should(nearQuery)
         i /= 10
       }
     }
-    nestIfNeeded(field, disMaxQuery.add(fieldQuery1).add(fieldQuery2))
+    nestIfNeeded(field, fieldQuery1)
   }
 
   private def strongMatch(fields: Map[String, Float],
@@ -355,7 +346,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.min(2, w.length)))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.max(1, math.min(2, w.length/3))))
           }
         }
 
@@ -369,7 +360,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 val answerQuery = disMaxQuery
                 v._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.min(2, w.length)))
+                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.max(1, math.min(2, w.length/2))))
                 }
                 perQuestionQuery.must(answerQuery)
                 conditionalQuery.add(perQuestionQuery)
@@ -408,8 +399,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
         kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
 
-        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-        query = kwquery
+        //kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        query = filteredQuery(kwquery, queryFilter(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)).cache(false))
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
         return WrappedRequest(None,Seq())
@@ -512,6 +503,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       .setExplain(explain)
       .setFetchSource(source)
 
+    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + (if(cats.size>0) "_ct," else "")  + "_score"
     addSort(search, sort, lat, lon, areaSlugs)
 
     if (agg) {

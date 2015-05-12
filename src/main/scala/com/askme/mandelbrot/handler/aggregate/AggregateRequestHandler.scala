@@ -45,7 +45,11 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
   private val aggregables = Map(
     "city"->"CityAggr",
     "loc"->"AreaAggr",
-    "cat"->"Product.l3categoryaggr",
+    "cat3"->"Product.l3categoryaggr",
+    "cat2"->"Product.l2categoryaggr",
+    "cat1"->"Product.l1categoryaggr",
+    "ckw"->"Product.categorykeywordsaggr",
+    "name"->"LocationNameAggr",
     "question"->"Product.stringattribute.qaggr",
     "answer"->"Product.stringattribute.aaggr")
 
