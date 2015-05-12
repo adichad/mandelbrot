@@ -225,7 +225,7 @@ object PlaceSearchRequestHandler extends Logging {
 
     catFilterFieldsShingle.foreach {
       field: (String, Float) => {
-        (math.min(2, mw.length) to math.min(3, mw.length)).foreach { len =>
+        (math.min(2, math.max(1, mw.length)) to math.min(3, math.max(1, mw.length))).foreach { len =>
           mw.sliding(len).foreach { shingle =>
             val ck = shingle.mkString(" ")
             if(ck.trim != "") {
@@ -439,7 +439,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         b.should(termFilter("Product.l3categoryslug", c).cache(false))
       }
       query = filteredQuery(query, nestedFilter("Product", b).cache(false))
-    } else {
+    } else if(w.length > 0) {
       val matchedCats = categoryFilter(query, w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
       query = matchedCats.query
       cats = matchedCats.cats
