@@ -424,6 +424,33 @@
             "type": "string",
             "store": true,
             "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "copy_to": ["Product.l1categoryaggr", "Product.l1categoryexact", "Product.l1categoryshingle"]
+          },
+          "l1categoryaggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
+          },
+          "l1categoryexact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l1categoryshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "norms": {"enabled": false},
             "include_in_root": true
           },
           "l2category": {

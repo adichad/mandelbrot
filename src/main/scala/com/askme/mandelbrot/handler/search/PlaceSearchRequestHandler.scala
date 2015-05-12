@@ -201,9 +201,9 @@ object PlaceSearchRequestHandler extends Logging {
     if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
   }
 
-  private val catFilterFields = Set("Product.l3categoryexact" -> 1024f, "Product.categorykeywordsexact" -> 1024f, "Product.l2categoryexact" -> 128f)
+  private val catFilterFields = Set("Product.l3categoryexact" -> 1024f, "Product.categorykeywordsexact" -> 1024f, "Product.l2categoryexact" -> 128f, "Product.l1categoryexact" -> 64f)
 
-  private val catFilterFieldsShingle = Set("Product.l3categoryshingle" -> 64f, "Product.categorykeywordsshingle" -> 64f, "Product.l2categoryshingle" -> 8f)
+  private val catFilterFieldsShingle = Set("Product.l3categoryshingle" -> 64f, "Product.categorykeywordsshingle" -> 64f, "Product.l2categoryshingle" -> 8f, "Product.l1categoryshingle" -> 4f)
 
 
   private case class CategoryFilter(query: BaseQueryBuilder, cats: Seq[String])
@@ -250,13 +250,13 @@ object PlaceSearchRequestHandler extends Logging {
         .setTerminateAfter(5000)
         .setFrom(0).setSize(0)
         .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
+        .addAggregation(terms("categories").field("Product.l2categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
         .subAggregation(max("max_score").script("docscore").lang("native")))
         .execute().get()
         .getAggregations.get("categories").asInstanceOf[Terms]
         .getBuckets.map(_.getKey)
 
-      cats.map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
+      cats.map(termFilter("Product.l2categoryaggr", _).cache(false)).foreach(catFilter.should(_))
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
@@ -295,7 +295,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
-    "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
+    "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "Product.l1category" -> 256f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
@@ -314,7 +314,7 @@ object PlaceSearchRequestHandler extends Logging {
   private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 1048576f)
 
   private val fullFields = Map(
-    "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
+    "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
     "LocationNameExact"->1048577f, "CompanyAliasesExact"->1048577f,
     "Product.stringattribute.answerexact"->524288f)
 
