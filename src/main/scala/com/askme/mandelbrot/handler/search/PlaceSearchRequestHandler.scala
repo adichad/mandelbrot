@@ -17,7 +17,7 @@ import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
-import org.elasticsearch.index.query.{BaseQueryBuilder, BoolFilterBuilder}
+import org.elasticsearch.index.query.{SpanQueryBuilder, BaseQueryBuilder, BoolFilterBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -68,13 +68,18 @@ object PlaceSearchRequestHandler extends Logging {
 
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
-    val terms = w
-      .map(fuzzyQuery(field, _).prefixLength(fuzzyprefix).fuzziness(Fuzziness.TWO))
-      .map(spanMultiTermQueryBuilder)
+    val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
+      if(x.length > 3)
+        spanMultiTermQueryBuilder(
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 6) Fuzziness.TWO else Fuzziness.ONE))
+      else
+        spanTermQuery(field, x)
+    )
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
+      val slop = if(sloppy)math.max(0, len - 2) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * len)
+        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * len)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
       }
@@ -84,8 +89,9 @@ object PlaceSearchRequestHandler extends Logging {
     val termsExact = w.map(spanTermQuery(field, _))
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       var i = 100000
+      val slop = if(sloppy)math.max(0, len - 2) else 0
       termsExact.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(if(sloppy)math.max(0,math.min(2,len - 3)) else 0).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
+        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len * len * math.max(1, i))
         shingle.foreach(nearQuery.clause)
         fieldQuery2.should(nearQuery)
         i /= 10
@@ -349,7 +355,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.min(2, w.length)))
           }
         }
 
@@ -363,7 +369,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 val answerQuery = disMaxQuery
                 v._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4))
+                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.min(2, w.length)))
                 }
                 perQuestionQuery.must(answerQuery)
                 conditionalQuery.add(perQuestionQuery)
