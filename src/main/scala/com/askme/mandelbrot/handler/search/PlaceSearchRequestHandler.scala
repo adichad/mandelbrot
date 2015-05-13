@@ -71,9 +71,9 @@ object PlaceSearchRequestHandler extends Logging {
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(x.length > 4)
+      if(x.length > 8)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 7) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -95,12 +95,9 @@ object PlaceSearchRequestHandler extends Logging {
     val fieldQuery = boolQuery
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       w.sliding(len).foreach { shingle =>
-        val x = shingle.mkString(" ")
+        val phrase = shingle.mkString(" ")
         fieldQuery.should(
-          if(x.length > 4)
-            fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>7) Fuzziness.TWO else Fuzziness.ONE).boost(boost * 2048 * len * len * (searchFields.size + condFields.values.size + 1))
-          else
-            termQuery(field, x)).boost(boost * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))
+          fuzzyOrTermQuery(field, phrase, boost * 2097152f * len * len * (searchFields.size + condFields.values.size + 1), fuzzyprefix))
       }
     }
     nestIfNeeded(field, fieldQuery)
@@ -119,11 +116,7 @@ object PlaceSearchRequestHandler extends Logging {
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, (
-              if(word.length > 6)
-                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
-              else
-                termQuery(field._1, word)).boost(262144000f * field._2 * posBoost)))
+            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, 262144000f * field._2 * posBoost, fuzzyprefix)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -135,11 +128,7 @@ object PlaceSearchRequestHandler extends Logging {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should((
-                      if(word.length > 6)
-                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
-                      else
-                        termQuery(subField._1, word)).boost(2f*subField._2 * posBoost))
+                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, 2f * subField._2 * posBoost, fuzzyprefix))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
@@ -163,6 +152,16 @@ object PlaceSearchRequestHandler extends Logging {
     allQuery.must(termQuery("CustomerType", "350"))
   }
 
+  private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int) = {
+    (
+      if(word.length > 8)
+        fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
+          .fuzziness(if(word.length > 12) Fuzziness.TWO else Fuzziness.ONE)
+          .boost(if(word.length > 12) exactBoost/3f else exactBoost/2f)
+      else
+        termQuery(field, word)).boost(exactBoost)
+
+  }
   private def strongMatchNonPaid(fields: Map[String, Float],
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
@@ -175,14 +174,8 @@ object PlaceSearchRequestHandler extends Logging {
         val wordQuery = boolQuery
         fields.foreach {
           field =>
-
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, (
-              if(word.length > 6)
-                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
-              else
-                termQuery(field._1, word)).boost(131072f * field._2 * posBoost)
-            ))
+            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, 131072f * field._2 * posBoost, fuzzyprefix)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -194,11 +187,7 @@ object PlaceSearchRequestHandler extends Logging {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should((
-                      if(word.length > 6)
-                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
-                      else
-                        termQuery(subField._1, word)).boost(2f*subField._2 * posBoost))
+                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, 2f*subField._2 * posBoost, fuzzyprefix))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
