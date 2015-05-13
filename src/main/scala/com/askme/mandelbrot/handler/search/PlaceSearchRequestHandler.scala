@@ -69,11 +69,11 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("20%")
+    val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(x.length > 3)
+      if(x.length > 4)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 6) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 7) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -89,6 +89,21 @@ object PlaceSearchRequestHandler extends Logging {
       }
     }
     nestIfNeeded(field, fieldQuery1)
+  }
+
+  private[PlaceSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1) = {
+    val fieldQuery = boolQuery
+    (minShingle to math.min(maxShingle, w.length)).foreach { len =>
+      w.sliding(len).foreach { shingle =>
+        val x = shingle.mkString(" ")
+        fieldQuery.should(
+          if(x.length > 4)
+            fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>7) Fuzziness.TWO else Fuzziness.ONE).boost(boost * 2048 * len * len * (searchFields.size + condFields.values.size + 1))
+          else
+            termQuery(field, x)).boost(boost * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))
+      }
+    }
+    nestIfNeeded(field, fieldQuery)
   }
 
   private def strongMatch(fields: Map[String, Float],
@@ -356,12 +371,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
 
     var query: BaseQueryBuilder = null
-
+    val kwquery = disMaxQuery
+    var cats = Seq[String]()
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
 
       if (w.length > 0) {
-        val kwquery = disMaxQuery
+
 
         searchFields.foreach {
           field: (String, Float) => {
@@ -386,6 +402,12 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
               }
             }
             kwquery.add(conditionalQuery)
+          }
+        }
+
+        fullFields.foreach {
+          field: (String, Float) => {
+            kwquery.add(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
           }
         }
 
@@ -416,10 +438,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             }
           }
         }
-        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-
-        //kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-        query = filteredQuery(kwquery, queryFilter(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)).cache(false))
+        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
         return WrappedRequest(None,Seq())
@@ -448,7 +468,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       query = filteredQuery(query, cityFilter)
     }
 
-    var cats = Seq[String]()
+
 
     if (category != "") {
       val cats = category.split("""#""")
@@ -462,7 +482,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val matchedCats = categoryFilter(query, w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
       query = matchedCats.query
       cats = matchedCats.cats
-
+      if(cats.isEmpty) {
+        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+      }
     }
 
     val locFilter = boolFilter.cache(false)

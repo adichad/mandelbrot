@@ -59,7 +59,7 @@ object ListSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery1)
   }
 
-  private[ListSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+  private[ListSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1) = {
     val fieldQuery = boolQuery
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       w.sliding(len).foreach { shingle =>
