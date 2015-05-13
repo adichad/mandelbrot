@@ -69,7 +69,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("50%")
+    val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length > 8)
         spanMultiTermQueryBuilder(
@@ -284,8 +284,8 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(true))
-        catFilter.should(termsFilter("LocationName", mw:_*))
-        catFilter.should(termsFilter("CompanyAliases", mw:_*))
+        catFilter.should(termsFilter("LocationName", mw:_*).cache(false))
+        catFilter.should(termsFilter("CompanyAliases", mw:_*).cache(false))
 
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
@@ -370,7 +370,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.max(1, math.min(2, w.length/3))))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
           }
         }
 
@@ -384,7 +384,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 val answerQuery = disMaxQuery
                 v._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, math.min(4, w.length), math.max(1, math.min(2, w.length/2))))
+                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
                 }
                 perQuestionQuery.must(answerQuery)
                 conditionalQuery.add(perQuestionQuery)
