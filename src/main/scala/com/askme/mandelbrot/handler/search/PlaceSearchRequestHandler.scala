@@ -120,8 +120,8 @@ object PlaceSearchRequestHandler extends Logging {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
             wordQuery.should(nestIfNeeded(field._1, (
-              if(word.length > 3)
-                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
+              if(word.length > 6)
+                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
               else
                 termQuery(field._1, word)).boost(262144000f * field._2 * posBoost)))
         }
@@ -136,8 +136,8 @@ object PlaceSearchRequestHandler extends Logging {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
                     answerQuery.should((
-                      if(word.length > 3)
-                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
+                      if(word.length > 6)
+                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
                       else
                         termQuery(subField._1, word)).boost(2f*subField._2 * posBoost))
                 }
@@ -178,8 +178,8 @@ object PlaceSearchRequestHandler extends Logging {
 
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
             wordQuery.should(nestIfNeeded(field._1, (
-              if(word.length > 3)
-                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
+              if(word.length > 6)
+                fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
               else
                 termQuery(field._1, word)).boost(131072f * field._2 * posBoost)
             ))
@@ -195,8 +195,8 @@ object PlaceSearchRequestHandler extends Logging {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
                     answerQuery.should((
-                      if(word.length > 3)
-                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
+                      if(word.length > 6)
+                        fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
                       else
                         termQuery(subField._1, word)).boost(2f*subField._2 * posBoost))
                 }
