@@ -358,7 +358,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.text._
     import searchParams.view._
 
-
     var query: BaseQueryBuilder = null
     val kwquery = disMaxQuery
     var cats = Seq[String]()
@@ -366,8 +365,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       w = analyze(esClient, index, "CompanyName", kw)
 
       if (w.length > 0) {
-
-
         searchFields.foreach {
           field: (String, Float) => {
             kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
@@ -428,6 +425,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           }
         }
         kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
@@ -449,7 +447,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     }
 
     if (city != "") {
-
       val cityParams = city.split( """,""").map(_.trim.toLowerCase)
       cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
       cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
@@ -471,9 +468,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val matchedCats = categoryFilter(query, w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
       query = matchedCats.query
       cats = matchedCats.cats
-      if(cats.isEmpty) {
-        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-      }
     }
 
     val locFilter = boolFilter.cache(false)
@@ -533,7 +527,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       .setExplain(explain)
       .setFetchSource(source)
 
-    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + (if(cats.size>0) "_ct," else "")  + "_score"
+    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") /*+ (if(cats.size>0) "_ct," else "") */ + "_score"
     addSort(search, sort, lat, lon, areaSlugs)
 
     if (agg) {
