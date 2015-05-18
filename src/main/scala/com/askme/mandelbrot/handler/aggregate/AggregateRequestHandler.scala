@@ -238,7 +238,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
         import response.result
 
         val recordCount = result.getHits.totalHits
-        val res: JValue = if(response.aggParams.agg.response == "processed") reshape(response) else parse(result.getAggregations.toString)
+        val res: JValue = if(response.aggParams.agg.response == "processed") reshape(response) else parse(result.toString)
 
         val timeTaken = System.currentTimeMillis - startTime
         info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + recordCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
