@@ -7,17 +7,124 @@
       "enabled": false
     },
     "properties": {
-      "PlaceID": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed",
-        "doc_values": true
-      },
-      "UserID": {
+      "DealID": {
         "type": "integer",
         "store": true,
         "ignore_malformed": false,
         "doc_values": true
+      },
+      "Title": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "copy_to": "TitleExact"
+      },
+      "TitleExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "Description": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed"
+      },
+      "OriginalPrice": {
+        "type": "float",
+        "store": true,
+        "ignore_malformed": false,
+        "null_value": 0.0
+      },
+      "OfferPrice": {
+        "type": "float",
+        "store": true,
+        "ignore_malformed": false,
+        "null_value": 0.0
+      },
+      "SavedPrice": {
+        "type": "float",
+        "store": true,
+        "ignore_malformed": false,
+        "null_value": 0.0
+      },
+      "SavedPercentage": {
+        "type": "float",
+        "store": true,
+        "ignore_malformed": false,
+        "null_value": 0.0
+      },
+      "DetailURL": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "PaymentURL": {
+        "type": "string",
+        "store": true,
+        "index": "no"
+      },
+      "Keywords": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "copy_to": "TitleExact"
+      },
+      "KeywordsExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "Features": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "copy_to": "FeaturesExact"
+      },
+      "FeaturesExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "Channel": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "copy_to": "ChannelExact"
+      },
+      "ChannelExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "StartDate": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss.SSS",
+        "store": true,
+        "ignore_malformed": false
+      },
+      "EndDate": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss.SSS",
+        "store": true,
+        "ignore_malformed": false
       },
       "LocationID": {
         "type": "integer",

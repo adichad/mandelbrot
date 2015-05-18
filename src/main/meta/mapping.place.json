@@ -229,12 +229,24 @@
       "State": {
         "type": "string",
         "store": true,
+        "index": "analyzed",
+        "copy_to": ["StateAggr"]
+      },
+      "StateAggr": {
+        "type": "string",
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "Country": {
         "type": "string",
         "store": true,
+        "index": "analyzed",
+        "copy_to": ["CountryAggr"]
+      },
+      "CountryAggr": {
+        "type": "string",
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
