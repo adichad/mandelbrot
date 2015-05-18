@@ -91,8 +91,10 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
     def currCountAgg(aggSpec: AggSpec, field: String) = {
       cardinality(aggSpec.name).field(field).precisionThreshold(40000)
     }
-    def currAgg(aggSpec: AggSpec, field: String) =
+    def currAgg(aggSpec: AggSpec, field: String) = {
+
       terms(aggSpec.name).field(field).size(aggSpec.offset+aggSpec.size).shardSize(0)
+    }
 
     def nestPath(field: String) = {
       val parts = field.split("""\.""")
@@ -236,7 +238,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
         import response.result
 
         val recordCount = result.getHits.totalHits
-        val res = reshape(response)
+        val res: JValue = if(response.aggParams.agg.response == "processed") reshape(response) else parse(result.getAggregations.toString)
 
         val timeTaken = System.currentTimeMillis - startTime
         info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + recordCount + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
@@ -259,7 +261,7 @@ class AggregateRequestHandler(val config: Config, serverContext: SearchContext) 
 
         val currAgg = res.asInstanceOf[Terms]
 
-        error(currAgg.toString)
+        //error(currAgg.toString)
         val buckets = currAgg.getBuckets.drop(agg.offset)
         JObject(
           JField(agg.name,

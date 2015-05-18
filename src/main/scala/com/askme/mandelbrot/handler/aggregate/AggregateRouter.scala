@@ -30,12 +30,12 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                 'agg.as[String] ? "city",
                 'maxdocspershard.as[Int] ? 500000,
                 'timeoutms.as[Long] ? 30000l,
-                'searchtype.as[String] ? "count", 'client_ip.as[String] ? "") {
+                'searchtype.as[String] ? "count", 'client_ip.as[String] ? "", 'response.as[String] ? "processed") {
                 (city, area, category, question, answer,
                  size, offset,
                  agg,
                  maxdocspershard,
-                 timeoutms, searchType, trueClient) =>
+                 timeoutms, searchType, trueClient, response) =>
                   entity(as[String]) { data =>
                     respondWithMediaType(
                       `application/json`) {
@@ -49,7 +49,7 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                           RequestParams(httpReq, clip, trueClient),
                           IndexParams(index, esType),
                           FilterParams(city, area, category, question, answer),
-                          AggParams(aggSpecs),
+                          AggParams(aggSpecs, response),
                           LimitParams(maxdocspershard, timeoutms),
                           System.currentTimeMillis
                         )))
