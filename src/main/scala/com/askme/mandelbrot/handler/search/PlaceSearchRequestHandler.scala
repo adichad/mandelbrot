@@ -17,7 +17,7 @@ import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
-import org.elasticsearch.index.query.{SpanQueryBuilder, BaseQueryBuilder, BoolFilterBuilder}
+import org.elasticsearch.index.query.{FilterBuilder, BaseQueryBuilder, BoolFilterBuilder, SpanQueryBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -225,9 +225,9 @@ object PlaceSearchRequestHandler extends Logging {
   private val catFilterFieldsShingle = Set("Product.l3categoryshingle" -> 64f, "Product.categorykeywordsshingle" -> 64f, "Product.l2categoryshingle" -> 8f, "Product.l1categoryshingle" -> 4f)
 
 
-  private case class CategoryFilter(query: BaseQueryBuilder, cats: Seq[String])
+  private case class CategoryFilter(filter: FilterBuilder, cats: Seq[String])
 
-  private def categoryFilter(query: BaseQueryBuilder, mw: Array[String], cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
+  private def categoryFilter(mw: Array[String], cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
     val cquery = disMaxQuery
     var hasClauses = false
 
@@ -285,7 +285,7 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(termQuery("CompanyAliasesExact", mw.mkString(" "))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
-        
+
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
@@ -301,12 +301,12 @@ object PlaceSearchRequestHandler extends Logging {
         }
 
         catFilter.should(queryFilter(cquery).cache(false))
-        CategoryFilter(filteredQuery(query, catFilter), cats)
+        CategoryFilter(catFilter, cats)
       }
       else
-        CategoryFilter(query, Seq[String]())
+        CategoryFilter(null, Seq[String]())
     }
-    else CategoryFilter(query, Seq[String]())
+    else CategoryFilter(null, Seq[String]())
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
@@ -330,7 +330,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val exactFields = Map("CompanyAliases" -> 2097152000000f)
 
-  private val exactFirstFields = Map("LocationName" -> 2097152000000f)
+  private val exactFirstFields = Map("LocationName" -> 2097152000000f, "DetailSlug" -> 2097152000000f)
 
   private val fullExactFields = Map("LocationNameExact"->4097152000000f, "CompanyAliasesExact"->4097152000000f)
 
@@ -403,7 +403,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 131072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 131072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         exactFields.foreach {
@@ -411,12 +411,12 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 231072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 231072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         fullExactFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
           }
         }
 
@@ -433,37 +433,20 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     }
 
     // filters
+    val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
     val cityFilter = boolFilter.cache(false)
-    if (id != "")
-      query = filteredQuery(query, idsFilter(esType).addIds(id.split( """,""").map(_.trim): _*))
-    if(userid != 0)
-      query = filteredQuery(query, termFilter("UserID", userid))
+    if (id != "") {
+      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim): _*))
+    }
+    if(userid != 0) {
+      finalFilter.add(termFilter("UserID", userid).cache(false))
+    }
     if(locid != "") {
-      query = filteredQuery(query, termsFilter("EDMSLocationID", locid.split(""",""").map(_.trim.toInt) :_*))
+      finalFilter.add(termsFilter("EDMSLocationID", locid.split(""",""").map(_.trim.toInt) :_*).cache(false))
     }
 
-    if (city != "") {
-      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(true))
-      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
-      query = filteredQuery(query, cityFilter)
-    }
-
-
-
-    if (category != "") {
-      val cats = category.split("""#""")
-      val b = boolFilter.cache(false)
-      cats.foreach { c =>
-        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(true))
-        b.should(termFilter("Product.l3categoryslug", c).cache(false))
-      }
-      query = filteredQuery(query, nestedFilter("Product", b).cache(false))
-    } else if(w.length > 0) {
-      val matchedCats = categoryFilter(query, w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
-      query = matchedCats.query
-      cats = matchedCats.cats
+    if (pin != "") {
+      finalFilter.add(termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(false))
     }
 
     val locFilter = boolFilter.cache(false)
@@ -476,14 +459,14 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         val terms = areaWords
           .map(fuzzyQuery("Area", _).prefixLength(1).fuzziness(Fuzziness.TWO))
           .map(spanMultiTermQueryBuilder)
-        val areaSpan = spanNearQuery.slop(1).inOrder(true)
+        val areaSpan = spanNearQuery.slop(1).inOrder(false)
         terms.foreach(areaSpan.clause)
         locFilter.should(queryFilter(areaSpan).cache(false))
 
         val synTerms = areaWords
           .map(fuzzyQuery("AreaSynonyms", _).prefixLength(1).fuzziness(Fuzziness.TWO))
           .map(spanMultiTermQueryBuilder)
-        val synAreaSpan = spanNearQuery.slop(1).inOrder(true)
+        val synAreaSpan = spanNearQuery.slop(1).inOrder(false)
         synTerms.foreach(synAreaSpan.clause)
         locFilter.should(queryFilter(synAreaSpan).cache(false))
         analyzedAreas += areaWords.mkString("-")
@@ -505,16 +488,38 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           .optimizeBbox("indexed")
           .geoDistance(GeoDistance.SLOPPY_ARC))
 
-    if (locFilter.hasClauses)
-      query = filteredQuery(query, locFilter)
-    if (pin != "")
-      query = filteredQuery(query, termsFilter("PinCode", pin.split( """,""").map(_.trim): _*).cache(false))
+    if (city != "") {
+      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
+      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
+      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
 
+      finalFilter.add(cityFilter)
+    }
+
+    if (category != "") {
+      val cats = category.split("""#""")
+      val b = boolFilter.cache(false)
+      cats.foreach { c =>
+        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(true))
+        b.should(termFilter("Product.l3categoryslug", c).cache(false))
+      }
+      finalFilter.add(nestedFilter("Product", b).cache(false))
+    } else if(w.length > 0) {
+      val matchedCats = categoryFilter(w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
+      if(matchedCats.filter!=null)
+        finalFilter.add(matchedCats.filter)
+      cats = matchedCats.cats
+    }
+
+    if (locFilter.hasClauses) {
+      finalFilter.add(locFilter)
+    }
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setSearchType(SearchType.fromString(searchType))
-      .setQuery(filteredQuery(query, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
+      .setQuery(filteredQuery(query, finalFilter))
       .setTrackScores(true)
       .addFields(select.split( ""","""): _*)
       .setFrom(offset).setSize(size)

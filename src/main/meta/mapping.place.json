@@ -45,7 +45,7 @@
       "DetailSlug": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "analyzed"
       },
       "PPCOnline": {
         "type": "integer",
