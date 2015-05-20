@@ -61,7 +61,9 @@
             "path lab, patho lab, path laboratory, patho laboratory, pathology lab => pathology laboratory",
             "women => woman",
             "men => man",
-            "kidz => kid"
+            "kidz => kid",
+            "lady hostel, woman hostel, women hostel => girl hostel",
+            "men hostel, man hostel, gent hostel => boy hostel"
           ]
         },
         "plural_stem": {
