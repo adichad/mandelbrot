@@ -358,7 +358,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     var query: BaseQueryBuilder = null
-    val kwquery = boolQuery
+    val kwquery = disMaxQuery
     var cats = Seq[String]()
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
@@ -366,7 +366,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if (w.length > 0) {
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.should(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
           }
         }
 
@@ -386,13 +386,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 conditionalQuery.add(perQuestionQuery)
               }
             }
-            kwquery.should(conditionalQuery)
+            kwquery.add(conditionalQuery)
           }
         }
 
         fullFields.foreach {
           field: (String, Float) => {
-            kwquery.should(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
+            kwquery.add(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
           }
         }
 
@@ -401,7 +401,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.should(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         exactFields.foreach {
@@ -409,7 +409,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.should(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
 
@@ -418,13 +418,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             (math.max(1*w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
                 val k = shingle.mkString(" ")
-                kwquery.should(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
+                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
               }
             }
           }
         }
-        kwquery.should(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-        kwquery.should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
