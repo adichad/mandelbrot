@@ -362,7 +362,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
           }
         }
-        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
+        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(100000000000f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
