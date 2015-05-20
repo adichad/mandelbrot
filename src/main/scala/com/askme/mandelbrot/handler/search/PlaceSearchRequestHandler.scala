@@ -403,7 +403,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 131072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e38f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 131072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         exactFields.foreach {
@@ -411,12 +411,12 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 231072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e38f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 231072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         fullExactFields.foreach {
           field: (String, Float) => {
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e50f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e38f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
           }
         }
 
