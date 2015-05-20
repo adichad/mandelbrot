@@ -328,9 +328,11 @@ object PlaceSearchRequestHandler extends Logging {
     )
   )
 
-  private val exactFields = Map("Product.categorykeywords" -> 1048576f, "CompanyAliases" -> 2097152000000f)
+  private val exactFields = Map("CompanyAliases" -> 2097152000000f)
 
-  private val exactFirstFields = Map("Product.l3category" -> 1048576f, "LocationName" -> 2097152000000f)
+  private val exactFirstFields = Map("LocationName" -> 2097152000000f)
+
+  private val fullExactFields = Map("LocationNameExact"->4097152000000f, "CompanyAliasesExact"->4097152000000f)
 
   private val fullFields = Map(
     "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
@@ -392,7 +394,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         fullFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
+            kwquery.add(shingleFull(field._1, field._2, w, fuzzyprefix, w.length, 1))
           }
         }
 
@@ -412,17 +414,12 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 231072f * 10000 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
-
-        fullFields.foreach {
+        fullExactFields.foreach {
           field: (String, Float) => {
-            (math.max(1*w.length/2, 1) to w.length).foreach { len =>
-              w.sliding(len).foreach { shingle =>
-                val k = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
-              }
-            }
+            kwquery.add(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length))
           }
         }
+
         kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
