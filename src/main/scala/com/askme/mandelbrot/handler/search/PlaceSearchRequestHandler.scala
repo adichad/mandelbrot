@@ -140,16 +140,7 @@ object PlaceSearchRequestHandler extends Logging {
         i /= 10
       }
     }
-    val exactQuery = disMaxQuery
-    val k = w.mkString(" ")
-    val exactBoostFactor = 262144000f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
-    fullFields.foreach {
-      field: (String, Float) => {
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
-      }
-    }
-    allQuery.should(exactQuery)
-    allQuery.must(termQuery("CustomerType", "350"))
+    allQuery
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int) = {
@@ -161,54 +152,6 @@ object PlaceSearchRequestHandler extends Logging {
       else
         termQuery(field, word)).boost(exactBoost)
 
-  }
-  private def strongMatchNonPaid(fields: Map[String, Float],
-                          condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
-
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 3f / 4f).toInt).boost(32768f)
-    var i = 10000
-    w.foreach {
-      word => {
-        val posBoost = math.max(1, i)
-        val wordQuery = boolQuery
-        fields.foreach {
-          field =>
-            //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, 131072f * field._2 * posBoost, fuzzyprefix)))
-        }
-        condFields.foreach {
-          cond: (String, Map[String, Map[String, Float]]) => {
-            cond._2.foreach {
-              valField: (String, Map[String, Float]) => {
-                val perQuestionQuery = boolQuery
-                perQuestionQuery.must(termQuery(cond._1, valField._1))
-                val answerQuery = boolQuery
-                valField._2.foreach {
-                  subField: (String, Float) =>
-                    //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, 2f*subField._2 * posBoost, fuzzyprefix))
-                }
-                perQuestionQuery.must(answerQuery)
-                wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
-              }
-            }
-          }
-        }
-        allQuery.should(wordQuery)
-        i /= 10
-      }
-    }
-    val k = w.mkString(" ")
-    val exactBoostFactor = 262144f * w.length * w.length * (searchFields.size + condFields.values.size + 1)*100
-    val exactQuery = disMaxQuery
-    fullFields.foreach {
-      field: (String, Float) => {
-        exactQuery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * exactBoostFactor)))
-      }
-    }
-
-    allQuery.should(exactQuery)
   }
 
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
@@ -419,9 +362,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
           }
         }
-
-        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
