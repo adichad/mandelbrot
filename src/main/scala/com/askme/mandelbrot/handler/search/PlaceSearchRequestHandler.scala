@@ -313,7 +313,7 @@ object PlaceSearchRequestHandler extends Logging {
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
-  private val searchFields = Map("LocationName" -> 8192f, "CompanyAliases" -> 8192f,
+  private val searchFields = Map("LocationName" -> 81920f, "CompanyAliases" -> 81920f,
     "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "Product.l1category" -> 256f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
@@ -334,7 +334,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val fullFields = Map(
     "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
-    "LocationNameExact"->2097152f, "CompanyAliasesExact"->2097152f,
+    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
     "Product.stringattribute.answerexact"->524288f)
 
   private val emptyStringArray = new Array[String](0)
