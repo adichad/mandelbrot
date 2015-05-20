@@ -285,6 +285,12 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(termQuery("CompanyAliasesExact", mw.mkString(" "))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
+        val lnf = boolFilter
+        mw.map(w=>termFilter("LocationName", w)).foreach(lnf.must(_))
+        catFilter.should(lnf)
+        val csf = boolFilter()
+        mw.map(w=>termFilter("CompanyAliases", w)).foreach(csf.must(_))
+        catFilter.should(csf)
 
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
