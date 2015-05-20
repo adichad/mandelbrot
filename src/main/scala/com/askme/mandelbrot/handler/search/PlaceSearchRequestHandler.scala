@@ -107,7 +107,7 @@ object PlaceSearchRequestHandler extends Logging {
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f).queryName("apl")
     var i = 1000000
     w.foreach {
       word => {
@@ -282,10 +282,9 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(true))
-        catFilter.should(termsFilter("LocationName", mw:_*).cache(false))
-        catFilter.should(termsFilter("CompanyAliases", mw:_*).cache(false))
+        catFilter.should(queryFilter(termQuery("CompanyAliasesExact", mw.mkString(" "))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
+        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
 
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
@@ -314,7 +313,7 @@ object PlaceSearchRequestHandler extends Logging {
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
-  private val searchFields = Map("LocationName" -> 512f, "CompanyAliases" -> 512f,
+  private val searchFields = Map("LocationName" -> 2049f, "CompanyAliases" -> 2049f,
     "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "Product.l1category" -> 256f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
     "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
@@ -359,7 +358,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     var query: BaseQueryBuilder = null
-    val kwquery = disMaxQuery
+    val kwquery = boolQuery
     var cats = Seq[String]()
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
@@ -367,7 +366,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if (w.length > 0) {
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
+            kwquery.should(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
           }
         }
 
@@ -387,13 +386,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 conditionalQuery.add(perQuestionQuery)
               }
             }
-            kwquery.add(conditionalQuery)
+            kwquery.should(conditionalQuery)
           }
         }
 
         fullFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
+            kwquery.should(shingleFull(field._1, field._2, w, fuzzyprefix, 4, 1))
           }
         }
 
@@ -402,7 +401,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.should(boolQuery.should(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
         exactFields.foreach {
@@ -410,7 +409,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
+            kwquery.should(boolQuery.should(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 2 * w.length * w.length * (searchFields.size + condFields.values.size + 1)))
           }
         }
 
@@ -419,13 +418,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             (math.max(1*w.length/2, 1) to w.length).foreach { len =>
               w.sliding(len).foreach { shingle =>
                 val k = shingle.mkString(" ")
-                kwquery.add(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
+                kwquery.should(nestIfNeeded(field._1, termQuery(field._1, k).boost(field._2 * 2097152f * len * len * (searchFields.size + condFields.values.size + 1))))
               }
             }
           }
         }
-        kwquery.add(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-        kwquery.add(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.should(strongMatchNonPaid(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+        kwquery.should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
         query = kwquery
       } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
