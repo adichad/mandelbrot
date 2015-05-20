@@ -107,7 +107,7 @@ object PlaceSearchRequestHandler extends Logging {
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f).queryName("apl")
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f)
     var i = 1000000
     w.foreach {
       word => {
@@ -285,13 +285,7 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(termQuery("CompanyAliasesExact", mw.mkString(" "))).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
-        val lnf = boolFilter
-        mw.map(w=>termFilter("LocationName", w)).foreach(lnf.must(_))
-        catFilter.should(lnf)
-        val csf = boolFilter()
-        mw.map(w=>termFilter("CompanyAliases", w)).foreach(csf.must(_))
-        catFilter.should(csf)
-
+        
         Seq("LocationNameExact", "CompanyAliasesExact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
