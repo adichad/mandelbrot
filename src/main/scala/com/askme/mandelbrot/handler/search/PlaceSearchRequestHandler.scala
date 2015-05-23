@@ -1,7 +1,6 @@
 package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
-import java.util.regex.Pattern
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -37,7 +36,7 @@ import scala.collection.JavaConversions._
 object PlaceSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
-  val idregex: Pattern = """u\d+l\d+""".r.pattern
+  val idregex = """[uU]\d+[lL]\d+""".r
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = ""): Unit = {
     //if()
     val parts = for (x <- sort.split(",")) yield x.trim
@@ -310,9 +309,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     val kwquery = disMaxQuery
     var cats = Seq[String]()
     if (kw != null && kw.trim != "") {
-      w = analyze(esClient, index, "CompanyName", kw)
-      kwids = w.filter(idregex.matcher(_).matches()).map(_.trim.toUpperCase)
-      if(kwids.length > 0) w = emptyStringArray
+      kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
+      w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
+      info(kwids.toList)
+      info(w.toList)
 
       if (w.length > 0) {
         searchFields.foreach {
