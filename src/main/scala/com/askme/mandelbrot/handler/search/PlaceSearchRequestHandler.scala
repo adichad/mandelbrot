@@ -311,8 +311,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if (kw != null && kw.trim != "") {
       kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
       w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
-      info(kwids.toList)
-      info(w.toList)
 
       if (w.length > 0) {
         searchFields.foreach {
