@@ -1,6 +1,7 @@
 package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
+import java.util.regex.Pattern
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -17,7 +18,7 @@ import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
-import org.elasticsearch.index.query.{FilterBuilder, BaseQueryBuilder, BoolFilterBuilder, SpanQueryBuilder}
+import org.elasticsearch.index.query.{BaseQueryBuilder, BoolFilterBuilder, FilterBuilder, SpanQueryBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -36,6 +37,7 @@ import scala.collection.JavaConversions._
 object PlaceSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
+  val idregex: Pattern = """u\d+l\d+""".r.pattern
   private def addSort(search: SearchRequestBuilder, sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = ""): Unit = {
     //if()
     val parts = for (x <- sort.split(",")) yield x.trim
@@ -284,12 +286,14 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val emptyStringArray = new Array[String](0)
 
+
 }
 
 class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import PlaceSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var kwids: Array[String] = emptyStringArray
 
   private case class WrappedRequest(search: Option[SearchRequestBuilder], cats: Seq[String])
 
@@ -307,6 +311,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     var cats = Seq[String]()
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "CompanyName", kw)
+      kwids = w.filter(idregex.matcher(_).matches()).map(_.trim.toUpperCase)
+      if(kwids.length > 0) w = emptyStringArray
 
       if (w.length > 0) {
         searchFields.foreach {
@@ -364,11 +370,11 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
         kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e35f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
-      } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
+      } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
         return WrappedRequest(None,Seq())
       }
-    } else if(category.trim == "" && id=="" && userid == 0 && locid == "") {
+    } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
       context.parent ! EmptyResponse ("empty search criteria")
       return WrappedRequest(None,Seq())
     }
@@ -376,8 +382,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     // filters
     val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
     val cityFilter = boolFilter.cache(false)
-    if (id != "") {
-      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim): _*))
+    if (id != "" || !kwids.isEmpty) {
+      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
     }
     if(userid != 0) {
       finalFilter.add(termFilter("UserID", userid).cache(false))

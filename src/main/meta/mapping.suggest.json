@@ -1,0 +1,31 @@
+{
+  "suggest": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "properties": {
+      "output": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "suggest_analyzer",
+        "search_analyzer": "suggest_analyzer"
+      },
+      "type": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "count": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      }
+    }
+  }
+}
