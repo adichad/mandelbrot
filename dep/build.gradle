@@ -28,6 +28,9 @@ eclipse {
     targetCompatibility = 1.8
   }
 }
+compileJava {
+  sourceCompatibility = 1.8
+}
 
 buildscript {
   repositories {
@@ -113,6 +116,8 @@ dependencies {
 
   compile     group: 'org.json4s',                 name: "json4s-native_${scala_base_version}",               version: '3.2.11'
   compile     group: 'org.json4s',                 name: "json4s-ext_${scala_base_version}",                  version: '3.2.11'
+  compile     group: 'org.json4s',                 name: "json4s-jackson_${scala_base_version}",              version: '3.2.11'
+
 
 
   compile     group: 'com.typesafe.akka',          name: "akka-actor_${scala_base_version}",                  version: akka_version
@@ -123,10 +128,10 @@ dependencies {
 
 //  compile     group: 'com.thinkaurelius.titan',    name: "titan-core",                                    version: titan_version      // distributed graph database engine
 //  compile     group: 'com.thinkaurelius.titan',    name: "titan-es",                                      version: titan_version      // distributed graph database engine
-  compile     group: 'com.hazelcast',              name: "hazelcast",                                         version: '3.3.1'            // distributed in-memory data grid
-  compile     group: 'com.fasterxml.jackson.core', name: "jackson-databind",                                  version: '2.4.+'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: "jackson-annotations",                               version: '2.4.+'            // json support
-  compile     group: 'com.fasterxml.jackson.core', name: "jackson-core",                                      version: '2.4.+'            // json support
+  compile     group: 'com.hazelcast',              name: "hazelcast",                                         version: '3.4.2'            // distributed in-memory data grid
+  compile     group: 'com.fasterxml.jackson.core', name: "jackson-databind",                                  version: '2.5.3'            // json support
+  compile     group: 'com.fasterxml.jackson.core', name: "jackson-annotations",                               version: '2.5.3'            // json support
+  compile     group: 'com.fasterxml.jackson.core', name: "jackson-core",                                      version: '2.5.3'            // json support
   compile     group: "org.apache.kafka",           name: "kafka-clients",                                     version: "0.8.2.1"
 
 
@@ -135,22 +140,22 @@ dependencies {
 
 //  compile     group: 'org.openstreetmap.osmosis',  name: "osmosis-pbf2",                                  version: '0.43.1'           // openstreetmap
 
-  compile     group: 'org.apache.spark',           name: "spark-core_${scala_base_version}",                  version: spark_version
-  compile     group: 'org.apache.spark',           name: "spark-sql_${scala_base_version}",                   version: spark_version
-  compile     group: 'org.apache.spark',           name: "spark-streaming_${scala_base_version}",             version: spark_version
-  compile     group: 'org.apache.spark',           name: "spark-mllib_${scala_base_version}",                 version: spark_version
-  compile     group: 'org.apache.spark',           name: "spark-graphx_${scala_base_version}",                version: spark_version
+//  compile     group: 'org.apache.spark',           name: "spark-core_${scala_base_version}",                  version: spark_version
+//  compile     group: 'org.apache.spark',           name: "spark-sql_${scala_base_version}",                   version: spark_version
+//  compile     group: 'org.apache.spark',           name: "spark-streaming_${scala_base_version}",             version: spark_version
+//  compile     group: 'org.apache.spark',           name: "spark-mllib_${scala_base_version}",                 version: spark_version
+//  compile     group: 'org.apache.spark',           name: "spark-graphx_${scala_base_version}",                version: spark_version
 
-  compile     group: 'org.elasticsearch',          name: "elasticsearch-hadoop",                              version: '2.0.0'
+//  compile     group: 'org.elasticsearch',          name: "elasticsearch-hadoop",                              version: '2.0.0'
 
 
-  provided    group: 'org.apache.hadoop',          name: "hadoop-annotations",                                version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-api",                                   version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-common",                                version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-server-common",                         version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-server-web-proxy",                      version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-client",                                     version: hadoop_version
-  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-client",                                version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-annotations",                                version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-api",                                   version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-common",                                version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-server-common",                         version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-server-web-proxy",                      version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-client",                                     version: hadoop_version
+//  provided    group: 'org.apache.hadoop',          name: "hadoop-yarn-client",                                version: hadoop_version
 
   compile     group: 'net.databinder.dispatch',    name: "dispatch-core_${scala_base_version}",               version: '0.11.1'
 
