@@ -156,7 +156,7 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
-    analyze(esClient, index, field, text).deep == keywords.deep
+    if(keywords.isEmpty) false else analyze(esClient, index, field, text).deep == keywords.deep
   }
 
   private def weakMatchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
@@ -225,12 +225,12 @@ object PlaceSearchRequestHandler extends Logging {
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(termQuery("LocationNameExact", mw.mkString(" "))).cache(false))
-        catFilter.should(queryFilter(termQuery("CompanyAliasesExact", mw.mkString(" "))).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
+        catFilter.should(queryFilter(nestIfNeeded("Product.stringattribute.answerexact", termQuery("Product.stringattribute.answerexact", mw.mkString(" ")))).cache(false))
 
-        Seq("LocationNameExact", "CompanyAliasesExact").foreach {
+        Seq("LocationNameExact", "CompanyAliasesExact", "Product.stringattribute.answerexact").foreach {
           field: (String) => {
             (1 to mw.length).foreach { len =>
               mw.sliding(len).foreach { shingle =>
@@ -259,16 +259,15 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val searchFields = Map("LocationName" -> 81920f, "CompanyAliases" -> 81920f,
     "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "Product.l1category" -> 256f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
-    "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 16f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
+    "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 512f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
-      "brands" -> Map("Product.stringattribute.answer" -> 1024f),
-      "menu" -> Map("Product.stringattribute.answer" -> 512f),
-      "destinations" -> Map("Product.stringattribute.answer" -> 512f),
-      "product" -> Map("Product.stringattribute.answer" -> 256f),
-      "tests" -> Map("Product.stringattribute.answer" -> 256f),
-      "courses" -> Map("Product.stringattribute.answer" -> 256f)
+      "brands" -> Map("Product.stringattribute.answer" -> 2048f),
+      "menu" -> Map("Product.stringattribute.answer" -> 2048f),
+      "destinations" -> Map("Product.stringattribute.answer" -> 1024f),
+      "product" -> Map("Product.stringattribute.answer" -> 1024f),
+      "service" -> Map("Product.stringattribute.answer"->1024f)
     )
   )
 
@@ -281,7 +280,7 @@ object PlaceSearchRequestHandler extends Logging {
   private val fullFields = Map(
     "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
     "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
-    "Product.stringattribute.answerexact"->524288f)
+    "Product.stringattribute.answerexact"->1048576f)
 
   private val emptyStringArray = new Array[String](0)
 
