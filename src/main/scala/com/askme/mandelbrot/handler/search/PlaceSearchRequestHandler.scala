@@ -350,7 +350,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e35f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 231072f * 10000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e7f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 231072f * 10000f * superBoost))
           }
         }
         exactFields.foreach {
@@ -358,7 +358,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e35f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 131072f * 10000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e7f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 131072f * 10000f * superBoost))
           }
         }
         fullExactFields.foreach {
