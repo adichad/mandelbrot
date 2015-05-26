@@ -228,7 +228,6 @@ object PlaceSearchRequestHandler extends Logging {
         catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.stringattribute.answerexact", termQuery("Product.stringattribute.answerexact", mw.mkString(" ")))).cache(false))
 
         Seq("LocationNameExact", "CompanyAliasesExact", "Product.stringattribute.answerexact").foreach {
           field: (String) => {
@@ -273,7 +272,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val exactFields = Map("CompanyAliases" -> 2097152000000f)
 
-  private val exactFirstFields = Map("LocationName" -> 2097152000000f/*, "DetailSlug" -> 2097152000000f*/)
+  private val exactFirstFields = Map("LocationName" -> 2097152000000f, "DetailSlug" -> 2097152000000f)
 
   private val fullExactFields = Map("LocationNameExact"->4097152000000f, "CompanyAliasesExact"->4097152000000f)
 
