@@ -98,7 +98,7 @@ object PlaceSearchRequestHandler extends Logging {
       w.sliding(len).foreach { shingle =>
         val phrase = shingle.mkString(" ")
         fieldQuery.should(
-          fuzzyOrTermQuery(field, phrase, boost * 2097152f * len * len * (searchFields.size + condFields.values.size + 1), fuzzyprefix))
+          fuzzyOrTermQuery(field, phrase, boost * len * len * (searchFields.size + condFields.values.size + 1), fuzzyprefix))
       }
     }
     nestIfNeeded(field, fieldQuery)
@@ -108,7 +108,7 @@ object PlaceSearchRequestHandler extends Logging {
                           condFields: Map[String, Map[String, Map[String, Float]]],
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt).boost(65536000f)
+    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt)
     var i = 1000000
     w.foreach {
       word => {
@@ -117,7 +117,7 @@ object PlaceSearchRequestHandler extends Logging {
         fields.foreach {
           field =>
             //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, 262144000f * field._2 * posBoost, fuzzyprefix)))
+            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, field._2 * posBoost, fuzzyprefix)))
         }
         condFields.foreach {
           cond: (String, Map[String, Map[String, Float]]) => {
@@ -129,7 +129,7 @@ object PlaceSearchRequestHandler extends Logging {
                 valField._2.foreach {
                   subField: (String, Float) =>
                     //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, 2f * subField._2 * posBoost, fuzzyprefix))
+                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, subField._2 * posBoost, fuzzyprefix))
                 }
                 perQuestionQuery.must(answerQuery)
                 wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
@@ -344,13 +344,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           }
         }
 
-        val superBoost = 262144000f * 65536000f * w.length * w.length * (searchFields.size + condFields.values.size + 1)
+        val superBoost = w.length * w.length * (searchFields.size + condFields.values.size + 1)
         exactFirstFields.foreach {
           field: (String, Float) => {
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e21f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 231072f * 10000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 1000f * superBoost))
           }
         }
         exactFields.foreach {
@@ -358,15 +358,15 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e21f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 131072f * 10000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 10000f * superBoost))
           }
         }
         fullExactFields.foreach {
           field: (String, Float) => {
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e21f)).must(shingleFull(field._1, field._2 * 2097152f * 1e10f * superBoost, w, fuzzyprefix, w.length, w.length)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(shingleFull(field._1, field._2 * 1e5f * superBoost, w, fuzzyprefix, w.length, w.length)))
           }
         }
-        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
+        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e7f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
