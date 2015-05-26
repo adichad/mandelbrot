@@ -362,7 +362,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
         fullExactFields.foreach {
           field: (String, Float) => {
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(shingleFull(field._1, field._2 * 2097152f * 10000 * 10000, w, fuzzyprefix, w.length, w.length)))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(10000000f)).must(shingleFull(field._1, field._2 * 2097152f * 100000f * 100000f * w.length * w.length * (searchFields.size + condFields.values.size + 1), w, fuzzyprefix, w.length, w.length)))
           }
         }
         kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e35f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
