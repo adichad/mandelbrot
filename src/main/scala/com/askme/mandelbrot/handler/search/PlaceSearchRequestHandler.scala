@@ -41,20 +41,17 @@ object PlaceSearchRequestHandler extends Logging {
     //if()
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.foreach {
-      _ match {
-        case "_score" => search.addSort(new ScoreSortBuilder().order(SortOrder.DESC))
-        case "_distance" => search.addSort(
-          SortBuilders.scriptSort("geobucket", "number").lang("native")
-            .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC))
-        case "_ct" => search.addSort(SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC))
-        case x => {
-          val pair = x.split( """\.""", 2)
-          if (pair.size == 2)
-            search.addSort(new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1))))
-          else if (pair.size == 1)
-            search.addSort(new FieldSortBuilder(pair(0)).order(SortOrder.DESC))
-        }
-      }
+      case "_score" => search.addSort(new ScoreSortBuilder().order(SortOrder.DESC))
+      case "_distance" => search.addSort(
+        SortBuilders.scriptSort("geobucket", "number").lang("native")
+          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC))
+      case "_ct" => search.addSort(SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC))
+      case x =>
+        val pair = x.split( """\.""", 2)
+        if (pair.size == 2)
+          search.addSort(new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1))))
+        else if (pair.size == 1)
+          search.addSort(new FieldSortBuilder(pair(0)).order(SortOrder.DESC))
     }
   }
 
@@ -257,16 +254,15 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields = Map("LocationName" -> 81920f, "CompanyAliases" -> 81920f,
-    "Product.l3category" -> 2048f, "Product.l2category" -> 1024f, "Product.l1category" -> 256f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 256f, "Product.brand" -> 256f,
-    "Product.categorykeywords" -> 2048f, "Product.stringattribute.answer" -> 512f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
+    "Product.l3category" -> 4096f, "Product.l2category" -> 1024f, "Product.l1category" -> 512f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 1024f, "Product.brand" -> 2048f,
+    "Product.categorykeywords" -> 4096f, "Product.stringattribute.answer" -> 1024f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
-      "brands" -> Map("Product.stringattribute.answer" -> 2048f),
+      "brand" -> Map("Product.stringattribute.answer" -> 2048f),
       "menu" -> Map("Product.stringattribute.answer" -> 2048f),
-      "destinations" -> Map("Product.stringattribute.answer" -> 1024f),
-      "product" -> Map("Product.stringattribute.answer" -> 1024f),
-      "service" -> Map("Product.stringattribute.answer"->1024f)
+      "destination" -> Map("Product.stringattribute.answer" -> 2048f),
+      "product" -> Map("Product.stringattribute.answer" -> 2048f)
     )
   )
 
@@ -349,7 +345,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 1000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 10000f * superBoost))
           }
         }
         exactFields.foreach {
@@ -357,7 +353,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 10000f * superBoost))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 1000f * superBoost))
           }
         }
         fullExactFields.foreach {
@@ -365,7 +361,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(shingleFull(field._1, field._2 * 1e5f * superBoost, w, fuzzyprefix, w.length, w.length)))
           }
         }
-        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e12f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
+        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e14f)).must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
