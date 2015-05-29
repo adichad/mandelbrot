@@ -338,7 +338,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if (w.length > 0) {
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, 1))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2,w.length)))
           }
         }
 
@@ -352,7 +352,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 val answerQuery = disMaxQuery
                 v._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, 1))
+                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, math.min(2,w.length)))
                 }
                 perQuestionQuery.must(answerQuery)
                 conditionalQuery.add(perQuestionQuery)
