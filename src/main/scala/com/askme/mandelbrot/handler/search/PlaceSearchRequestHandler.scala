@@ -280,7 +280,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val emptyStringArray = new Array[String](0)
 
-  private def superBoost(len: Int) = math.pow(10,(len-1)*(len-1)).toFloat * (searchFields.size + condFields.values.reduce(_.size+_.size) + 1)
+  private def superBoost(len: Int) = math.pow(10,(len-1)*(len-1)).toFloat * (searchFields.size + condFields.values.size + 1)
 
 
 }
