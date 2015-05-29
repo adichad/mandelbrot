@@ -77,13 +77,13 @@ object PlaceSearchRequestHandler extends Logging {
     )
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      var i = 100000
+      //var i = 100000
       val slop = if(sloppy)math.max(0, len - 2) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len * math.max(1, i))
+        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
-        i /= 10
+        //i /= 10
       }
     }
     nestIfNeeded(field, fieldQuery1)
@@ -107,10 +107,10 @@ object PlaceSearchRequestHandler extends Logging {
                           w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
 
     val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt)
-    var i = 1000000
+    //var i = 1000000
     w.foreach {
       word => {
-        val posBoost = math.max(1, i)
+        val posBoost = 1//math.max(1, i)
         val wordQuery = boolQuery
         fields.foreach {
           field =>
@@ -136,7 +136,7 @@ object PlaceSearchRequestHandler extends Logging {
           }
         }
         allQuery.should(wordQuery)
-        i /= 10
+        //i /= 10
       }
     }
     allQuery
@@ -280,7 +280,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val emptyStringArray = new Array[String](0)
 
-  private def superBoost(len: Int) = math.pow(10,(len-1)*(len-1)).toFloat * (searchFields.size + condFields.values.size + 1)
+  private def superBoost(len: Int) = math.pow(10,(len+1)*(len+1)).toFloat * (searchFields.size + condFields.values.size + 1)
 
 
 }
