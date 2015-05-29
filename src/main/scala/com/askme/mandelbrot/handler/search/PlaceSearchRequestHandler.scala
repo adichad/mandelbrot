@@ -90,7 +90,7 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private[PlaceSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1) = {
-    val fieldQuery = boolQuery
+    val fieldQuery = boolQuery.minimumShouldMatch("33%")
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       val lboost = boost * superBoost(len)
       w.sliding(len).foreach { shingle =>
@@ -291,14 +291,16 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.l3categoryexact"->104857600000f,
     "Product.l2categoryexact"->10485760000f,
     "Product.l1categoryexact"->1048576000f,
-    "Product.categorykeywordsexact"->104857600000f)
+    "Product.categorykeywordsexact"->104857600000f,
+    "Product.stringattribute.answerexact"->1f)
 
   private val fullFields = Map(
     "Product.l3categoryexact"->2097152f,
     "Product.l2categoryexact"->1048576f,
     "Product.l1categoryexact"->1048576f,
     "Product.categorykeywordsexact"->2097152f,
-    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f)
+    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
+    "Product.stringattribute.answerexact"->1f)
 
   private val emptyStringArray = new Array[String](0)
 
