@@ -280,7 +280,8 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val emptyStringArray = new Array[String](0)
 
-  private def superBoost(len: Int) = math.pow(10,(len+1)*(len+1)).toFloat * (searchFields.size + condFields.values.size + 1)
+  private def superBoost(len: Int) = math.pow(10,(len-1)*(len-1)).toFloat * (searchFields.size + condFields.values.size + 1)
+  private val paidFactor = 1e14f
 
 
 }
@@ -343,12 +344,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
 
         val factor = superBoost(w.length)
+
         exactFields.foreach {
           field: (String, Float) => {
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e22f))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
               .must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 1000f * factor))
           }
         }
@@ -357,17 +359,17 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
             val nearQuery = spanNearQuery.slop(0).inOrder(true)
             termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e22f))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
               .must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 10000f * factor))
           }
         }
         fullExactFields.foreach {
           field: (String, Float) => {
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e22f))
+            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
               .must(shingleFull(field._1, field._2 * 1e5f * factor, w, fuzzyprefix, w.length, w.length)))
           }
         }
-        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(1e22f))
+        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
           .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
         query = kwquery
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
