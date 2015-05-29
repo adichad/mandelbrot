@@ -338,7 +338,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if (w.length > 0) {
         searchFields.foreach {
           field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
+            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, 1))
           }
         }
 
@@ -352,7 +352,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
                 val answerQuery = disMaxQuery
                 v._2.foreach {
                   subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, math.min(2, w.length)))
+                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, 1))
                 }
                 perQuestionQuery.must(answerQuery)
                 conditionalQuery.add(perQuestionQuery)
@@ -369,7 +369,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           }
         }
         kwquery.add(
-          boolQuery.should(fullShingleQuery)
+          boolQuery.must(fullShingleQuery)
             .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
             .should(termQuery("CustomerType", "350").boost(paidFactor))
         )
