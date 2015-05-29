@@ -370,8 +370,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
         kwquery.add(
           boolQuery.must(fullShingleQuery)
-            .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-            .should(termQuery("CustomerType", "350").boost(paidFactor))
+            .should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+            .should(termQuery("CustomerType", "350").boost(paidFactor/1000))
         )
 
         val factor = superBoost(w.length)
