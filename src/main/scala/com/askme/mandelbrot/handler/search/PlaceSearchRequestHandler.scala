@@ -254,9 +254,19 @@ object PlaceSearchRequestHandler extends Logging {
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
-  private val searchFields = Map("LocationName" -> 81920f, "CompanyAliases" -> 81920f,
-    "Product.l3category" -> 4096f, "Product.l2category" -> 1024f, "Product.l1category" -> 512f, "LocationType"->1024f, "BusinessType"->1024f, "Product.name" -> 1024f, "Product.brand" -> 2048f,
-    "Product.categorykeywords" -> 4096f, "Product.stringattribute.answer" -> 1024f, "Area"->8f, "AreaSynonyms"->8f, "City"->1f, "CitySynonyms"->1f)
+  private val searchFields = Map(
+    "LocationName" -> 81920f, "CompanyAliases" -> 81920f,
+    "Product.l3category" -> 4096f,
+    "Product.l2category" -> 1024f,
+    "Product.l1category" -> 512f,
+    "LocationType"->1024f,
+    "BusinessType"->1024f,
+    "Product.name" -> 1024f,
+    "Product.brand" -> 2048f,
+    "Product.categorykeywords" -> 4096f,
+    "Product.stringattribute.answer" -> 1024f,
+    "Area"->8f, "AreaSynonyms"->8f,
+    "City"->1f, "CitySynonyms"->1f)
 
   private val condFields = Map(
     "Product.stringattribute.question" -> Map(
@@ -267,9 +277,14 @@ object PlaceSearchRequestHandler extends Logging {
     )
   )
 
-  private val exactFields = Map("CompanyAliases" -> 209715200f, "Product.categorykeywords" -> 104857600f)
+  private val exactFields = Map(
+    "CompanyAliases" -> 209715200f,
+    "Product.categorykeywords" -> 104857600f,
+    "Product.stringattribute.answer" -> 10485760f)
 
-  private val exactFirstFields = Map("LocationName" -> 209715200f, "DetailSlug" -> 209715200f,
+  private val exactFirstFields = Map(
+    "LocationName" -> 209715200f,
+    "DetailSlug" -> 209715200f,
     "Product.l3category" -> 104857600f)
 
   private val fullExactFields = Map(
@@ -277,11 +292,14 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.l3categoryexact"->104857600000f,
     "Product.l2categoryexact"->10485760000f,
     "Product.l1categoryexact"->1048576000f,
-    "Product.categorykeywordsexact"->104857600000f)
+    "Product.categorykeywordsexact"->104857600000f,
+    "Product.stringattribute.answerexact"->10485760000f)
 
   private val fullFields = Map(
-    "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f,
-    "Product.categorykeywordsexact"->1048576f,
+    "Product.l3categoryexact"->2097152f,
+    "Product.l2categoryexact"->1048576f,
+    "Product.l1categoryexact"->1048576f,
+    "Product.categorykeywordsexact"->2097152f,
     "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
     "Product.stringattribute.answerexact"->1048576f)
 
