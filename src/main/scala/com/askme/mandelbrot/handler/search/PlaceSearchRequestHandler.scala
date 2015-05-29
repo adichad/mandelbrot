@@ -267,11 +267,14 @@ object PlaceSearchRequestHandler extends Logging {
     )
   )
 
-  private val exactFields = Map("CompanyAliases" -> 209715200f)
+  private val exactFields = Map("CompanyAliases" -> 209715200f, "Product.categorykeywords" -> 104857600)
 
-  private val exactFirstFields = Map("LocationName" -> 209715200f, "DetailSlug" -> 209715200f)
+  private val exactFirstFields = Map("LocationName" -> 209715200f, "DetailSlug" -> 209715200f,
+    "Product.l3category" -> 104857600)
 
-  private val fullExactFields = Map("LocationNameExact"->4097152000000f, "CompanyAliasesExact"->4097152000000f)
+  private val fullExactFields = Map("LocationNameExact"->409715200000f, "CompanyAliasesExact"->409715200000f,
+    "Product.l3categoryexact"->104857600000f, "Product.l2categoryexact"->10485760000f, "Product.l1categoryexact"->1048576000f,
+    "Product.categorykeywordsexact"->104857600000f)
 
   private val fullFields = Map(
     "Product.l3categoryexact"->1048576f, "Product.l2categoryexact"->1048576f, "Product.l1categoryexact"->1048576f, "Product.categorykeywordsexact"->1048576f,
