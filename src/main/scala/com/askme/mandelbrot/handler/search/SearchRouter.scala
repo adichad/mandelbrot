@@ -35,30 +35,30 @@ case object SearchRouter extends Router {
               'agg.as[Boolean]
                 ? true,
               'aggbuckets.as[Int] ? 10,
-
+              'kwmode.as[String] ? "live",
               'timeoutms.as[Long] ?
                 1500l,
-              'searchtype.as[String] ?
-                "query_then_fetch",
+
               'client_ip.as[String] ? "") {
               (kw, city, area, pin, category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain,
                select,
-               agg, aggbuckets,
-               timeoutms, searchType, trueClient) =>
+               agg, aggbuckets, kwmode,
+               timeoutms, trueClient) =>
                 val fuzzyprefix = 2
                 val fuzzysim = 1f
                 val slugFlag = true
                 val maxdocspershard = 50000
                 val sort = "_distance,_score"
                 val unselect = "keywords"
+                val searchType = "query_then_fetch"
               respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, esType),
-                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
+                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim, kwmode),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, if (lat != 0d || lon != 0d) "_distance,_score" else "_score", select, unselect, searchType, slugFlag),

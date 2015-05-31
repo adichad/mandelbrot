@@ -12,20 +12,23 @@ import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.action.suggest.SuggestRequest
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
-import org.elasticsearch.index.query.{BaseQueryBuilder, BoolFilterBuilder, FilterBuilder, SpanQueryBuilder}
+import org.elasticsearch.index.query._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortBuilders, SortOrder}
+import org.elasticsearch.search.suggest.SuggestBuilders
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
+import scala.util.control.TailCalls.TailRec
 
 
 /**
@@ -66,7 +69,32 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
 
-  private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+
+  private implicit class DisMaxQueryPimp(val q: DisMaxQueryBuilder) {
+    def addAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.add)
+      q
+    }
+  }
+
+  private implicit class BoolQueryPimp(val q: BoolQueryBuilder) {
+    def shouldAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.should)
+      q
+    }
+
+    def mustAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.must)
+      q
+    }
+
+    def mustNotAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.mustNot)
+      q
+    }
+  }
+
+  private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length > 8)
@@ -78,7 +106,7 @@ object PlaceSearchRequestHandler extends Logging {
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       //var i = 100000
-      val slop = if(sloppy)math.max(0, len - 2) else 0
+      val slop = if(sloppy)len/3 else 0
       terms.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
         shingle.foreach(nearQuery.clause)
@@ -100,6 +128,24 @@ object PlaceSearchRequestHandler extends Logging {
       }
     }
     nestIfNeeded(field, fieldQuery)
+  }
+
+  private[PlaceSearchRequestHandler] def shinglePartition(
+                                                           tokenFields: Map[String, Float],
+                                                           recomFields: Map[String, Float],
+                                                           w: Array[String],
+                                                           maxShingle: Int,
+                                                           minShingle: Int = 1): BoolQueryBuilder = {
+    boolQuery.minimumNumberShouldMatch(1).shouldAll(
+      (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(w.slice(0, _)).map(shingle =>
+        shinglePartition(tokenFields, recomFields, w.slice(shingle.length, w.length), maxShingle, minShingle)
+          .must(
+            disMaxQuery
+              .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, math.max(1,w.length-2))))
+              .addAll(tokenFields.map(field => shingleSpan(field._1, field._2, shingle, 1, w.length, w.length)))
+          )
+      )
+    )
   }
 
   private def strongMatch(fields: Map[String, Float],
@@ -143,13 +189,12 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int) = {
-    (
       if(word.length > 8)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
           .fuzziness(if(word.length > 12) Fuzziness.TWO else Fuzziness.ONE)
           .boost(if(word.length > 12) exactBoost/3f else exactBoost/2f)
       else
-        termQuery(field, word)).boost(exactBoost)
+        termQuery(field, word).boost(exactBoost)
 
   }
 
@@ -221,9 +266,9 @@ object PlaceSearchRequestHandler extends Logging {
 
       //debug(catFilter.toString)
       if (catFilter.hasClauses) {
-        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, 0.85f, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, mw.length, mw.length)).cache(false))
+        catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
 
@@ -295,11 +340,11 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.stringattribute.answerexact"->1f)
 
   private val fullFields = Map(
+    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
     "Product.l3categoryexact"->2097152f,
     "Product.l2categoryexact"->1048576f,
     "Product.l1categoryexact"->1048576f,
     "Product.categorykeywordsexact"->2097152f,
-    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
     "Product.stringattribute.answerexact"->1f)
 
   private val emptyStringArray = new Array[String](0)
@@ -335,73 +380,78 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
 
       if (w.length > 0) {
-        searchFields.foreach {
-          field: (String, Float) => {
-            kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, fuzzysim, 4, math.min(2,w.length)))
-          }
-        }
-
-        condFields.foreach {
-          field: (String, Map[String, Map[String, Float]]) => {
-            val conditionalQuery = disMaxQuery
-            field._2.foreach {
-              v: (String, Map[String, Float]) => {
-                val perQuestionQuery = boolQuery
-                perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
-                val answerQuery = disMaxQuery
-                v._2.foreach {
-                  subField: (String, Float) =>
-                    answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, fuzzysim, 4, math.min(2,w.length)))
-                }
-                perQuestionQuery.must(answerQuery)
-                conditionalQuery.add(perQuestionQuery)
-              }
+        if(kwmode=="live") {
+          searchFields.foreach {
+            field: (String, Float) => {
+              kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, 4, math.min(2, w.length)))
             }
-            kwquery.add(conditionalQuery)
           }
-        }
 
-        val fullShingleQuery = boolQuery
-        fullFields.foreach {
-          field: (String, Float) => {
-            fullShingleQuery.should(shingleFull(field._1, field._2, w, fuzzyprefix, w.length, 1))
+          condFields.foreach {
+            field: (String, Map[String, Map[String, Float]]) => {
+              val conditionalQuery = disMaxQuery
+              field._2.foreach {
+                v: (String, Map[String, Float]) => {
+                  val perQuestionQuery = boolQuery
+                  perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
+                  val answerQuery = disMaxQuery
+                  v._2.foreach {
+                    subField: (String, Float) =>
+                      answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, 4, math.min(2, w.length)))
+                  }
+                  perQuestionQuery.must(answerQuery)
+                  conditionalQuery.add(perQuestionQuery)
+                }
+              }
+              kwquery.add(conditionalQuery)
+            }
           }
-        }
-        kwquery.add(
-          boolQuery.must(fullShingleQuery)
-            .should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-            .should(termQuery("CustomerType", "350").boost(paidFactor/1000))
-        )
 
-        val factor = superBoost(w.length)
+          val fullShingleQuery = boolQuery
+          fullFields.foreach {
+            field: (String, Float) => {
+              fullShingleQuery.should(shingleFull(field._1, field._2, w, fuzzyprefix, w.length, 1))
+            }
+          }
+          kwquery.add(
+            boolQuery.must(fullShingleQuery)
+              .should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
+              .should(termQuery("CustomerType", "350").boost(paidFactor / 1000))
+          )
 
-        exactFields.foreach {
-          field: (String, Float) => {
-            val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
-            val nearQuery = spanNearQuery.slop(0).inOrder(true)
-            termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-              .must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 1000f * factor))
+          val factor = superBoost(w.length)
+
+          exactFields.foreach {
+            field: (String, Float) => {
+              val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
+              val nearQuery = spanNearQuery.slop(0).inOrder(true)
+              termsExact.foreach(nearQuery.clause)
+              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
+                .must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 1000f * factor))
+            }
           }
-        }
-        exactFirstFields.foreach {
-          field: (String, Float) => {
-            val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
-            val nearQuery = spanNearQuery.slop(0).inOrder(true)
-            termsExact.foreach(nearQuery.clause)
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-              .must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 10000f * factor))
+          exactFirstFields.foreach {
+            field: (String, Float) => {
+              val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
+              val nearQuery = spanNearQuery.slop(0).inOrder(true)
+              termsExact.foreach(nearQuery.clause)
+              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
+                .must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 10000f * factor))
+            }
           }
-        }
-        fullExactFields.foreach {
-          field: (String, Float) => {
-            kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-              .must(shingleFull(field._1, field._2 * 1e5f * factor, w, fuzzyprefix, w.length, w.length)))
+          fullExactFields.foreach {
+            field: (String, Float) => {
+              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
+                .must(shingleFull(field._1, field._2 * 1e5f * factor, w, fuzzyprefix, w.length, w.length)))
+            }
           }
+          kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor / 100))
+            .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
+
+          query = kwquery
+        } else {
+          query = shinglePartition(searchFields, fullFields, w, w.length, 1).should(termQuery("CustomerType", "350").boost(paidFactor))
         }
-        kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor/100))
-          .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
-        query = kwquery
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
         return WrappedRequest(None,Seq())
