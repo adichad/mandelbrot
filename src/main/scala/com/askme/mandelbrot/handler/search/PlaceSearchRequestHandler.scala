@@ -142,7 +142,7 @@ object PlaceSearchRequestHandler extends Logging {
           shinglePartition(tokenFields, recomFields, w.slice(shingle.length, w.length), maxShingle, minShingle)
             .must(
               disMaxQuery
-                .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, math.max(1,w.length-2))))
+                .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, w.length)))
                 .addAll(tokenFields.map(field => shingleSpan(field._1, field._2, shingle, 1, w.length, w.length)))
             )
         )
@@ -350,6 +350,32 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.categorykeywordsexact"->2097152f,
     "Product.stringattribute.answerexact"->1f)
 
+
+  private val fullFields2 = Map(
+    "LocationNameExact"->1000000000f, "CompanyAliasesExact"->1000000000f,
+    "Product.l3categoryexact"->100000000f,
+    "Product.l2categoryexact"->10000000f,
+    "Product.l1categoryexact"->10000000f,
+    "Product.categorykeywordsexact"->100000000f,
+    "Product.stringattribute.answerexact"->1000000f)
+
+
+  private val searchFields2 = Map(
+    "LocationName" -> 1000000f, "CompanyAliases" -> 1000000f,
+    "Product.l3category" -> 100000f,
+    "Product.l2category" -> 1000f,
+    "Product.l1category" -> 100f,
+    "LocationType"->1000f,
+    "BusinessType"->1000f,
+    "Product.name" -> 1000f,
+    "Product.brand" -> 10000f,
+    "Product.categorykeywords" -> 100000f,
+    "Product.stringattribute.answer" -> 100f,
+    "Area"->10f, "AreaSynonyms"->10f,
+    "City"->1f, "CitySynonyms"->1f)
+
+
+
   private val emptyStringArray = new Array[String](0)
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len-1)).toFloat * (searchFields.size + condFields.values.size + 1)
@@ -453,7 +479,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           query = kwquery
         } else {
-          query = shinglePartition(searchFields, fullFields, w, w.length, 1).should(termQuery("CustomerType", "350").boost(paidFactor))
+          query = shinglePartition(searchFields2, fullFields2, w, w.length, 1).should(termQuery("CustomerType", "350").boost(paidFactor))
         }
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
