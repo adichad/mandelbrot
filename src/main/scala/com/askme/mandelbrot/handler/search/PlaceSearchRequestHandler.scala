@@ -136,16 +136,19 @@ object PlaceSearchRequestHandler extends Logging {
                                                            w: Array[String],
                                                            maxShingle: Int,
                                                            minShingle: Int = 1): BoolQueryBuilder = {
-    boolQuery.minimumNumberShouldMatch(1).shouldAll(
-      (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(w.slice(0, _)).map(shingle =>
-        shinglePartition(tokenFields, recomFields, w.slice(shingle.length, w.length), maxShingle, minShingle)
-          .must(
-            disMaxQuery
-              .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, math.max(1,w.length-2))))
-              .addAll(tokenFields.map(field => shingleSpan(field._1, field._2, shingle, 1, w.length, w.length)))
-          )
+    if(w.length>0)
+      boolQuery.minimumNumberShouldMatch(1).shouldAll(
+        (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(w.slice(0, _)).map(shingle =>
+          shinglePartition(tokenFields, recomFields, w.slice(shingle.length, w.length), maxShingle, minShingle)
+            .must(
+              disMaxQuery
+                .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, math.max(1,w.length-2))))
+                .addAll(tokenFields.map(field => shingleSpan(field._1, field._2, shingle, 1, w.length, w.length)))
+            )
+        )
       )
-    )
+    else
+      boolQuery
   }
 
   private def strongMatch(fields: Map[String, Float],
