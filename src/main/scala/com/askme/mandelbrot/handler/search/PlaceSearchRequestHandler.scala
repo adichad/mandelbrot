@@ -130,21 +130,28 @@ object PlaceSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery)
   }
 
+  private[PlaceSearchRequestHandler] def currQuery(tokenFields: Map[String, Float],
+                recomFields: Map[String, Float],
+                w: Array[String]) = {
+    disMaxQuery
+      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-2, 1))))
+      //.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length)))
+  }
   private[PlaceSearchRequestHandler] def shinglePartition(
                                                            tokenFields: Map[String, Float],
                                                            recomFields: Map[String, Float],
                                                            w: Array[String],
                                                            maxShingle: Int,
                                                            minShingle: Int = 1): BoolQueryBuilder = {
+
     if(w.length>0)
       boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(w.slice(0, _)).map(shingle =>
-          shinglePartition(tokenFields, recomFields, w.slice(shingle.length, w.length), maxShingle, minShingle)
-            .must(
-              disMaxQuery
-                .addAll(recomFields.map(field => shingleFull(field._1, field._2, shingle, 1, w.length, w.length)))
-                .addAll(tokenFields.map(field => shingleSpan(field._1, field._2, shingle, 1, w.length, w.length)))
-            )
+        (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map(x =>
+          if(x._2.length>0)
+            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle)
+              .must(currQuery(tokenFields, recomFields, x._1))
+          else
+            currQuery(tokenFields, recomFields, x._1)
         )
       )
     else
