@@ -134,7 +134,7 @@ object PlaceSearchRequestHandler extends Logging {
                 recomFields: Map[String, Float],
                 w: Array[String]) = {
     disMaxQuery
-      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-2, 1))))
+      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-1, 1))))
       //.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length)))
   }
   private[PlaceSearchRequestHandler] def shinglePartition(
@@ -278,13 +278,13 @@ object PlaceSearchRequestHandler extends Logging {
       if (catFilter.hasClauses) {
         catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, mw.length, mw.length)).cache(false))
+        //catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, mw.length, mw.length)).cache(false))
         catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
         catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
 
         Seq("LocationNameExact", "CompanyAliasesExact", "Product.stringattribute.answerexact").foreach {
           field: (String) => {
-            (1 to mw.length).foreach { len =>
+            (math.max(1,mw.length/2) to mw.length).foreach { len =>
               mw.sliding(len).foreach { shingle =>
                 val ck = shingle.mkString(" ")
                 if(ck.trim != "") {
@@ -366,7 +366,6 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.categorykeywordsexact"->10000000000f,
     "Product.stringattribute.answerexact"->1000000f)
 
-
   private val searchFields2 = Map(
     "LocationName" -> 10000000f, "CompanyAliases" -> 10000000f,
     "Product.l3category" -> 10000000f,
@@ -380,7 +379,6 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.stringattribute.answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f)
-
 
 
   private val emptyStringArray = new Array[String](0)
@@ -486,8 +484,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           query = kwquery
         } else {
-          query = shinglePartition(searchFields2, fullFields2, w, w.length, math.max(w.length/3, 1))
-            /*.should(termQuery("CustomerType", "350").boost(paidFactor))*/
+          query = shinglePartition(searchFields2, fullFields2, w, w.length, math.max(w.length/2, 1))
+            .should(shinglePartition(searchFields2, fullFields2, w, w.length, w.length).must(termQuery("CustomerType", "350")).boost(paidFactor))
         }
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
