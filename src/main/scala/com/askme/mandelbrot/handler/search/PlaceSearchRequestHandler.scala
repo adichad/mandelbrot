@@ -359,24 +359,24 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val fullFields2 = Map(
-    "LocationNameExact"->1000000000f, "CompanyAliasesExact"->1000000000f,
-    "Product.l3categoryexact"->100000000f,
+    "LocationNameExact"->100000000f, "CompanyAliasesExact"->100000000f,
+    "Product.l3categoryexact"->10000000000f,
     "Product.l2categoryexact"->10000000f,
     "Product.l1categoryexact"->10000000f,
-    "Product.categorykeywordsexact"->100000000f,
+    "Product.categorykeywordsexact"->10000000000f,
     "Product.stringattribute.answerexact"->1000000f)
 
 
   private val searchFields2 = Map(
-    "LocationName" -> 1000000f, "CompanyAliases" -> 1000000f,
-    "Product.l3category" -> 100000f,
+    "LocationName" -> 10000000f, "CompanyAliases" -> 10000000f,
+    "Product.l3category" -> 10000000f,
     "Product.l2category" -> 1000f,
     "Product.l1category" -> 100f,
     "LocationType"->1000f,
     "BusinessType"->1000f,
     "Product.name" -> 1000f,
     "Product.brand" -> 10000f,
-    "Product.categorykeywords" -> 100000f,
+    "Product.categorykeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f)
@@ -486,7 +486,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           query = kwquery
         } else {
-          query = shinglePartition(searchFields2, fullFields2, w, w.length, 1).should(termQuery("CustomerType", "350").boost(paidFactor))
+          query = shinglePartition(searchFields2, fullFields2, w, w.length, math.max(w.length/3, 1))
+            /*.should(termQuery("CustomerType", "350").boost(paidFactor))*/
         }
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
