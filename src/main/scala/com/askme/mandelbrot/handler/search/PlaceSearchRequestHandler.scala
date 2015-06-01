@@ -485,7 +485,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           query = kwquery
         } else {
           query = shinglePartition(searchFields2, fullFields2, w, w.length, math.max(w.length/2, 1))
-            .should(shinglePartition(searchFields2, fullFields2, w, w.length, w.length).must(termQuery("CustomerType", "350")).boost(paidFactor))
+            //.should(shinglePartition(searchFields2, fullFields2, w, w.length, w.length).must(termQuery("CustomerType", "350")).boost(paidFactor))
         }
       } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
         context.parent ! EmptyResponse ("empty search criteria")
