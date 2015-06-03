@@ -1,9 +1,9 @@
 {
   "settings" : {
-    "number_of_shards" : 20,
-    "number_of_replicas" : 1,
+    "number_of_shards" : 18,
+    "number_of_replicas" : 2,
     "index.cache.query.enable": true,
-    "refresh_interval": "10s",
+    "refresh_interval": "60s",
     "analysis": {
       "char_filter": {
         "mapping_char_filter": {
@@ -61,14 +61,16 @@
             "path lab, patho lab, path laboratory, patho laboratory, pathology lab => pathology laboratory",
             "women => woman",
             "men => man",
-            "kidz => kid"
+            "kidz => kid",
+            "lady hostel, woman hostel, women hostel => girl hostel",
+            "men hostel, man hostel, gent hostel => boy hostel"
           ]
         },
         "plural_stem": {
           "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
           "stemmer": "plural",
           "min-len": 3,
-          "exclude": ["ins"]
+          "exclude": ["ins", "tvs"]
         },
         "participle_stem": {
           "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
