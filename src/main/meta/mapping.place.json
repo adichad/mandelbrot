@@ -6,6 +6,13 @@
     "_all": {
       "enabled": false
     },
+    "transform" : [
+      {
+        "script" : "mediacount",
+        "params" : {},
+        "lang": "native"
+      }
+    ],
     "properties": {
       "PlaceID": {
         "type": "string",
@@ -93,8 +100,7 @@
         "store": false,
         "index": "analyzed",
         "analyzer": "shingle_analyzer",
-        "search_analyzer": "shingle_analyzer",
-        "norms": {"enabled": false}
+        "search_analyzer": "shingle_analyzer"
       },
       "LocationDescription": {
         "type": "string",
@@ -104,17 +110,45 @@
       "LocationType": {
         "type": "string",
         "store": true,
-        "index": "analyzed"
+        "index": "analyzed",
+        "copy_to": ["LocationTypeExact"]
+      },
+      "LocationTypeExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
       },
       "BusinessType": {
         "type": "string",
         "store": true,
-        "index": "analyzed"
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "copy_to": ["BusinessTypeExact"]
+      },
+      "BusinessTypeExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
       },
       "Address": {
         "type": "string",
         "store": true,
-        "index": "analyzed"
+        "index": "analyzed",
+        "copy_to": ["AddressExact"]
+      },
+      "AddressExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
       },
       "BuildingName": {
         "type": "string",
@@ -135,7 +169,14 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "copy_to": "AreaAggr"
+        "copy_to": ["AreaAggr", "AreaExact"]
+      },
+      "AreaExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
       },
       "AreaSlug": {
         "type": "string",
@@ -155,7 +196,16 @@
         "index": "analyzed",
         "position_offset_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": "AreaSynonymsAggr"
+        "copy_to": ["AreaSynonymsAggr", "AreaSynonymsExact"]
+      },
+      "AreaSynonymsExact": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
       },
       "AreaSynonymsAggr": {
         "type": "string",
@@ -177,7 +227,7 @@
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false},
-        "copy_to": "CityAggr"
+        "copy_to": ["CityAggr", "CityExact"]
       },
       "CitySlug": {
         "type": "string",
@@ -375,6 +425,12 @@
         "store": true,
         "ignore_malformed": false
       },
+      "MediaCount": {
+        "type": "integer",
+        "doc_values": true,
+        "store": true,
+        "ignore_malformed": true
+      },
       "Media": {
         "type": "nested",
         "include_in_root": true,
@@ -410,7 +466,17 @@
             "store": true,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "include_in_root": true,
+            "copy_to": ["nameexact"]
+          },
+          "nameexact": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
           },
           "description": {
             "type": "string",
@@ -431,7 +497,17 @@
             "store": true,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "include_in_root": true,
+            "copy_to": ["brandexact"]
+          },
+          "brandexact": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
           },
           "imageurls": {
             "type": "string",
