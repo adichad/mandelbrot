@@ -20,6 +20,12 @@
         "index": "not_analyzed",
         "doc_values": true
       },
+      "MergedToID": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
       "UserID": {
         "type": "integer",
         "store": true,
@@ -164,6 +170,21 @@
         "type": "string",
         "store": true,
         "index": "analyzed"
+      },
+      "SKUAreas": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "SKUAreasAggr": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "Area": {
         "type": "string",

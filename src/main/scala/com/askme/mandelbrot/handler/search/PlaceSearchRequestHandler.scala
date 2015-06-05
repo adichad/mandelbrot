@@ -152,7 +152,7 @@ object PlaceSearchRequestHandler extends Logging {
                 recomFields: Map[String, Float],
                 w: Array[String], fuzzy: Boolean = true) = {
     disMaxQuery
-      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-1, 1), fuzzy)))
+      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length, 1), fuzzy)))
       //.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length)))
   }
   private[PlaceSearchRequestHandler] def shinglePartition(
