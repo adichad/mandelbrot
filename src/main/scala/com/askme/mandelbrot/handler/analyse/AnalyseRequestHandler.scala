@@ -32,7 +32,7 @@ class AnalyseRequestHandler(val config: Config, serverContext: SearchContext) ex
       import analyseParams.req._
 
       implicit val formats = DefaultFormats
-      val input = keywords ++ parse(data).extract[List[String]]
+      val input = keywords ++ parse(if(data.isEmpty) "[]" else data).extract[List[String]]
 
       val result = render(map2jvalue(analyzers.map { analyzer =>
         analyzer ->
