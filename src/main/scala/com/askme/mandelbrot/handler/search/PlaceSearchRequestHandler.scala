@@ -608,7 +608,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if(response.getHits.totalHits() > 11 || isMatchAll)
+            if(response.getHits.totalHits() > 2 || isMatchAll)
               me ! WrappedResponse(searchParams, response, 0)
             else
               me ! ReSearch(searchParams, finalFilter, search, 1, response)
@@ -629,7 +629,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if (response.getHits.totalHits() > 11 || relaxLevel >= qDefs.length - 1)
+            if (response.getHits.totalHits() > (relaxLevel+1)*2 || relaxLevel >= qDefs.length - 1)
               me ! WrappedResponse(searchParams, response, relaxLevel)
             else
               me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
