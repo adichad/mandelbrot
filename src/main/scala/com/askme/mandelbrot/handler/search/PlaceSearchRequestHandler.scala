@@ -608,7 +608,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if(response.getHits.totalHits() > 0 || isMatchAll)
+            if(response.getHits.totalHits() > 11 || isMatchAll)
               me ! WrappedResponse(searchParams, response, 0)
             else
               me ! ReSearch(searchParams, finalFilter, search, 1, response)
