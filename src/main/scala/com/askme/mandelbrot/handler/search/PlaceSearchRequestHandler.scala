@@ -43,10 +43,12 @@ object PlaceSearchRequestHandler extends Logging {
   val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
 
-  private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = "") = {
+  private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = "", w: Array[String]) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map(
       _ match {
+        case "_name" => SortBuilders.scriptSort("exactnamematch", "number").lang("native").order(SortOrder.ASC).
+          param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
         case "_distance" => SortBuilders.scriptSort("geobucket", "number").lang("native")
           .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC)
@@ -331,7 +333,7 @@ object PlaceSearchRequestHandler extends Logging {
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   private val fullFields2 = Map(
-    "LocationNameExact"->100000000f, "CompanyAliasesExact"->100000000f,
+    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
     "Product.l3categoryexact"->10000000000f,
     "Product.l2categoryexact"->10000000f,
     "Product.l1categoryexact"->10000000f,
@@ -345,7 +347,7 @@ object PlaceSearchRequestHandler extends Logging {
     "City"->1f, "CitySynonyms"->1f)
 
   private val searchFields2 = Map(
-    "LocationName" -> 10000000f, "CompanyAliases" -> 10000000f,
+    "LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
     "Product.l3category" -> 10000000f,
     "Product.l2category" -> 1000f,
     "Product.l1category" -> 100f,
@@ -498,8 +500,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.page._
     import searchParams.view._
 
-    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
-    val sorters = getSort(sort, lat, lon, areaSlugs)
+    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
+    val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
@@ -515,7 +517,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if(collapse) {
       val orders: List[Terms.Order] = (
-        (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+        Some(Terms.Order.aggregation("exactname", true)) ::
+          (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("customertype", true)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
@@ -526,13 +529,14 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val collapsed = terms("collapsed").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
-        .subAggregation(max("score").script("docscore").lang("native"))
 
+      collapsed.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       if(lat != 0.0d || lon !=0.0d) {
         collapsed.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
-      collapsed.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       collapsed.subAggregation(min("customertype").script("customertype").lang("native"))
+      collapsed.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      collapsed.subAggregation(max("score").script("docscore").lang("native"))
 
       search.addAggregation(collapsed)
     }
