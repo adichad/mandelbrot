@@ -5,4 +5,4 @@ import com.askme.mandelbrot.handler.message.RestMessage
 /**
  * Created by adichad on 31/03/15.
  */
-case class TextParams(kw: String, fuzzyprefix: Int, fuzzysim: Float, kwmode: String) extends RestMessage
+case class TextParams(kw: String, fuzzyprefix: Int, fuzzysim: Float) extends RestMessage

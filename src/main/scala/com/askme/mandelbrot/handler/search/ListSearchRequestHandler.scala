@@ -170,7 +170,7 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       val endTime = System.currentTimeMillis
       val timeTaken = endTime - startTime
       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
-      context.parent ! SearchResult("", result.getHits.hits.length, timeTaken, parse(result.toString))
+      context.parent ! SearchResult("", result.getHits.hits.length, timeTaken, 0, parse(result.toString))
   }
 
 }

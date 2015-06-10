@@ -38,7 +38,7 @@ class AggregateRequestCompleter(val config: Config, serverContext: SearchContext
      case tout: ReceiveTimeout => {
        val timeTaken = System.currentTimeMillis - startTime
        warn("[timeout/" + (timeTaken) + "] [" + req.clip.toString + "]->[" + req.httpReq.uri + "]")
-       complete(GatewayTimeout, Timeout(lim.timeoutms*2))
+       complete(GatewayTimeout, Timeout(timeTaken, lim.timeoutms*2))
      }
      case res: RestMessage => complete(OK, res)
 
@@ -55,7 +55,7 @@ class AggregateRequestCompleter(val config: Config, serverContext: SearchContext
        case e => {
          val timeTaken = System.currentTimeMillis - startTime
          error("[" + timeTaken + "] [" + req.clip.toString + "]->[" + req.httpReq.uri + "]", e)
-         complete(InternalServerError, e.getMessage)
+         complete(InternalServerError, e)
          Stop
        }
      }

@@ -23,8 +23,8 @@ import scala.concurrent.duration.{Duration, MILLISECONDS}
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
-  if(searchParams.req.trueClient.startsWith("42.120.")) {
-    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [alibaba sala]")
+  if(searchParams.req.trueClient.startsWith("42.120.")||searchParams.req.trueClient == "50.22.144.34") {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source: " + searchParams.req.trueClient)
   }
   else if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
@@ -61,12 +61,12 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     case _: EmptyResponse => {
       val timeTaken = System.currentTimeMillis - searchParams.startTime
       warn("[" + timeTaken + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [empty search criteria]")
-      complete(BadRequest, "empty search criteria")
+      complete(BadRequest, EmptyResponse("empty search criteria"))
     }
     case tout: ReceiveTimeout => {
       val timeTaken = System.currentTimeMillis - searchParams.startTime
       warn("[timeout/" + (timeTaken) + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]")
-      complete(GatewayTimeout, Timeout(searchParams.limits.timeoutms*2))
+      complete(GatewayTimeout, Timeout(timeTaken, searchParams.limits.timeoutms*2))
     }
     case res: RestMessage => complete(OK, res)
 
@@ -83,7 +83,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
       case e => {
         val timeTaken = System.currentTimeMillis - searchParams.startTime
         error("[" + timeTaken + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]", e)
-        complete(InternalServerError, e.getMessage)
+        complete(InternalServerError, e)
         Stop
       }
     }

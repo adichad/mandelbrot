@@ -19,7 +19,7 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.search.aggregations.{AggregationBuilder, AbstractAggregationBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -98,24 +98,29 @@ object PlaceSearchRequestHandler extends Logging {
     }
   }
 
-  private implicit class SearchSortPimp(val search: SearchRequestBuilder) {
+  private implicit class SearchPimp(val search: SearchRequestBuilder) {
     def addSorts(sorts: Iterable[SortBuilder]) = {
       sorts.foreach(search.addSort)
       search
     }
+
+    def addAggregations(aggregations: Iterable[AbstractAggregationBuilder]) = {
+      aggregations.foreach(search.addAggregation)
+      search
+    }
   }
 
-  private implicit class AggregationSortPimp(val agg: TopHitsBuilder) {
+  private implicit class AggregationPimp(val agg: TopHitsBuilder) {
     def addSorts(sorts: Iterable[SortBuilder]) = {
       sorts.foreach(agg.addSort)
       agg
     }
   }
 
-  private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
+  private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(x.length > 8)
+      if(x.length > 8 && fuzzy)
         spanMultiTermQueryBuilder(
           fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
       else
@@ -124,7 +129,7 @@ object PlaceSearchRequestHandler extends Logging {
 
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       //var i = 100000
-      val slop = if(sloppy)len/3 else 0
+      val slop = if(sloppy) len/3 else 0
       terms.sliding(len).foreach { shingle =>
         val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
         shingle.foreach(nearQuery.clause)
@@ -135,41 +140,39 @@ object PlaceSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery1)
   }
 
-  private[PlaceSearchRequestHandler] def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = true) = {
+  private def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = true) = {
     val fieldQuery = boolQuery.minimumShouldMatch("33%")
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       val lboost = boost * superBoost(len)
       w.sliding(len).foreach { shingle =>
         val phrase = shingle.mkString(" ")
-        fieldQuery.should(
-          fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
+        fieldQuery.should(fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
       }
     }
     nestIfNeeded(field, fieldQuery)
   }
 
-  private[PlaceSearchRequestHandler] def currQuery(tokenFields: Map[String, Float],
+  private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
-                w: Array[String], fuzzy: Boolean = true) = {
-    disMaxQuery
-      .addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length, 1), fuzzy)))
-      //.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length)))
+                w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
+    if(span)
+      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length, sloppy, fuzzy)))
+    else
+      disMaxQuery.addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
   }
-  private[PlaceSearchRequestHandler] def shinglePartition(
-                                                           tokenFields: Map[String, Float],
-                                                           recomFields: Map[String, Float],
-                                                           w: Array[String],
-                                                           maxShingle: Int,
-                                                           minShingle: Int = 1, fuzzy: Boolean = true): BoolQueryBuilder = {
+
+  private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
+                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                               span: Boolean = false, tokenRelax: Int = 0): BoolQueryBuilder = {
 
     if(w.length>0)
       boolQuery.minimumNumberShouldMatch(1).shouldAll(
         (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map(x =>
           if(x._2.length>0)
-            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy)
-              .must(currQuery(tokenFields, recomFields, x._1, fuzzy))
+            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
+              .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
           else
-            currQuery(tokenFields, recomFields, x._1, fuzzy)
+            currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
         )
       )
     else
@@ -405,114 +408,43 @@ object PlaceSearchRequestHandler extends Logging {
   private val paidFactor = 1e15f
 
 
+
+
+  private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
+  private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
+
+  private def queryBuilder(fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0)
+                          (tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String], maxShingle: Int, minShingle: Int = 1) = {
+    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
+  }
+
+  private val qDefs: Seq[(Map[String, Float], Map[String, Float], Array[String], Int, Int)=>BaseQueryBuilder] = Seq(
+    queryBuilder(false, false, false, 0),
+    queryBuilder(false, false, true, 0),
+    queryBuilder(false, false, false, 1),
+    queryBuilder(true, false, false, 0),
+    queryBuilder(false, true, true, 0),
+    queryBuilder(true, false, false, 1),
+    queryBuilder(false, false, true, 1)
+  )
+
 }
 
 class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import PlaceSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var cats = Seq[String]()
   private var kwids: Array[String] = emptyStringArray
+  private var areaSlugs: String = ""
 
-  private case class WrappedRequest(search: Option[SearchRequestBuilder], cats: Seq[String])
-
-  private def buildSearch(searchParams: SearchParams): WrappedRequest = {
+  private def buildFilter(searchParams: SearchParams): FilterBuilder = {
     import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
     import searchParams.limits._
-    import searchParams.page._
-    import searchParams.text._
     import searchParams.view._
 
-    var query: BaseQueryBuilder = null
-    val kwquery = disMaxQuery
-    var cats = Seq[String]()
-    if (kw != null && kw.trim != "") {
-      kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
-      w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
-
-      if (w.length > 0) {
-        if(kwmode=="live") {
-          searchFields.foreach {
-            field: (String, Float) => {
-              kwquery.add(shingleSpan(field._1, field._2, w, fuzzyprefix, 4, math.min(2, w.length)))
-            }
-          }
-
-          condFields.foreach {
-            field: (String, Map[String, Map[String, Float]]) => {
-              val conditionalQuery = disMaxQuery
-              field._2.foreach {
-                v: (String, Map[String, Float]) => {
-                  val perQuestionQuery = boolQuery
-                  perQuestionQuery.must(nestIfNeeded(field._1, termQuery(field._1, v._1)))
-                  val answerQuery = disMaxQuery
-                  v._2.foreach {
-                    subField: (String, Float) =>
-                      answerQuery.add(shingleSpan(subField._1, subField._2, w, fuzzyprefix, 4, math.min(2, w.length)))
-                  }
-                  perQuestionQuery.must(answerQuery)
-                  conditionalQuery.add(perQuestionQuery)
-                }
-              }
-              kwquery.add(conditionalQuery)
-            }
-          }
-
-          val fullShingleQuery = boolQuery
-          fullFields.foreach {
-            field: (String, Float) => {
-              fullShingleQuery.should(shingleFull(field._1, field._2, w, fuzzyprefix, w.length, 1))
-            }
-          }
-          kwquery.add(
-            boolQuery.must(fullShingleQuery)
-              .should(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index))
-              .should(termQuery("CustomerType", "350").boost(paidFactor / 1000))
-          )
-
-          val factor = superBoost(w.length)
-
-          exactFields.foreach {
-            field: (String, Float) => {
-              val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
-              val nearQuery = spanNearQuery.slop(0).inOrder(true)
-              termsExact.foreach(nearQuery.clause)
-              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-                .must(nestIfNeeded(field._1, nearQuery)).boost(field._2 * 1000f * factor))
-            }
-          }
-          exactFirstFields.foreach {
-            field: (String, Float) => {
-              val termsExact = w.map(spanTermQuery(field._1, _).boost(field._2))
-              val nearQuery = spanNearQuery.slop(0).inOrder(true)
-              termsExact.foreach(nearQuery.clause)
-              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-                .must(nestIfNeeded(field._1, spanFirstQuery(nearQuery, termsExact.length + 1))).boost(field._2 * 10000f * factor))
-            }
-          }
-          fullExactFields.foreach {
-            field: (String, Float) => {
-              kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor))
-                .must(shingleFull(field._1, field._2 * 1e5f * factor, w, fuzzyprefix, w.length, w.length)))
-            }
-          }
-          kwquery.add(boolQuery.should(termQuery("CustomerType", "350").boost(paidFactor / 100))
-            .must(strongMatch(searchFields, condFields, w, kw, fuzzyprefix, fuzzysim, esClient, index)))
-
-          query = kwquery
-        } else {
-          query = shinglePartition(searchFields2, fullFields2, w, w.length, math.max(w.length/2, 1), fuzzy=false)
-            //.should(shinglePartition(searchFields2, fullFields2, w, w.length, w.length).must(termQuery("CustomerType", "350")).boost(paidFactor))
-        }
-      } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
-        context.parent ! EmptyResponse ("empty search criteria")
-        return WrappedRequest(None,Seq())
-      }
-    } else if(kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
-      context.parent ! EmptyResponse ("empty search criteria")
-      return WrappedRequest(None,Seq())
-    }
 
     // filters
     val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
@@ -559,7 +491,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       areas.map(a => termFilter("AreaSlug", a).cache(false)).foreach(locFilter.should)
 
     }
-    val areaSlugs = analyzedAreas.mkString("#")
+    areaSlugs = analyzedAreas.mkString("#")
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
@@ -597,13 +529,23 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if (locFilter.hasClauses) {
       finalFilter.add(locFilter)
     }
-    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + (if(kwmode!="live") "_ct,_mc," else "") + "_score"
+    finalFilter
+  }
+
+  private def buildSearch(searchParams: SearchParams): SearchRequestBuilder = {
+    import searchParams.geo._
+    import searchParams.idx._
+    import searchParams.limits._
+    import searchParams.page._
+    import searchParams.text._
+    import searchParams.view._
+
+    val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs)
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setSearchType(SearchType.fromString(searchType))
-      .setQuery(filteredQuery(query, finalFilter))
       .setTrackScores(true)
       .addFields(select.split( ""","""): _*)
       .setFrom(offset).setSize(size)
@@ -616,8 +558,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if(collapse) {
       val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          (if (kwmode!="live") Some(Terms.Order.aggregation("customertype", true)) else None) ::
-          (if (kwmode!="live") Some(Terms.Order.aggregation("mediacount", false)) else None) ::
+          Some(Terms.Order.aggregation("customertype", true)) ::
+          Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
         ).flatten
@@ -631,10 +573,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if(lat != 0.0d || lon !=0.0d) {
         collapsed.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
-      if(kwmode!="live") {
-        collapsed.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
-        collapsed.subAggregation(min("customertype").script("customertype").lang("native"))
-      }
+      collapsed.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      collapsed.subAggregation(min("customertype").script("customertype").lang("native"))
+
       search.addAggregation(collapsed)
     }
 
@@ -677,33 +618,71 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
       )
     }
-    WrappedRequest(Some(search), cats)
+    search
   }
 
 
-  case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, cats: Seq[String])
-
   override def receive = {
     case searchParams: SearchParams =>
+      import searchParams.text._
+      import searchParams.idx._
+      import searchParams.filters._
 
-      val wreq = buildSearch(searchParams)
-      val searchOpt = wreq.search
-      val cats = wreq.cats
-      searchOpt match {
-      case None=>
-      case Some(search) =>
+      kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
+      w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
+      if(w.isEmpty && kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
+        context.parent ! EmptyResponse("empty search criteria")
+      }
+      else {
+        val query =
+          if (w.length > 0) qDefs(0)(searchFields2, fullFields2, w, w.length, math.max(w.length/2, 1))
+          else matchAllQuery()
+        val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
+
+        // filters
+        val finalFilter = buildFilter(searchParams)
+
+        val search = buildSearch(searchParams)
+
+        search.setQuery(filteredQuery(query, finalFilter))
+
         val me = context.self
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            me ! WrappedResponse(searchParams, response, cats)
+            if(response.getHits.totalHits() > 0 || isMatchAll)
+              me ! WrappedResponse(searchParams, response, 0)
+            else
+              me ! ReSearch(searchParams, finalFilter, search, 1, response)
           }
 
           override def onFailure(e: Throwable): Unit = {
             throw e
           }
         })
-    }
+      }
+
+    case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+      if(relaxLevel >= qDefs.length)
+        context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
+      else {
+        val query = qDefs(relaxLevel)(searchFields2, fullFields2, w, w.length, math.max(w.length / 2, 1))
+        val me = context.self
+
+        search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
+          override def onResponse(response: SearchResponse): Unit = {
+            if (response.getHits.totalHits() > 0 || relaxLevel >= qDefs.length - 1)
+              me ! WrappedResponse(searchParams, response, relaxLevel)
+            else
+              me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
+          }
+
+          override def onFailure(e: Throwable): Unit = {
+            throw e
+          }
+        })
+      }
+
     case response: WrappedResponse =>
       import response.result
       import response.searchParams.filters._
@@ -714,8 +693,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       import response.searchParams.startTime
       import response.searchParams.text._
       import response.searchParams.view._
-
-      val cats = response.cats.toList
+      import response.relaxLevel
 
       val areaWords = analyze(esClient, index, "Area", area)
 
@@ -750,7 +728,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val endTime = System.currentTimeMillis
       val timeTaken = endTime - startTime
       info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
-      context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, parsedResult)
+      context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
   }
 
   def urlize(k: String) =

@@ -25,13 +25,13 @@ case object SearchRouter extends Router {
               'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[Double] ? 20.0d,
               'source.as[Boolean] ? false, 'explain.as[Boolean] ? false, 'select ? "_id",
               'agg.as[Boolean] ? true,
-              'kwmode.as[String] ? "live", 'collapse.as[Boolean] ? false,
+              'collapse.as[Boolean] ? false,
               'client_ip.as[String] ? "") { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain, select,
-               agg, kwmode, collapse,
+               agg, collapse,
                trueClient) =>
               val fuzzyprefix = 2
               val fuzzysim = 1f
@@ -47,7 +47,7 @@ case object SearchRouter extends Router {
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, esType),
-                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim, kwmode),
+                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse),
