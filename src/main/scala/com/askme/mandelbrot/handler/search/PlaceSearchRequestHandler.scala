@@ -162,14 +162,14 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
-                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                               maxShingle: Int, minShingleFactor: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
                                span: Boolean = false, tokenRelax: Int = 0): BoolQueryBuilder = {
 
     if(w.length>0)
       boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.min(minShingle, w.length) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map(x =>
+        (math.min(w.length/minShingleFactor, w.length) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map(x =>
           if(x._2.length>0)
-            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
+            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
               .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
           else
             currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
@@ -364,19 +364,26 @@ object PlaceSearchRequestHandler extends Logging {
   private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
   private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
 
-  private def queryBuilder(fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0)
-                          (tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String], maxShingle: Int, minShingle: Int = 1) = {
-    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
+  private def queryBuilder(fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingleFactor: Int = 1, tokenRelax: Int = 0)
+                          (tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String], maxShingle: Int) = {
+    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
   }
 
-  private val qDefs: Seq[(Map[String, Float], Map[String, Float], Array[String], Int, Int)=>BaseQueryBuilder] = Seq(
-    queryBuilder(false, false, false, 0),
-    queryBuilder(false, false, true, 0),
-    queryBuilder(false, false, false, 1),
-    queryBuilder(true, false, false, 0),
-    queryBuilder(false, false, true, 1),
-    queryBuilder(false, true, true, 0),
-    queryBuilder(true, false, false, 1)
+  private val qDefs: Seq[(Map[String, Float], Map[String, Float], Array[String], Int)=>BaseQueryBuilder] = Seq(
+    queryBuilder(false, false, false, 1, 0),
+    queryBuilder(false, false, true, 1, 0),
+    queryBuilder(false, false, false, 1, 1),
+    queryBuilder(true, false, false, 1, 0),
+    queryBuilder(false, false, true, 1, 1),
+    queryBuilder(false, true, true, 1, 0),
+    queryBuilder(true, false, false, 1, 1),
+    queryBuilder(false, false, false, 2, 0),
+    queryBuilder(false, false, true, 2, 0),
+    queryBuilder(false, false, false, 2, 1),
+    queryBuilder(true, false, false, 2, 0),
+    queryBuilder(false, false, true, 2, 1),
+    queryBuilder(false, true, true, 2, 0),
+    queryBuilder(true, false, false, 2, 1)
   )
 
 }
@@ -488,7 +495,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.idx._
     import searchParams.limits._
     import searchParams.page._
-    import searchParams.text._
     import searchParams.view._
 
     val sort = (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
@@ -586,7 +592,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       }
       else {
         val query =
-          if (w.length > 0) qDefs(0)(searchFields2, fullFields2, w, w.length, math.max(w.length/2, 1))
+          if (w.length > 0) qDefs(0)(searchFields2, fullFields2, w, w.length)
           else matchAllQuery()
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
@@ -617,7 +623,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if(relaxLevel >= qDefs.length)
         context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
       else {
-        val query = qDefs(relaxLevel)(searchFields2, fullFields2, w, w.length, math.max(w.length / 2, 1))
+        val query = qDefs(relaxLevel)(searchFields2, fullFields2, w, w.length)
         val me = context.self
 
         search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
