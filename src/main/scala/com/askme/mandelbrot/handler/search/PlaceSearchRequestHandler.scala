@@ -374,9 +374,9 @@ object PlaceSearchRequestHandler extends Logging {
     queryBuilder(false, false, true, 0),
     queryBuilder(false, false, false, 1),
     queryBuilder(true, false, false, 0),
+    queryBuilder(false, false, true, 1),
     queryBuilder(false, true, true, 0),
-    queryBuilder(true, false, false, 1),
-    queryBuilder(false, false, true, 1)
+    queryBuilder(true, false, false, 1)
   )
 
 }
