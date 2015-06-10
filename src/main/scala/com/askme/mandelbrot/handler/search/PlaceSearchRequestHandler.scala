@@ -167,13 +167,14 @@ object PlaceSearchRequestHandler extends Logging {
 
     if(w.length>0)
       boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.min(w.length/minShingleFactor, w.length) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map(x =>
-          if(x._2.length>0)
+        (math.max(1, math.min(w.length/minShingleFactor, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+          //info(x._1.toList.toString+","+x._2.toList.toString)
+          if (x._2.length > 0)
             shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
               .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
           else
             currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
-        )
+        }
       )
     else
       boolQuery
