@@ -248,7 +248,7 @@
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false},
-        "copy_to": ["CityAggr", "CityExact"]
+        "copy_to": ["CityAggr"]
       },
       "CitySlug": {
         "type": "string",

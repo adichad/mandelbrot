@@ -156,7 +156,7 @@ object PlaceSearchRequestHandler extends Logging {
                 recomFields: Map[String, Float],
                 w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
     if(span)
-      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, w.length, sloppy, fuzzy)))
+      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
     else
       disMaxQuery.addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
   }
@@ -329,63 +329,19 @@ object PlaceSearchRequestHandler extends Logging {
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
-
-  private val searchFields = Map(
-    "LocationName" -> 81920f, "CompanyAliases" -> 81920f,
-    "Product.l3category" -> 40960f,
-    "Product.l2category" -> 1024f,
-    "Product.l1category" -> 512f,
-    "LocationType"->1024f,
-    "BusinessType"->1024f,
-    "Product.name" -> 1024f,
-    "Product.brand" -> 2048f,
-    "Product.categorykeywords" -> 40960f,
-    "Product.stringattribute.answer" -> 512f,
-    "Area"->8f, "AreaSynonyms"->8f,
-    "City"->1f, "CitySynonyms"->1f)
-
-  private val condFields = Map(
-    "Product.stringattribute.question" -> Map(
-      "brand" -> Map("Product.stringattribute.answer" -> 2048f),
-      "menu" -> Map("Product.stringattribute.answer" -> 2048f),
-      "destination" -> Map("Product.stringattribute.answer" -> 2048f),
-      "product" -> Map("Product.stringattribute.answer" -> 2048f)
-    )
-  )
-
-  private val exactFields = Map(
-    "CompanyAliases" -> 209715200f,
-    "Product.categorykeywords" -> 104857600f)
-
-  private val exactFirstFields = Map(
-    "LocationName" -> 209715200f,
-    "DetailSlug" -> 209715200f,
-    "Product.l3category" -> 10240f)
-
-  private val fullExactFields = Map(
-    "LocationNameExact"->409715200000f, "CompanyAliasesExact"->409715200000f,
-    "Product.l3categoryexact"->104857600000f,
-    "Product.l2categoryexact"->10485760000f,
-    "Product.l1categoryexact"->1048576000f,
-    "Product.categorykeywordsexact"->104857600000f,
-    "Product.stringattribute.answerexact"->1f)
-
-  private val fullFields = Map(
-    "LocationNameExact"->20971520f, "CompanyAliasesExact"->20971520f,
-    "Product.l3categoryexact"->2097152f,
-    "Product.l2categoryexact"->1048576f,
-    "Product.l1categoryexact"->1048576f,
-    "Product.categorykeywordsexact"->2097152f,
-    "Product.stringattribute.answerexact"->1f)
-
-
   private val fullFields2 = Map(
     "LocationNameExact"->100000000f, "CompanyAliasesExact"->100000000f,
     "Product.l3categoryexact"->10000000000f,
     "Product.l2categoryexact"->10000000f,
     "Product.l1categoryexact"->10000000f,
+    "LocationTypeExact"->1000f,
+    "BusinessTypeExact"->1000f,
+    "Product.nameexact" -> 1000f,
+    "Product.brandexact" -> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
-    "Product.stringattribute.answerexact"->1000000f)
+    "Product.stringattribute.answerexact"->1000000f,
+    "AreaExact"->10f, "AreaSynonymsExact"->10f,
+    "City"->1f, "CitySynonyms"->1f)
 
   private val searchFields2 = Map(
     "LocationName" -> 10000000f, "CompanyAliases" -> 10000000f,
@@ -398,17 +354,12 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.brand" -> 10000f,
     "Product.categorykeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
-    "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f)
+    "Area"->10f, "AreaSynonyms"->10f)
 
 
   private val emptyStringArray = new Array[String](0)
 
-  private def superBoost(len: Int) = math.pow(10, math.min(10,len-1)).toFloat * (searchFields.size + condFields.values.size + 1)
-  private val paidFactor = 1e15f
-
-
-
+  private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
 
   private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
   private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
