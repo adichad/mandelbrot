@@ -12,25 +12,22 @@ import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
-import org.elasticsearch.action.suggest.SuggestRequest
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.search.aggregations.{AggregationBuilder, AbstractAggregationBuilder}
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort._
-import org.elasticsearch.search.suggest.SuggestBuilders
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import scala.collection.JavaConversions._
-import scala.util.control.TailCalls.TailRec
 
 
 /**
@@ -367,26 +364,26 @@ object PlaceSearchRequestHandler extends Logging {
   private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
   private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
 
-  private def queryBuilder(fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingleFactor: Int = 1, tokenRelax: Int = 0)
-                          (tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String], maxShingle: Int) = {
+  private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingleFactor: Int = 1, tokenRelax: Int = 0)
+                          (w: Array[String], maxShingle: Int) = {
     shinglePartition(tokenFields, recomFields, w, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
   }
 
-  private val qDefs: Seq[(Map[String, Float], Map[String, Float], Array[String], Int)=>BaseQueryBuilder] = Seq(
-    queryBuilder(false, false, false, 1, 0),
-    queryBuilder(false, false, true, 1, 0),
-    queryBuilder(false, false, false, 1, 1),
-    queryBuilder(true, false, false, 1, 0),
-    queryBuilder(false, false, true, 1, 1),
-    queryBuilder(false, true, true, 1, 0),
-    queryBuilder(true, false, false, 1, 1),
-    queryBuilder(false, false, false, 2, 0),
-    queryBuilder(false, false, true, 2, 0),
-    queryBuilder(false, false, false, 2, 1),
-    queryBuilder(true, false, false, 2, 0),
-    queryBuilder(false, false, true, 2, 1),
-    queryBuilder(false, true, true, 2, 0),
-    queryBuilder(true, false, false, 2, 1)
+  private val qDefs: Seq[(Array[String], Int)=>BaseQueryBuilder] = Seq(
+    queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, true, 1, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1),
+    queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, true, 1, 1),
+    queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0),
+    queryBuilder(searchFields2, fullFields2, true, false, false, 1, 1),
+    queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, false, 2, 1),
+    queryBuilder(searchFields2, fullFields2, true, false, false, 2, 0),
+    queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1),
+    queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0),
+    queryBuilder(searchFields2, fullFields2, true, false, false, 2, 1)
   )
 
 }
@@ -500,7 +497,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.page._
     import searchParams.view._
 
-    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
+    val sort = /*"_name," + */(if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -517,7 +514,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if(collapse) {
       val orders: List[Terms.Order] = (
-        Some(Terms.Order.aggregation("exactname", true)) ::
+        /*Some(Terms.Order.aggregation("exactname", true)) ::*/
           (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("customertype", true)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
@@ -530,7 +527,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val collapsed = terms("collapsed").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
-      collapsed.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
+      //collapsed.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       if(lat != 0.0d || lon !=0.0d) {
         collapsed.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
@@ -597,7 +594,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       }
       else {
         val query =
-          if (w.length > 0) qDefs(0)(searchFields2, fullFields2, w, w.length)
+          if (w.length > 0) qDefs(0)(w, w.length)
           else matchAllQuery()
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
@@ -628,7 +625,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if(relaxLevel >= qDefs.length)
         context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
       else {
-        val query = qDefs(relaxLevel)(searchFields2, fullFields2, w, w.length)
+        val query = qDefs(relaxLevel)(w, w.length)
         val me = context.self
 
         search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
