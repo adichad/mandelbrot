@@ -339,7 +339,6 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.nameexact" -> 1000f,
     "Product.brandexact" -> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
-    "Product.stringattribute.answerexact"->1000000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f)
 
@@ -353,8 +352,35 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.name" -> 1000f,
     "Product.brand" -> 10000f,
     "Product.categorykeywords" -> 10000000f,
+    "Area"->10f, "AreaSynonyms"->10f,
+    "City"->1f, "CitySynonyms"->1f)
+
+  private val searchFields3 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
+    "Product.l3category" -> 10000000f,
+    "Product.l2category" -> 1000f,
+    "Product.l1category" -> 100f,
+    "LocationType"->1000f,
+    "BusinessType"->1000f,
+    "Product.name" -> 1000f,
+    "Product.brand" -> 10000f,
+    "Product.categorykeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
-    "Area"->10f, "AreaSynonyms"->10f)
+    "Area"->10f, "AreaSynonyms"->10f,
+    "City"->1f, "CitySynonyms"->1f)
+
+  private val fullFields3 = Map(
+    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
+    "Product.l3categoryexact"->10000000000f,
+    "Product.l2categoryexact"->10000000f,
+    "Product.l1categoryexact"->10000000f,
+    "LocationTypeExact"->1000f,
+    "BusinessTypeExact"->1000f,
+    "Product.nameexact" -> 1000f,
+    "Product.brandexact" -> 10000f,
+    "Product.categorykeywordsexact"->10000000000f,
+    "Product.stringattribute.answerexact"->1000000f,
+    "AreaExact"->10f, "AreaSynonymsExact"->10f,
+    "City"->1f, "CitySynonyms"->1f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -369,21 +395,36 @@ object PlaceSearchRequestHandler extends Logging {
     shinglePartition(tokenFields, recomFields, w, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
   }
 
-  private val qDefs: Seq[(Array[String], Int)=>BaseQueryBuilder] = Seq(
-    queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, true, 1, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1),
-    queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, true, 1, 1),
-    queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0),
-    queryBuilder(searchFields2, fullFields2, true, false, false, 1, 1),
-    queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, false, 2, 1),
-    queryBuilder(searchFields2, fullFields2, true, false, false, 2, 0),
-    queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1),
-    queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0),
-    queryBuilder(searchFields2, fullFields2, true, false, false, 2, 1)
+  private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 2),
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 1, 0), 4),
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 6),
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 8),
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 1, 1), 10),
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0), 12),
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 1), 12),
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0), 12),
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 12),
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 1), 12),
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 0), 12),
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 12),
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 12),
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 1), 12),
+
+    (queryBuilder(searchFields3, fullFields3, false, false, false, 1, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, true, 1, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, false, 1, 1), 12),
+    (queryBuilder(searchFields3, fullFields3, true, false, false, 1, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, true, 1, 1), 12),
+    (queryBuilder(searchFields3, fullFields3, false, true, true, 1, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, true, false, false, 1, 1), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, false, 2, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, true, 2, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, false, 2, 1), 12),
+    (queryBuilder(searchFields3, fullFields3, true, false, false, 2, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, false, false, true, 2, 1), 12),
+    (queryBuilder(searchFields3, fullFields3, false, true, true, 2, 0), 12),
+    (queryBuilder(searchFields3, fullFields3, true, false, false, 2, 1), 12)
   )
 
 }
@@ -594,8 +635,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       }
       else {
         val query =
-          if (w.length > 0) qDefs(0)(w, w.length)
+          if (w.length > 0) qDefs(0)._1(w, w.length)
           else matchAllQuery()
+        val leastCount = qDefs(0)._2
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
         // filters
@@ -609,7 +651,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if(response.getHits.totalHits() > 2 || isMatchAll)
+            if(response.getHits.totalHits() >= leastCount || isMatchAll)
               me ! WrappedResponse(searchParams, response, 0)
             else
               me ! ReSearch(searchParams, finalFilter, search, 1, response)
@@ -625,12 +667,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if(relaxLevel >= qDefs.length)
         context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
       else {
-        val query = qDefs(relaxLevel)(w, w.length)
+        val query = qDefs(relaxLevel)._1(w, w.length)
+        val leastCount = qDefs(relaxLevel)._2
         val me = context.self
 
         search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if (response.getHits.totalHits() > (relaxLevel+1)*2 || relaxLevel >= qDefs.length - 1)
+            if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
               me ! WrappedResponse(searchParams, response, relaxLevel)
             else
               me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
