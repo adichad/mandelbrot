@@ -415,18 +415,6 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields, fullFields, false, false, false, 3, 1), 12), //10
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, true, false, true, 1, 0), 12), //11
-    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 12), //12
-    // full-shingle fuzzy span matches
-
-    (queryBuilder(searchFields, fullFields, false, true, true, 1, 0), 12), //13
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 12), //14
-    // full-shingle exact sloppy-span matches
-
-    (queryBuilder(searchFields, fullFields, false, true, true, 1, 1), 12), //15
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 12), //16
-    // relaxed-shingle exact sloppy-span matches
-    // don't search attributes
 
     //                                        fuzzy, slop,  span, minshingle, tokenrelax
     (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 5), //0
@@ -448,6 +436,18 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 1), 12), //10
     // relaxed-shingle exact full matches
 
+    (queryBuilder(searchFields, fullFields, true, false, true, 1, 0), 12), //11
+    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 12), //12
+    // full-shingle fuzzy span matches
+
+    (queryBuilder(searchFields, fullFields, false, true, true, 1, 0), 12), //13
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 12), //14
+    // full-shingle exact sloppy-span matches
+
+    (queryBuilder(searchFields, fullFields, false, true, true, 1, 1), 12), //15
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 12), //16
+    // relaxed-shingle exact sloppy-span matches
+  
     (queryBuilder(searchFields2, fullFields2, true, false, true, 1, 0), 12), //11
     (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 12), //12
     // full-shingle fuzzy span matches
@@ -459,7 +459,6 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 1), 12), //15
     (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 12) //16
     // relaxed-shingle exact sloppy-span matches
-    // also search attributes
 
   )
 
