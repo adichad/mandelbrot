@@ -40,7 +40,7 @@ case object SearchRouter extends Router {
               val sort = "_distance,_score"
               val unselect = "keywords"
               val searchType = "query_then_fetch"
-              val timeoutms = 1500l
+              val timeoutms = 600l
               val aggbuckets = 10
 
               respondWithMediaType(`application/json`) { ctx =>

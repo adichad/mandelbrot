@@ -53,7 +53,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
       case "place" => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
       case _ => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
     }
-    context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 2, MILLISECONDS))
+    context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 8, MILLISECONDS))
     target ! searchParams
   }
 
