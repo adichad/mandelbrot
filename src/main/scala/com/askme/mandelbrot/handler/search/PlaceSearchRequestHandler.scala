@@ -246,7 +246,7 @@ object PlaceSearchRequestHandler extends Logging {
   private case class CategoryFilter(filter: FilterBuilder, cats: Seq[String])
 
   private def categoryFilter(mw: Array[String], cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
-    val cquery = disMaxQuery
+    /*val cquery = disMaxQuery
     var hasClauses = false
 
     catFilterFields.foreach {
@@ -323,7 +323,7 @@ object PlaceSearchRequestHandler extends Logging {
       else
         CategoryFilter(null, Seq[String]())
     }
-    else CategoryFilter(null, Seq[String]())
+    else*/ CategoryFilter(null, Seq[String]())
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
@@ -396,68 +396,48 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
   //                                         fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 5), //0
-    (queryBuilder(searchFields, fullFields, false, false, false, 2, 0), 5), //1
-    (queryBuilder(searchFields, fullFields, false, false, false, 3, 0), 5), //2
+    (queryBuilder(searchFields, fullFields, false, false, false, 2, 0), 5), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, false, false, true, 1, 0), 12), //3
-    (queryBuilder(searchFields, fullFields, false, false, true, 2, 0), 12), //4
+    (queryBuilder(searchFields, fullFields, false, false, true, 2, 0), 12), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields, fullFields, true, false, false, 1, 0), 12), //5
-    (queryBuilder(searchFields, fullFields, true, false, false, 2, 0), 12), //6
-    (queryBuilder(searchFields, fullFields, true, false, false, 3, 0), 12), //7
+    (queryBuilder(searchFields, fullFields, true, false, false, 2, 0), 12), //2
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields, fullFields, false, false, false, 1, 1), 12), //8
-    (queryBuilder(searchFields, fullFields, false, false, false, 2, 1), 12), //9
-    (queryBuilder(searchFields, fullFields, false, false, false, 3, 1), 12), //10
+    (queryBuilder(searchFields, fullFields, false, false, false, 2, 1), 12), //3
     // relaxed-shingle exact full matches
 
 
     //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 5), //0
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0), 5), //1
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 0), 5), //2
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0), 5), //4
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 1, 0), 12), //3
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 12), //4
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 12), //5
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 12), //5
     (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 0), 12), //6
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 3, 0), 12), //7
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 12), //8
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 1), 12), //9
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 1), 12), //10
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 1), 12), //7
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, true, false, true, 1, 0), 12), //11
-    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 12), //12
+    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 12), //8
     // full-shingle fuzzy span matches
 
-    (queryBuilder(searchFields, fullFields, false, true, true, 1, 0), 12), //13
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 12), //14
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 12), //9
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields, fullFields, false, true, true, 1, 1), 12), //15
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 12), //16
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 12), //10
     // relaxed-shingle exact sloppy-span matches
-  
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 1, 0), 12), //11
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 12), //12
+
+    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 12), //11
     // full-shingle fuzzy span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0), 12), //13
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 12), //14
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 12), //12
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 1), 12), //15
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 12) //16
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 12) //13
     // relaxed-shingle exact sloppy-span matches
 
   )
@@ -757,14 +737,15 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           (if (area != "") matchedArea else "")
       }
 
-      val parsedResult = parse(result.toString).transformField {
+      val parsedResult = parse(result.toString)
+      /*.transformField {
         case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
-      }.removeField(_._1=="_shards")
+      }.removeField(_._1=="_shards")*/
 
 
       val endTime = System.currentTimeMillis
       val timeTaken = endTime - startTime
-      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
+      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [q"+relaxLevel+"] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
       context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
   }
 
