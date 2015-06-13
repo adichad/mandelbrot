@@ -408,36 +408,42 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields, fullFields, false, false, false, 3, 1), 1), //3
     // relaxed-shingle exact full matches
 
+    (queryBuilder(searchFields, fullFields, false, false, true, 3, 1), 1), //4
+    // relaxed-shingle exact span matches
+
 
     //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 0), 1), //4
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 0), 1), //5
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 3, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 3, 0), 1), //6
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 3, 0), 5), //6
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 3, 0), 5), //7
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 1), 1), //7
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 1), 1), //8
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 5), //8
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 3, 1), 1), //9
+    // relaxed-shingle exact span matches
+
+    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 5), //10
     // full-shingle fuzzy span matches
 
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 1), //9
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 1), //11
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 1), //10
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 1), //12
     // relaxed-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 5), //11
+    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 5), //13
     // full-shingle fuzzy span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 1), //12
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 1), //14
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 1) //13
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 1) //15
     // relaxed-shingle exact sloppy-span matches
 
   )
