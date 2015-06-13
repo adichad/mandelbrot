@@ -329,33 +329,7 @@ object PlaceSearchRequestHandler extends Logging {
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
-  private val fullFields2 = Map(
-    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
-    "Product.l3categoryexact"->10000000000f,
-    "Product.l2categoryexact"->10000000f,
-    "Product.l1categoryexact"->10000000f,
-    "LocationTypeExact"->1000f,
-    "BusinessTypeExact"->1000f,
-    "Product.nameexact" -> 1000f,
-    "Product.brandexact" -> 10000f,
-    "Product.categorykeywordsexact"->10000000000f,
-    "AreaExact"->10f, "AreaSynonymsExact"->10f,
-    "City"->1f, "CitySynonyms"->1f)
-
-  private val searchFields2 = Map(
-    "LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
-    "Product.l3category" -> 10000000f,
-    "Product.l2category" -> 1000f,
-    "Product.l1category" -> 100f,
-    "LocationType"->1000f,
-    "BusinessType"->1000f,
-    "Product.name" -> 1000f,
-    "Product.brand" -> 10000f,
-    "Product.categorykeywords" -> 10000000f,
-    "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f)
-
-  private val searchFields3 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
+  private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
     "Product.l3category" -> 10000000f,
     "Product.l2category" -> 1000f,
     "Product.l1category" -> 100f,
@@ -368,7 +342,7 @@ object PlaceSearchRequestHandler extends Logging {
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f)
 
-  private val fullFields3 = Map(
+  private val fullFields2 = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
     "Product.l3categoryexact"->10000000000f,
     "Product.l2categoryexact"->10000000f,
@@ -378,7 +352,7 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.nameexact" -> 1000f,
     "Product.brandexact" -> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
-    "Product.stringattribute.answerexact"->1000000f,
+    "Product.stringattribute.answerexact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f)
 
@@ -409,8 +383,8 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 0), 12),
     (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 12),
     (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 12),
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 1), 12),
-
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 2, 1), 12)
+/*
     (queryBuilder(searchFields3, fullFields3, false, false, false, 1, 0), 12),
     (queryBuilder(searchFields3, fullFields3, false, false, true, 1, 0), 12),
     (queryBuilder(searchFields3, fullFields3, false, false, false, 1, 1), 12),
@@ -424,7 +398,7 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields3, fullFields3, true, false, false, 2, 0), 12),
     (queryBuilder(searchFields3, fullFields3, false, false, true, 2, 1), 12),
     (queryBuilder(searchFields3, fullFields3, false, true, true, 2, 0), 12),
-    (queryBuilder(searchFields3, fullFields3, true, false, false, 2, 1), 12)
+    (queryBuilder(searchFields3, fullFields3, true, false, false, 2, 1), 12)*/
   )
 
 }
