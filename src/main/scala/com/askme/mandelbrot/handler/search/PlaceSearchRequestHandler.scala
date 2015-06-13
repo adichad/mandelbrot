@@ -329,6 +329,31 @@ object PlaceSearchRequestHandler extends Logging {
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
+  private val searchFields = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
+    "Product.l3category" -> 10000000f,
+    "Product.l2category" -> 1000f,
+    "Product.l1category" -> 100f,
+    "LocationType"->1000f,
+    "BusinessType"->1000f,
+    "Product.name" -> 1000f,
+    "Product.brand" -> 10000f,
+    "Product.categorykeywords" -> 10000000f,
+    "Area"->10f, "AreaSynonyms"->10f,
+    "City"->1f, "CitySynonyms"->1f)
+
+  private val fullFields = Map(
+    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
+    "Product.l3categoryexact"->10000000000f,
+    "Product.l2categoryexact"->10000000f,
+    "Product.l1categoryexact"->10000000f,
+    "LocationTypeExact"->1000f,
+    "BusinessTypeExact"->1000f,
+    "Product.nameexact" -> 1000f,
+    "Product.brandexact" -> 10000f,
+    "Product.categorykeywordsexact"->10000000000f,
+    "AreaExact"->10f, "AreaSynonymsExact"->10f,
+    "City"->1f, "CitySynonyms"->1f)
+
   private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
     "Product.l3category" -> 10000000f,
     "Product.l2category" -> 1000f,
@@ -370,7 +395,40 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
-  //                                          fuzzy, slop,  span, minshingle, tokenrelax
+  //                                         fuzzy, slop,  span, minshingle, tokenrelax
+    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 5), //0
+    (queryBuilder(searchFields, fullFields, false, false, false, 2, 0), 5), //1
+    (queryBuilder(searchFields, fullFields, false, false, false, 3, 0), 5), //2
+    // full-shingle exact full matches
+
+    (queryBuilder(searchFields, fullFields, false, false, true, 1, 0), 12), //3
+    (queryBuilder(searchFields, fullFields, false, false, true, 2, 0), 12), //4
+    // full-shingle exact span matches
+
+    (queryBuilder(searchFields, fullFields, true, false, false, 1, 0), 12), //5
+    (queryBuilder(searchFields, fullFields, true, false, false, 2, 0), 12), //6
+    (queryBuilder(searchFields, fullFields, true, false, false, 3, 0), 12), //7
+    // full-shingle fuzzy full matches
+
+    (queryBuilder(searchFields, fullFields, false, false, false, 1, 1), 12), //8
+    (queryBuilder(searchFields, fullFields, false, false, false, 2, 1), 12), //9
+    (queryBuilder(searchFields, fullFields, false, false, false, 3, 1), 12), //10
+    // relaxed-shingle exact full matches
+
+    (queryBuilder(searchFields, fullFields, true, false, true, 1, 0), 12), //11
+    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 12), //12
+    // full-shingle fuzzy span matches
+
+    (queryBuilder(searchFields, fullFields, false, true, true, 1, 0), 12), //13
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 12), //14
+    // full-shingle exact sloppy-span matches
+
+    (queryBuilder(searchFields, fullFields, false, true, true, 1, 1), 12), //15
+    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 12), //16
+    // relaxed-shingle exact sloppy-span matches
+    // don't search attributes
+
+    //                                        fuzzy, slop,  span, minshingle, tokenrelax
     (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 5), //0
     (queryBuilder(searchFields2, fullFields2, false, false, false, 2, 0), 5), //1
     (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 0), 5), //2
@@ -401,6 +459,7 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 1), 12), //15
     (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 12) //16
     // relaxed-shingle exact sloppy-span matches
+    // also search attributes
 
   )
 
