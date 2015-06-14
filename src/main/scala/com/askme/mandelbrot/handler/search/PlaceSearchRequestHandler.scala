@@ -530,126 +530,142 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
 
   override def receive = {
-    case searchParams: SearchParams =>
-      import searchParams.text._
-      import searchParams.idx._
-      import searchParams.filters._
-      import searchParams.startTime
-      import searchParams.req._
+      case searchParams: SearchParams =>
+        try {
+          import searchParams.text._
+          import searchParams.idx._
+          import searchParams.filters._
+          import searchParams.startTime
+          import searchParams.req._
 
-      kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
-      w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
-      if(w.isEmpty && kwids.isEmpty && category.trim == "" && id=="" && userid == 0 && locid == "") {
-        context.parent ! EmptyResponse("empty search criteria")
-      }
-      else {
-        val query =
-          if (w.length > 0) qDefs(0)._1(w, w.length)
-          else matchAllQuery()
-        val leastCount = qDefs(0)._2
-        val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
-
-        // filters
-        val finalFilter = buildFilter(searchParams)
-
-        val search = buildSearch(searchParams)
-
-        search.setQuery(filteredQuery(query, finalFilter))
-
-        val me = context.self
-
-        search.execute(new ActionListener[SearchResponse] {
-          override def onResponse(response: SearchResponse): Unit = {
-            if(response.getHits.totalHits() >= leastCount || isMatchAll)
-              me ! WrappedResponse(searchParams, response, 0)
-            else
-              me ! ReSearch(searchParams, finalFilter, search, 1, response)
+          kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
+          w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
+          if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
+            context.parent ! EmptyResponse("empty search criteria")
           }
+          else {
+            val query =
+              if (w.length > 0) qDefs(0)._1(w, w.length)
+              else matchAllQuery()
+            val leastCount = qDefs(0)._2
+            val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
-          override def onFailure(e: Throwable): Unit = {
-            val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            // filters
+            val finalFilter = buildFilter(searchParams)
+
+            val search = buildSearch(searchParams)
+
+            search.setQuery(filteredQuery(query, finalFilter))
+
+            val me = context.self
+
+            search.execute(new ActionListener[SearchResponse] {
+              override def onResponse(response: SearchResponse): Unit = {
+                if (response.getHits.totalHits() >= leastCount || isMatchAll)
+                  me ! WrappedResponse(searchParams, response, 0)
+                else
+                  me ! ReSearch(searchParams, finalFilter, search, 1, response)
+              }
+
+              override def onFailure(e: Throwable): Unit = {
+                val timeTaken = System.currentTimeMillis() - startTime
+                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+                context.parent ! ErrorResponse(e.getMessage, e)
+              }
+            })
+          }
+        } catch {
+          case e: Throwable =>
             context.parent ! ErrorResponse(e.getMessage, e)
+        }
+
+      case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+        try {
+          import searchParams.startTime
+          import searchParams.req._
+
+          if (relaxLevel >= qDefs.length)
+            context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
+          else {
+            val query = qDefs(relaxLevel)._1(w, w.length)
+            val leastCount = qDefs(relaxLevel)._2
+            val me = context.self
+
+            search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
+              override def onResponse(response: SearchResponse): Unit = {
+                if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
+                  me ! WrappedResponse(searchParams, response, relaxLevel)
+                else
+                  me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
+              }
+
+              override def onFailure(e: Throwable): Unit = {
+                val timeTaken = System.currentTimeMillis() - startTime
+                error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+                context.parent ! ErrorResponse(e.getMessage, e)
+              }
+            })
           }
-        })
-      }
-
-    case ReSearch(searchParams, filter, search, relaxLevel, response) =>
-      import searchParams.startTime
-      import searchParams.req._
-
-      if(relaxLevel >= qDefs.length)
-        context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
-      else {
-        val query = qDefs(relaxLevel)._1(w, w.length)
-        val leastCount = qDefs(relaxLevel)._2
-        val me = context.self
-
-        search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
-          override def onResponse(response: SearchResponse): Unit = {
-            if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
-              me ! WrappedResponse(searchParams, response, relaxLevel)
-            else
-              me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
-          }
-
-          override def onFailure(e: Throwable): Unit = {
-            val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+        } catch {
+          case e: Throwable =>
             context.parent ! ErrorResponse(e.getMessage, e)
+        }
+
+      case response: WrappedResponse =>
+        try {
+          import response.result
+          import response.searchParams.filters._
+          import response.searchParams.geo._
+          import response.searchParams.idx._
+          import response.searchParams.limits._
+          import response.searchParams.req._
+          import response.searchParams.startTime
+          import response.searchParams.text._
+          import response.searchParams.view._
+          import response.relaxLevel
+
+          val areaWords = analyze(esClient, index, "Area", area)
+
+
+          var slug = ""
+          if (slugFlag) {
+            val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+            val matchedCat = catBucks
+              .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
+              || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
+              .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
+            val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+
+            val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
+              .fold(//look in synonyms if name not found
+                areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
+                  c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
+                ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKey))
+              )(k => "/in/" + urlize(k.getKey))
+
+            slug = (if (city != "") "/" + urlize(city) else "") +
+              matchedCat +
+              (if (category != "") "/cat/" + urlize(category) else "") +
+              (if (area != "") matchedArea else "")
           }
-        })
-      }
 
-    case response: WrappedResponse =>
-      import response.result
-      import response.searchParams.filters._
-      import response.searchParams.geo._
-      import response.searchParams.idx._
-      import response.searchParams.limits._
-      import response.searchParams.req._
-      import response.searchParams.startTime
-      import response.searchParams.text._
-      import response.searchParams.view._
-      import response.relaxLevel
+          val cats = if (agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
 
-      val areaWords = analyze(esClient, index, "Area", area)
+          val parsedResult = parse(result.toString)
+          /*.transformField {
+            case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
+          }.removeField(_._1=="_shards")*/
 
 
-      var slug = ""
-      if (slugFlag) {
-        val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-        val matchedCat = catBucks
-          .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
-          || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
-          .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
-        val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+          val endTime = System.currentTimeMillis
+          val timeTaken = endTime - startTime
+          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
+          context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
+        } catch {
+          case e: Throwable =>
+            context.parent ! ErrorResponse(e.getMessage, e)
+        }
 
-        val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
-          .fold(//look in synonyms if name not found
-            areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
-              c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKey, areaWords))
-            ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKey))
-          )(k => "/in/" + urlize(k.getKey))
-
-        slug = (if (city != "") "/" + urlize(city) else "") +
-          matchedCat +
-          (if (category != "") "/cat/" + urlize(category) else "") +
-          (if (area != "") matchedArea else "")
-      }
-
-      val cats = if(agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
-
-      val parsedResult = parse(result.toString)
-      /*.transformField {
-        case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
-      }.removeField(_._1=="_shards")*/
-
-
-      val endTime = System.currentTimeMillis
-      val timeTaken = endTime - startTime
-      info("[" + result.getTookInMillis + "/" + timeTaken + (if(result.isTimedOut) " timeout" else "") + "] [q"+relaxLevel+"] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if(result.isTerminatedEarly) " termearly ("+Math.min(maxdocspershard, int("max-docs-per-shard"))+")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
-      context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
   }
 
   def urlize(k: String) =
