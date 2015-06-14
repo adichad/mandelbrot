@@ -407,13 +407,13 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
     //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 0), 1), //0
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 0), 3), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 3, 0), 1), //2
+    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 3, 0), 3), //2
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 1), 1), //3
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 1), 3), //3
     // relaxed-shingle exact full matches
 
 
