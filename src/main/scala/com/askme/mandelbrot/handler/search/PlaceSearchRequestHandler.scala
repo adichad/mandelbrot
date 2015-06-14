@@ -203,12 +203,24 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val searchFieldsName = Map(
     "LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
+    "Product.l3category" -> 10000000f,
+    "Product.categorykeywords" -> 10000000f,
+    "Product.l2category" -> 1000f,
+    "Product.l1category" -> 100f,
+    "LocationType"->1000f,
+    "BusinessType"->1000f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f)
 
 
   private val fullFieldsName = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
+    "Product.l3categoryexact"->10000000000f,
+    "Product.categorykeywordsexact"->10000000000f,
+    "Product.l2categoryexact"->10000000f,
+    "Product.l1categoryexact"->10000000f,
+    "LocationTypeExact"->1000f,
+    "BusinessTypeExact"->1000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f)
 
@@ -279,13 +291,13 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
     //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 0), 3), //0
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 0), 1), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 3), //2
+    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 1), //2
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 1), 3), //3
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 1), 1), //3
     // relaxed-shingle exact full matches
 
 
@@ -348,7 +360,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
   import PlaceSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
-  private var cats = Seq[String]()
   private var kwids: Array[String] = emptyStringArray
   private var areaSlugs: String = ""
 
@@ -362,7 +373,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     // filters
     val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
-    val cityFilter = boolFilter.cache(false)
+
     if (id != "" || !kwids.isEmpty) {
       finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
     }
@@ -379,7 +390,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
-      val areas = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" "))
+      val areas = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
       areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
@@ -402,22 +413,25 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     }
 
     if (city != "") {
-      val cityParams = city.split( """,""").map(analyze(esClient, index, "City", _).mkString(" "))
-      cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
+      val cityFilter = boolFilter.cache(false)
+      city.split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+        cityFilter.should(termFilter("City", c).cache(false))
+        cityFilter.should(termFilter("CitySynonyms", c).cache(false))
+      }
 
-      finalFilter.add(cityFilter)
+      if(cityFilter.hasClauses)
+        finalFilter.add(cityFilter)
     }
 
     if (category != "") {
-      val cats = category.split("""#""")
       val b = boolFilter.cache(false)
-      cats.foreach { c =>
+      category.split("""#""").map(analyze(esClient, index, "Product.l3categoryexact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
         val cat = analyze(esClient, index, "Product.l3categoryexact", c).mkString(" ")
         b.should(termFilter("Product.l3categoryexact", cat)).cache(true)
         b.should(termFilter("Product.categorykeywordsexact", cat)).cache(false)
       }
-      finalFilter.add(nestedFilter("Product", b).cache(false))
+      if(b.hasClauses)
+        finalFilter.add(nestedFilter("Product", b).cache(false))
     }
 
     finalFilter
@@ -613,6 +627,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           (if (category != "") "/cat/" + urlize(category) else "") +
           (if (area != "") matchedArea else "")
       }
+
+      val cats = if(agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
 
       val parsedResult = parse(result.toString)
       /*.transformField {
