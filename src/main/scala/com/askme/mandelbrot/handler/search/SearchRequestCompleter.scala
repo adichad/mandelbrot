@@ -3,7 +3,7 @@ package com.askme.mandelbrot.handler.search
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.{Actor, OneForOneStrategy, Props, ReceiveTimeout}
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.message.{RestMessage, Timeout}
+import com.askme.mandelbrot.handler.message.{ErrorResponse, RestMessage, Timeout}
 import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.search.message.SearchParams
 import com.askme.mandelbrot.server.RootServer.SearchContext
@@ -68,6 +68,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
       warn("[timeout/" + (timeTaken) + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]")
       complete(GatewayTimeout, Timeout(timeTaken, searchParams.limits.timeoutms*2))
     }
+    case err: ErrorResponse => complete(InternalServerError, err.message)
     case res: RestMessage => complete(OK, res)
 
   }

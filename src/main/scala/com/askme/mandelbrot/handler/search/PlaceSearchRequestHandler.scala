@@ -5,6 +5,7 @@ import java.net.URLEncoder
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.EmptyResponse
+import com.askme.mandelbrot.handler.message.ErrorResponse
 import com.askme.mandelbrot.handler.search.message.{SearchParams, SearchResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
@@ -533,6 +534,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       import searchParams.text._
       import searchParams.idx._
       import searchParams.filters._
+      import searchParams.startTime
+      import searchParams.req._
 
       kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
       w = if(kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
@@ -564,12 +567,17 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           }
 
           override def onFailure(e: Throwable): Unit = {
-            throw e
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            context.parent ! ErrorResponse(e.getMessage, e)
           }
         })
       }
 
     case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+      import searchParams.startTime
+      import searchParams.req._
+
       if(relaxLevel >= qDefs.length)
         context.self ! (WrappedResponse(searchParams, response, relaxLevel - 1))
       else {
@@ -586,7 +594,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           }
 
           override def onFailure(e: Throwable): Unit = {
-            throw e
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            context.parent ! ErrorResponse(e.getMessage, e)
           }
         })
       }
