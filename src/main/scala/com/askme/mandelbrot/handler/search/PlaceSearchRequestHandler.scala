@@ -161,15 +161,15 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
-                               maxShingle: Int, minShingleFactor: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
                                span: Boolean = false, tokenRelax: Int = 0): BoolQueryBuilder = {
 
     if(w.length>0)
       boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.max(1, math.min(w.length/minShingleFactor, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
           //info(x._1.toList.toString+","+x._2.toList.toString)
           if (x._2.length > 0)
-            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
+            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
               .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
           else
             currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
@@ -177,46 +177,6 @@ object PlaceSearchRequestHandler extends Logging {
       )
     else
       boolQuery
-  }
-
-  private def strongMatch(fields: Map[String, Float],
-                          condFields: Map[String, Map[String, Map[String, Float]]],
-                          w: Array[String], kw: String, fuzzyprefix: Int, fuzzysim: Float, esClient: Client, index: String) = {
-
-    val allQuery = boolQuery.minimumNumberShouldMatch(math.ceil(w.length.toFloat * 4f / 5f).toInt)
-    //var i = 1000000
-    w.foreach {
-      word => {
-        val posBoost = 1//math.max(1, i)
-        val wordQuery = boolQuery
-        fields.foreach {
-          field =>
-            //wordQuery.should(nestIfNeeded(field._1, fuzzyQuery(field._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE)))
-            wordQuery.should(nestIfNeeded(field._1, fuzzyOrTermQuery(field._1, word, field._2 * posBoost, fuzzyprefix)))
-        }
-        condFields.foreach {
-          cond: (String, Map[String, Map[String, Float]]) => {
-            cond._2.foreach {
-              valField: (String, Map[String, Float]) => {
-                val perQuestionQuery = boolQuery
-                perQuestionQuery.must(termQuery(cond._1, valField._1))
-                val answerQuery = boolQuery
-                valField._2.foreach {
-                  subField: (String, Float) =>
-                    //answerQuery.should(fuzzyQuery(subField._1, word).prefixLength(fuzzyprefix).fuzziness(Fuzziness.ONE))
-                    answerQuery.should(fuzzyOrTermQuery(subField._1, word, subField._2 * posBoost, fuzzyprefix))
-                }
-                perQuestionQuery.must(answerQuery)
-                wordQuery.should(nestIfNeeded(cond._1, perQuestionQuery))
-              }
-            }
-          }
-        }
-        allQuery.should(wordQuery)
-        //i /= 10
-      }
-    }
-    allQuery
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
@@ -236,94 +196,6 @@ object PlaceSearchRequestHandler extends Logging {
   private def weakMatchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
     val textWords = analyze(esClient, index, field, text)
     if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
-  }
-
-  private val catFilterFields = Set("Product.l3categoryexact" -> 1024f, "Product.categorykeywordsexact" -> 1024f, "Product.l2categoryexact" -> 128f, "Product.l1categoryexact" -> 64f)
-
-  private val catFilterFieldsShingle = Set("Product.l3categoryshingle" -> 64f, "Product.categorykeywordsshingle" -> 64f, "Product.l2categoryshingle" -> 8f, "Product.l1categoryshingle" -> 4f)
-
-
-  private case class CategoryFilter(filter: FilterBuilder, cats: Seq[String])
-
-  private def categoryFilter(mw: Array[String], cityFilter: BoolFilterBuilder, aggBuckets: Int, esClient: Client, index: String, esType: String, maxdocspershard: Int): CategoryFilter = {
-    /*val cquery = disMaxQuery
-    var hasClauses = false
-
-    catFilterFields.foreach {
-      field: (String, Float) => {
-        (1 to mw.length).foreach { len =>
-          mw.sliding(len).foreach { shingle =>
-            val ck = shingle.mkString(" ")
-            if(ck.trim != "") {
-              cquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * len)))
-              hasClauses = true
-            }
-          }
-        }
-      }
-    }
-
-    catFilterFieldsShingle.foreach {
-      field: (String, Float) => {
-        (math.min(2, math.max(1, mw.length)) to math.min(3, math.max(1, mw.length))).foreach { len =>
-          mw.sliding(len).foreach { shingle =>
-            val ck = shingle.mkString(" ")
-            if(ck.trim != "") {
-              cquery.add(nestIfNeeded(field._1, termQuery(field._1, ck).boost(field._2 * len)))
-              hasClauses = true
-            }
-          }
-        }
-      }
-    }
-
-    if(hasClauses) {
-
-      val catFilter = boolFilter.cache(false)
-      val cats = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
-        .setTypes(esType.split(","): _*)
-        .setSearchType(SearchType.QUERY_THEN_FETCH)
-        .setQuery(filteredQuery(if (cityFilter.hasClauses) filteredQuery(cquery, cityFilter) else cquery, boolFilter.mustNot(termFilter("DeleteFlag", 1l))))
-        .setTerminateAfter(5000)
-        .setFrom(0).setSize(0)
-        .setTimeout(TimeValue.timeValueMillis(500))
-        .addAggregation(terms("categories").field("Product.l3categoryaggr").size(2).order(Terms.Order.aggregation("max_score", false))
-        .subAggregation(max("max_score").script("docscore").lang("native")))
-        .execute().get()
-        .getAggregations.get("categories").asInstanceOf[Terms]
-        .getBuckets.map(_.getKey)
-
-      cats.map(termFilter("Product.l3categoryaggr", _).cache(false)).foreach(catFilter.should(_))
-
-      //debug(catFilter.toString)
-      if (catFilter.hasClauses) {
-        catFilter.should(queryFilter(shingleSpan("LocationName", 1f, mw, 1, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(shingleSpan("CompanyAliases", 1f, mw, 1, mw.length, mw.length)).cache(false))
-        //catFilter.should(queryFilter(shingleSpan("Product.stringattribute.answer", 1f, mw, 1, mw.length, mw.length)).cache(false))
-        catFilter.should(queryFilter(nestIfNeeded("Product.l3categoryexact", termQuery("Product.l3categoryexact", mw.mkString(" ")))).cache(true))
-        catFilter.should(queryFilter(nestIfNeeded("Product.categorykeywordsexact", termQuery("Product.categorykeywordsexact", mw.mkString(" ")))).cache(false))
-
-        Seq("LocationNameExact", "CompanyAliasesExact", "Product.stringattribute.answerexact").foreach {
-          field: (String) => {
-            (math.max(1,mw.length/2) to mw.length).foreach { len =>
-              mw.sliding(len).foreach { shingle =>
-                val ck = shingle.mkString(" ")
-                if(ck.trim != "") {
-                  cquery.add(nestIfNeeded(field, termQuery(field, ck)))
-                  hasClauses = true
-                }
-              }
-            }
-          }
-        }
-
-        catFilter.should(queryFilter(cquery).cache(false))
-        CategoryFilter(catFilter, cats)
-      }
-      else
-        CategoryFilter(null, Seq[String]())
-    }
-    else*/ CategoryFilter(null, Seq[String]())
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
@@ -400,54 +272,54 @@ object PlaceSearchRequestHandler extends Logging {
   private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
   private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
 
-  private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingleFactor: Int = 1, tokenRelax: Int = 0)
+  private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingle: Int = 1, tokenRelax: Int = 0)
                           (w: Array[String], maxShingle: Int) = {
-    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingleFactor, fuzzy, sloppy, span, tokenRelax)
+    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
   }
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
     //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 0), 3), //0
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 0), 3), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 3, 0), 3), //2
+    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 3), //2
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 3, 1), 3), //3
+    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 1), 3), //3
     // relaxed-shingle exact full matches
 
 
     //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields, fullFields, false, false, false, 3, 0), 3), //0
+    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 3), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, false, false, true, 3, 0), 3), //1
+    (queryBuilder(searchFields, fullFields, false, false, true, 2, 0), 3), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields, fullFields, true, false, false, 3, 0), 5), //2
+    (queryBuilder(searchFields, fullFields, true, false, false, 1, 0), 5), //2
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields, fullFields, false, false, false, 3, 1), 3), //3
+    (queryBuilder(searchFields, fullFields, false, false, false, 1, 1), 3), //3
     // relaxed-shingle exact full matches
 
 
     //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 0), 3), //4
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 3), //4
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 3, 0), 3), //5
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 3), //5
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 3, 0), 5), //6
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 5), //6
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 3, 1), 3), //7
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 3), //7
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, false, false, true, 3, 1), 3), //8
+    (queryBuilder(searchFields, fullFields, false, false, true, 2, 1), 3), //8
     // relaxed-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 3, 1), 3), //9
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 3), //9
     // relaxed-shingle exact span matches
 
     (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 5), //10
@@ -506,34 +378,14 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     }
 
     val locFilter = boolFilter.cache(false)
-    val analyzedAreas = scala.collection.mutable.Set[String]()
     if (area != "") {
-      val areas = area.split( """,""").map(_.trim.toLowerCase)
-      areas.foreach { a =>
-
-        val areaWords = analyze(esClient, index, "Area", a)
-        val terms = areaWords
-          .map(fuzzyQuery("Area", _).prefixLength(1).fuzziness(Fuzziness.TWO))
-          .map(spanMultiTermQueryBuilder)
-        val areaSpan = spanNearQuery.slop(1).inOrder(false)
-        terms.foreach(areaSpan.clause)
-        locFilter.should(queryFilter(areaSpan).cache(false))
-
-        val synTerms = areaWords
-          .map(fuzzyQuery("AreaSynonyms", _).prefixLength(1).fuzziness(Fuzziness.TWO))
-          .map(spanMultiTermQueryBuilder)
-        val synAreaSpan = spanNearQuery.slop(1).inOrder(false)
-        synTerms.foreach(synAreaSpan.clause)
-        locFilter.should(queryFilter(synAreaSpan).cache(false))
-        analyzedAreas += areaWords.mkString("-")
-      }
-
-      areas.map(a => termFilter("City", a).cache(false)).foreach(locFilter.should)
-      areas.map(a => termFilter("CitySynonyms", a).cache(false)).foreach(locFilter.should)
-      areas.map(a => termFilter("AreaSlug", a).cache(false)).foreach(locFilter.should)
-
+      val areas = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" "))
+      areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areaSlugs = areas.map(_.replace(' ', '-')).mkString("#")
     }
-    areaSlugs = analyzedAreas.mkString("#")
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
@@ -544,11 +396,15 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           .optimizeBbox("indexed")
           .geoDistance(GeoDistance.SLOPPY_ARC))
 
+
+    if (locFilter.hasClauses) {
+      finalFilter.add(locFilter)
+    }
+
     if (city != "") {
-      val cityParams = city.split( """,""").map(_.trim.toLowerCase)
+      val cityParams = city.split( """,""").map(analyze(esClient, index, "City", _).mkString(" "))
       cityFilter.should(termsFilter("City", cityParams: _*).cache(false))
       cityFilter.should(termsFilter("CitySynonyms", cityParams: _*).cache(false))
-      cityFilter.should(termsFilter("CitySlug", cityParams: _*).cache(false))
 
       finalFilter.add(cityFilter)
     }
@@ -557,20 +413,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val cats = category.split("""#""")
       val b = boolFilter.cache(false)
       cats.foreach { c =>
-        b.should(queryFilter(matchPhraseQuery("Product.l3category", c).slop(1)).cache(true))
-        b.should(termFilter("Product.l3categoryslug", c).cache(false))
+        val cat = analyze(esClient, index, "Product.l3categoryexact", c).mkString(" ")
+        b.should(termFilter("Product.l3categoryexact", cat)).cache(true)
+        b.should(termFilter("Product.categorykeywordsexact", cat)).cache(false)
       }
       finalFilter.add(nestedFilter("Product", b).cache(false))
-    } else if(w.length > 0) {
-      val matchedCats = categoryFilter(w, cityFilter, aggbuckets, esClient, index, esType, Math.min(maxdocspershard, int("max-docs-per-shard")))
-      if(matchedCats.filter!=null)
-        finalFilter.add(matchedCats.filter)
-      cats = matchedCats.cats
     }
 
-    if (locFilter.hasClauses) {
-      finalFilter.add(locFilter)
-    }
     finalFilter
   }
 
