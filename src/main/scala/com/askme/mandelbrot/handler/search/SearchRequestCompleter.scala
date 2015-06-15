@@ -23,7 +23,8 @@ import scala.concurrent.duration.{Duration, MILLISECONDS}
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
-  if(searchParams.req.trueClient.startsWith("42.120.")||searchParams.req.trueClient == "50.22.144.34") {
+  if(searchParams.req.trueClient.startsWith("42.120.")||searchParams.req.trueClient == "50.22.144.34"
+    ||searchParams.req.trueClient == "172.30.2.34") {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source: " + searchParams.req.trueClient)
   }
