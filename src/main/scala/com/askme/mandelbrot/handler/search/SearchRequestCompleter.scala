@@ -17,16 +17,19 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-
-
-
+object  SearchRequestCompleter {
+  private val blockedIPs = Seq("157.55.39.55", "115.246.167.90", "1.39.62.69","151.80.31.140","1.39.35.14", "50.22.144.34", "172.30.2.34", "120.61.53.48", "43.247.158.4", "208.123.223.201", "49.15.132.164")
+  private val blockedPrefixes = Seq("42.120.")
+}
 
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
+  import SearchRequestCompleter._
   val json4sFormats = DefaultFormats
-  if(searchParams.req.trueClient.startsWith("42.120.")||searchParams.req.trueClient == "50.22.144.34"
-    ||searchParams.req.trueClient == "172.30.2.34") {
+
+  if(blockedPrefixes.exists(searchParams.req.trueClient.startsWith(_))
+    ||blockedIPs.exists(searchParams.req.trueClient == _)) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid request source]")
-    complete(BadRequest, "invalid request source: " + searchParams.req.trueClient)
+    complete(BadRequest, "invalid request source")
   }
   else if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid offset]")
@@ -54,7 +57,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
       case "place" => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
       case _ => context.actorOf(Props(classOf[PlaceSearchRequestHandler], config, serverContext))
     }
-    context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 8, MILLISECONDS))
+    context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
     target ! searchParams
   }
 
