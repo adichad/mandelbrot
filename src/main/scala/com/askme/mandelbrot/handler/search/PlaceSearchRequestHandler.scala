@@ -295,64 +295,25 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 0), 1), //0
     // full-shingle exact full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 1), //2
-    // full-shingle fuzzy full matches
+    //                                      fuzzy, slop,  span, minshingle, tokenrelax
+    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 3), //0
+    // full-shingle exact full matches
+    //                                        fuzzy, slop,  span, minshingle, tokenrelax
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 3), //4
+    // full-shingle exact full matches
 
     (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 1), 10), //3
     // relaxed-shingle exact full matches
 
-
-    //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 3), //0
-    // full-shingle exact full matches
-
-    (queryBuilder(searchFields, fullFields, false, false, true, 2, 0), 3), //1
-    // full-shingle exact span matches
-
-    (queryBuilder(searchFields, fullFields, true, false, false, 1, 0), 5), //2
+    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 1), //2
     // full-shingle fuzzy full matches
 
     (queryBuilder(searchFields, fullFields, false, false, false, 1, 1), 10), //3
     // relaxed-shingle exact full matches
 
-
-    //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 3), //4
-    // full-shingle exact full matches
-
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 3), //5
-    // full-shingle exact span matches
-
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 5), //6
-    // full-shingle fuzzy full matches
-
     (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 3)//, //7
-    // relaxed-shingle exact full matches
-/*
-    (queryBuilder(searchFields, fullFields, false, false, true, 2, 1), 3), //8
-    // relaxed-shingle exact span matches
+      // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 3), //9
-    // relaxed-shingle exact span matches
-
-    (queryBuilder(searchFields, fullFields, true, false, true, 2, 0), 5), //10
-    // full-shingle fuzzy span matches
-
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 0), 3), //11
-    // full-shingle exact sloppy-span matches
-
-    (queryBuilder(searchFields, fullFields, false, true, true, 2, 1), 3), //12
-    // relaxed-shingle exact sloppy-span matches
-
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 0), 5), //13
-    // full-shingle fuzzy span matches
-
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 3), //14
-    // full-shingle exact sloppy-span matches
-
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 1), 3) //15
-    // relaxed-shingle exact sloppy-span matches
-*/
   )
 
 }
@@ -540,6 +501,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
+          if (w.length>12) w = emptyStringArray
           if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
             context.parent ! EmptyResponse("empty search criteria")
           }
