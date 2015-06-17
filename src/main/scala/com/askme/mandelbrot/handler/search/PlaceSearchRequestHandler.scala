@@ -421,18 +421,15 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-
-    if(collapse) {
-      search.setFetchSource(select.split(""","""), unselect.split(""",""")).setFrom(0).setSize(0).setSearchType(SearchType.COUNT)
-    } else {
-      search.setFetchSource(source).addFields(select.split(""","""): _*).setFrom(offset).setSize(size).setSearchType(SearchType.fromString(searchType)).addSorts(sorters)
-    }
+      .setFetchSource(select.split(""","""), unselect.split(""","""))
+      .setSearchType(SearchType.fromString(searchType))
+      .addSorts(sorters)
+      .setFrom(offset).setSize(size)
 
     if(collapse) {
       val orders: List[Terms.Order] = (
         /*Some(Terms.Order.aggregation("exactname", true)) ::*/
           (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          Some(Terms.Order.aggregation("customertype", true)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -440,27 +437,19 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
 
-      val all = terms("masters").field("MasterID").order(order).size(offset+size)
-        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val platinum = terms("masters").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
       if(lat != 0.0d || lon !=0.0d) {
-        all.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
-      all.subAggregation(min("customertype").script("customertype").lang("native"))
-      all.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
-      all.subAggregation(max("score").script("docscore").lang("native"))
 
-      platinum.subAggregation(min("customertype").script("customertype").lang("native"))
       platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       platinum.subAggregation(max("score").script("docscore").lang("native"))
 
-      diamond.subAggregation(min("customertype").script("customertype").lang("native"))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
 
