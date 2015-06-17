@@ -471,8 +471,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       } else {
         termFilter("CustomerType", "550")
       }
-
-      search.addAggregation(all)
       search.addAggregation(filter("platinum").filter(platinumFilter).subAggregation(platinum))
       search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(platinum))
 
