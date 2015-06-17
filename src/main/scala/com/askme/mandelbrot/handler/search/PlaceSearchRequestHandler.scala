@@ -441,11 +441,11 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
 
       val all = terms("masters").field("MasterID").order(order).size(offset+size)
-        .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val platinum = terms("masters").field("MasterID").order(order).size(offset+size)
-        .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
-        .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
       if(lat != 0.0d || lon !=0.0d) {
         all.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
@@ -464,9 +464,28 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
 
+      val platinumFilter = if (area != "") {
+        val areaFilter = boolFilter().cache(false)
+        area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
+          .map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "550"))
+      } else {
+        termFilter("CustomerType", "550")
+      }
+
+
+      val diamondFilter = if (area != "") {
+        val areaFilter = boolFilter().cache(false)
+        area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
+          .map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "450"))
+      } else {
+        termFilter("CustomerType", "550")
+      }
+
       search.addAggregation(all)
-      search.addAggregation(filter("platinum").filter(termFilter("CustomerType", "550")).subAggregation(platinum))
-      search.addAggregation(filter("diamond").filter(termFilter("CustomerType", "450")).subAggregation(platinum))
+      search.addAggregation(filter("platinum").filter(platinumFilter).subAggregation(platinum))
+      search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(platinum))
 
     }
 
