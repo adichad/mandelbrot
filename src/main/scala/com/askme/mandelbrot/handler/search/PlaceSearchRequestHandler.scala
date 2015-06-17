@@ -417,15 +417,16 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
-      .setSearchType(SearchType.fromString(searchType))
       .setTrackScores(true)
-      .addFields(select.split( ""","""): _*)
-      .setFrom(offset).setSize(size)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setFetchSource(source)
-      .addSorts(sorters)
+
+    if(collapse) {
+      search.setFetchSource(select.split(""","""), unselect.split(""",""")).setFrom(0).setSize(0).setSearchType(SearchType.COUNT)
+    } else {
+      search.setFetchSource(source).addFields(select.split(""","""): _*).setFrom(offset).setSize(size).setSearchType(SearchType.fromString(searchType)).addSorts(sorters)
+    }
 
     if(collapse) {
       val orders: List[Terms.Order] = (
@@ -439,18 +440,34 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
 
-      val collapsed = terms("collapsed").field("MasterID").order(order).size(offset+size)
+      val all = terms("masters").field("MasterID").order(order).size(offset+size)
+        .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      val platinum = terms("masters").field("MasterID").order(order).size(offset+size)
+        .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(source).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
-      //collapsed.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       if(lat != 0.0d || lon !=0.0d) {
-        collapsed.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
+        all.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
+        platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
+        diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
-      collapsed.subAggregation(min("customertype").script("customertype").lang("native"))
-      collapsed.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
-      collapsed.subAggregation(max("score").script("docscore").lang("native"))
+      all.subAggregation(min("customertype").script("customertype").lang("native"))
+      all.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      all.subAggregation(max("score").script("docscore").lang("native"))
 
-      search.addAggregation(collapsed)
+      platinum.subAggregation(min("customertype").script("customertype").lang("native"))
+      platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      platinum.subAggregation(max("score").script("docscore").lang("native"))
+
+      diamond.subAggregation(min("customertype").script("customertype").lang("native"))
+      diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      diamond.subAggregation(max("score").script("docscore").lang("native"))
+
+      search.addAggregation(all)
+      search.addAggregation(filter("platinum").filter(termFilter("CustomerType", "550")).subAggregation(platinum))
+      search.addAggregation(filter("diamond").filter(termFilter("CustomerType", "450")).subAggregation(platinum))
+
     }
 
     if (agg) {
