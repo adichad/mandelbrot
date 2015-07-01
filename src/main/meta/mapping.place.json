@@ -9,7 +9,10 @@
     "transform" : [
       {
         "script" : "mediacount",
-        "params" : {},
+        "params" : {
+          "index": "askme",
+          "type": "place"
+        },
         "lang": "native"
       }
     ],
@@ -96,6 +99,12 @@
         "norms": {"enabled": false}
       },
       "LocationNameAggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "LocationNameDocVal": {
         "type": "string",
         "store": false,
         "index": "not_analyzed",
@@ -367,6 +376,12 @@
         "analyzer": "shingle_analyzer",
         "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
+      },
+      "CompanyAliasesDocVal": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "CompanyDescription": {
         "type": "string",
@@ -721,7 +736,7 @@
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
                 "index": "analyzed",
-                "copy_to": ["Product.stringattribute.answerexact", "Product.stringattribute.aaggr", "Product.stringattribute.answershingle"]
+                "copy_to": ["Product.stringattribute.aaggr", "Product.stringattribute.answershingle"]
               },
               "answerexact": {
                 "type": "string",

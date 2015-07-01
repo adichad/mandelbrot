@@ -16,60 +16,19 @@ import spray.can.Http
 import scala.concurrent.duration.DurationInt
 
 object RootServer extends Logging {
-
+  private var defContext: SearchContext = null
+  def defaultContext = defContext
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
-
-    /*
-    val conf = (new com.hazelcast.config.Config)
-      .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
-
-
-    private val netConf = conf.getNetworkConfig
-    private val joinConf = netConf.getJoin
-    joinConf.getMulticastConfig.setEnabled(boolean("hazel.multicast.enabled"))
-    joinConf.getTcpIpConfig.setEnabled(boolean("hazel.tcpip.enabled"))
-    joinConf.getTcpIpConfig.setMembers(list[String]("hazel.tcpip.members"))
-    joinConf.getTcpIpConfig.setRequiredMember(string("hazel.tcpip.required.member"))
-    netConf.setPort(int("hazel.port.number"))
-    netConf.setPortAutoIncrement(boolean("hazel.port.autoincrement"))
-    netConf.getInterfaces.setInterfaces(list[String]("hazel.interfaces"))
-    netConf.getInterfaces.setEnabled(boolean("hazel.interface.enabled"))
-    */
-    //val hazel = Hazelcast.newHazelcastInstance(conf)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
       .data(boolean("es.node.data")).settings(settings("es")).node
     val esClient = esNode.client
+    RootServer.defContext = this
 
-    //val kafkaProducer = new KafkaProducer[Array[Byte], Array[Byte]](props("kafka.producer"))
-
-    //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
-    //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
-/*
-    // http://spark.apache.org/docs/latest/configuration.html
-    private val sparkConf = (new SparkConf)
-      .setMaster(string("spark.master"))
-      .setAppName(string("spark.app.name"))
-      .set("spark.executor.memory", string("spark.executor.memory"))
-      .set("spark.shuffle.spill", string("spark.shuffle.spill"))
-      .set("spark.logConf", string("spark.logConf"))
-      .set("spark.local.dir", string("spark.local.dir"))
-      //.set("spark.serializer", classOf[KryoSerializer].getName)
-
-    val sparkContext = new SparkContext(sparkConf)
-    val sqlContext = new SQLContext(sparkContext)
-    val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
-*/
     private[RootServer] def close() {
-
-      //userExecutionContext.shutdown()
-      //batchExecutionContext.shutdown()
       esClient.close()
       esNode.close()
-      //kafkaProducer.close()
-      //sparkContext.stop()
-      //hazel.shutdown()
     }
   }
 
