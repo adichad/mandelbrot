@@ -28,9 +28,10 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
       try {
         val json = parse(indexParams.data.data)
 
+        val idField = string("mappings."+indexParams.idx.esType+".id")
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
-          val idraw = doc \ string("mappings."+indexParams.idx.esType+".id")
+          val idraw = doc \ idField
           val id: String = string("mappings."+indexParams.idx.esType+".idType").toLowerCase match {
             case "int" => idraw.asInstanceOf[JInt].values.toString
             case "string" => idraw.asInstanceOf[JString].values
@@ -46,7 +47,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             try {
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\"PlaceID\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+idField+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
               val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               val resp = parse(respStr)
