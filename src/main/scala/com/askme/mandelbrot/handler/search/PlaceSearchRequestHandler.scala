@@ -291,34 +291,26 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
-    //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 0), 1), //0
-    // full-shingle exact full matches
 
-    //                                      fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields, fullFields, false, false, false, 1, 0), 3), //1
-    // full-shingle exact full matches
     //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 3), //2
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 1), //1
     // full-shingle exact full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, true, false, false, 1, 0), 1), //3
+    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 1), //3
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, false, 1, 1), 10), //4
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields, fullFields, false, true, true, 10, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 1, 0), 1), //1
+    // full-shingle exact span matches
+
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 10, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 10), //6
-    // relaxed-shingle exact full matches
-
-    (queryBuilder(searchFieldsName, fullFieldsName, false, false, true, 2, 1), 1), //7
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 2), 0) //7
     // relaxed-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 0) //7
-    // relaxed-shingle exact span matches
 
   )
 
@@ -624,7 +616,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val matchedCat = catBucks
               .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
               || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
-              .fold("/search/" + urlize(kw))(k => "/" + urlize(k.getKey))
+              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(k.getKey))
             val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
             val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
