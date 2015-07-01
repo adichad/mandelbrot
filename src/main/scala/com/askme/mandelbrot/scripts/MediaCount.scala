@@ -63,7 +63,9 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
 
           // augment noisy attribute values with pkws
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
-            val catkws = new util.ArrayList[AnyRef](p.asInstanceOf[util.Map[String, AnyRef]].get("categorykeywords").asInstanceOf[util.ArrayList[AnyRef]].filter(!XContentMapValues.nodeStringValue(_, "").trim.isEmpty))
+            val catkwraw = p.asInstanceOf[util.Map[String, AnyRef]].get("categorykeywords")
+            val cats = (if(catkwraw == null) new util.ArrayList[AnyRef] else catkwraw.asInstanceOf[util.ArrayList[AnyRef]])
+            val catkws = new util.ArrayList[AnyRef](cats.filter(!XContentMapValues.nodeStringValue(_, "").trim.isEmpty))
             catkws.append(XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String, AnyRef]].get("l3category"), ""))
             p.asInstanceOf[util.Map[String, AnyRef]].get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
               a.asInstanceOf[util.Map[String, AnyRef]].put("answerexact", new util.ArrayList[AnyRef](a.asInstanceOf[util.Map[String, AnyRef]].get("answer").asInstanceOf[util.ArrayList[AnyRef]].map(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws)).flatten))
