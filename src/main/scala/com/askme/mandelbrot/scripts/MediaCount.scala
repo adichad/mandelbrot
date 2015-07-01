@@ -1,5 +1,6 @@
 package com.askme.mandelbrot.scripts
 
+import java.lang.Cloneable
 import java.util
 
 import com.askme.mandelbrot.server.RootServer
@@ -44,6 +45,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
     else
       Array(exactAns)
   }
+
   override def run(): AnyRef = {
     if (vars.containsKey("ctx") && vars.get("ctx").isInstanceOf[util.Map[String,AnyRef]]) {
       val ctx = vars.get("ctx").asInstanceOf[util.Map[String,AnyRef]]
@@ -68,7 +70,10 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
 
         // create analyzed doc-value fields
         source.put("LocationNameDocVal", analyze(esClient, index, "LocationNameExact", source.get("LocationName").asInstanceOf[String]).mkString(" "))
-        source.put("CompanyAliasesDocVal",new util.ArrayList[String](source.get("CompanyAliases").asInstanceOf[util.ArrayList[String]].map(a=>analyze(esClient, index, "CompanyAliasesExact", a).mkString(" "))))
+        val aliases =
+          if(source.get("CompanyAliases")==null) new util.ArrayList[String]()
+          else new util.ArrayList[String](source.get("CompanyAlaises").asInstanceOf[util.ArrayList[String]].map(a=>analyze(esClient, index, "CompanyAliasesExact", a).mkString(" ")))
+        source.put("CompanyAliasesDocVal", aliases)
 
       }
       // return the context
