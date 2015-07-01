@@ -37,11 +37,11 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
-  private def mapAttributes(ans: String, ckws: util.ArrayList[String]): Array[String] = {
+  private def mapAttributes(ans: String, ckws: util.ArrayList[AnyRef]): Array[String] = {
     val exactAns = analyze(esClient, index, "Product.categorykeywordsexact", ans).mkString(" ")
 
     if(search.setQuery(termQuery("Product.categorykeywordsexact",exactAns)).execute().get().exists())
-      ckws.map(exactAns+" "+_).toArray
+      ckws.map(exactAns+" "+XContentMapValues.nodeStringValue(_, "")).toArray
     else
       Array(exactAns)
   }
@@ -60,11 +60,11 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
         source.put("MediaCount", new java.lang.Integer(mediaCount))
 
         // augment noisy attribute values with pkws
-        source.get("Product").asInstanceOf[util.ArrayList[util.Map[String,AnyRef]]].foreach { p=>
-          val catkws = new util.ArrayList[String](p.get("categorykeywords").asInstanceOf[util.ArrayList[String]].filter(!_.trim.isEmpty))
-          catkws.append(p.get("l3category").asInstanceOf[String])
-          p.get("stringattribute").asInstanceOf[util.ArrayList[util.Map[String, AnyRef]]].foreach { a =>
-            a.put("answerexact", new util.ArrayList[String](a.get("answer").asInstanceOf[util.ArrayList[String]].map(mapAttributes(_, catkws)).flatten))
+        source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p=>
+          val catkws = new util.ArrayList[AnyRef](p.asInstanceOf[util.Map[String,AnyRef]].get("categorykeywords").asInstanceOf[util.ArrayList[AnyRef]].filter(!XContentMapValues.nodeStringValue(_, "").trim.isEmpty))
+          catkws.append(XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String,AnyRef]].get("l3category"), ""))
+          p.asInstanceOf[util.Map[String,AnyRef]].get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
+            a.asInstanceOf[util.Map[String, AnyRef]].put("answerexact", new util.ArrayList[AnyRef](a.asInstanceOf[util.Map[String, AnyRef]].get("answer").asInstanceOf[util.ArrayList[AnyRef]].map(ans=>mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws)).flatten))
           }
         }
 
@@ -72,7 +72,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
         source.put("LocationNameDocVal", analyze(esClient, index, "LocationNameExact", source.get("LocationName").asInstanceOf[String]).mkString(" "))
         val aliases =
           if(source.get("CompanyAliases")==null) new util.ArrayList[String]()
-          else new util.ArrayList[String](source.get("CompanyAlaises").asInstanceOf[util.ArrayList[String]].map(a=>analyze(esClient, index, "CompanyAliasesExact", a).mkString(" ")))
+          else new util.ArrayList[AnyRef](source.get("CompanyAlaises").asInstanceOf[util.ArrayList[AnyRef]].map(a=>analyze(esClient, index, "CompanyAliasesExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
         source.put("CompanyAliasesDocVal", aliases)
 
       }
