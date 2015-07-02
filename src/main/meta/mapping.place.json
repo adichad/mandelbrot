@@ -220,6 +220,12 @@
         "index": "not_analyzed",
         "doc_values": true
       },
+      "AreaDocVal": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
       "AreaSynonyms": {
         "type": "string",
         "store": true,
@@ -240,6 +246,12 @@
       "AreaSynonymsAggr": {
         "type": "string",
         "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "AreaSynonymsDocVal": {
+        "type": "string",
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },

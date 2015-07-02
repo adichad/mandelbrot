@@ -23,13 +23,13 @@ class MediaCount extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     val index = params.get("index").asInstanceOf[String]
     val esType = params.get("type").asInstanceOf[String]
-    new MediaCountScript(RootServer.defaultContext.esClient, index, esType)
+    val catkws = RootServer.uniqueVals(index, esType, "Product.categorykeywordsaggr", "Product.categorykeywordsexact", " ", 100000)
+    new MediaCountScript(RootServer.defaultContext.esClient, index, esType, catkws)
   }
 }
 
-class MediaCountScript(private val esClient: Client, index: String, esType: String) extends AbstractExecutableScript with Logging {
+class MediaCountScript(private val esClient: Client, index: String, esType: String, catkws: Set[String]) extends AbstractExecutableScript with Logging {
   val vars = new util.HashMap[String, AnyRef]()
-  val search = esClient.prepareExists(index).setTypes(esType)
 
   override def setNextVar(name: String, value: AnyRef): Unit = {
     vars.put(name, value)
@@ -41,7 +41,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
   private def mapAttributes(ans: String, ckws: util.ArrayList[AnyRef]): Array[String] = {
     val exactAns = analyze(esClient, index, "Product.categorykeywordsexact", ans).mkString(" ")
 
-    if(search.setQuery(termQuery("Product.categorykeywordsexact",exactAns)).execute().get().exists())
+    if(catkws.contains(exactAns))
       ckws.map(exactAns+" "+XContentMapValues.nodeStringValue(_, "")).toArray
     else
       Array(exactAns)
@@ -74,11 +74,18 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
 
           // create analyzed doc-value fields
           source.put("LocationNameDocVal", analyze(esClient, index, "LocationNameExact", source.get("LocationName").asInstanceOf[String]).mkString(" "))
+
           val aliases =
             if (source.get("CompanyAliases") == null) new util.ArrayList[String]()
             else new util.ArrayList[AnyRef](source.get("CompanyAliases").asInstanceOf[util.ArrayList[AnyRef]].map(a => analyze(esClient, index, "CompanyAliasesExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
           source.put("CompanyAliasesDocVal", aliases)
 
+          source.put("AreaDocVal", analyze(esClient, index, "AreaExact", source.get("Area").asInstanceOf[String]).mkString(" "))
+
+          val areaSyns =
+            if (source.get("AreaSynonyms") == null) new util.ArrayList[String]()
+            else new util.ArrayList[AnyRef](source.get("AreaSynonyms").asInstanceOf[util.ArrayList[AnyRef]].map(a => analyze(esClient, index, "AreaSynonymsExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
+          source.put("AreaSynonymsDocVal", areaSyns)
         }
         // return the context
         return ctx
