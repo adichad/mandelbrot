@@ -33,10 +33,11 @@ object RootServer extends Logging {
 
   def uniqueVals(index: String, esType: String, field: String, analysisField: String, sep: String, maxCount: Int): Set[String] = {
     vCache.getOrElseUpdate((index, esType, field, analysisField, sep),
-      defaultContext.esClient.prepareSearch(index).setTypes(esType).setSearchType(SearchType.COUNT).setSize(0).setTrackScores(false)
-        .setQuery(matchAllQuery).addAggregation(terms(field).size(maxCount)).execute().get()
+      defaultContext.esClient.prepareSearch(index).setTypes(esType).setSearchType(SearchType.COUNT)
+        .setSize(0).setTerminateAfter(1000000).setTrackScores(false)
+        .setQuery(matchAllQuery).addAggregation(terms(field).field(field).size(maxCount)).execute().get()
         .getAggregations.get(field).asInstanceOf[Terms].getBuckets
-        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKey).mkString(sep)).toSet)
+        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKey).mkString(sep)).filter(!_.isEmpty).toSet)
   }
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
