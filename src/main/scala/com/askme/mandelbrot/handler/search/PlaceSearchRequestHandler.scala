@@ -408,7 +408,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.page._
     import searchParams.view._
 
-    val sort = /*"_name," + */(if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
+    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -424,7 +424,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if(collapse) {
       val orders: List[Terms.Order] = (
-        /*Some(Terms.Order.aggregation("exactname", true)) ::*/
+        Some(Terms.Order.aggregation("exactname", true)) ::
           (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
@@ -438,6 +438,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
+      platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
+      diamond.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       if(lat != 0.0d || lon !=0.0d) {
         platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
