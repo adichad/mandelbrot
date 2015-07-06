@@ -358,6 +358,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areaSlugs = areas.map(_.replace(' ', '-')).mkString("#")
     }
 
