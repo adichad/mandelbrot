@@ -17,37 +17,34 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-object  SearchRequestCompleter {
-  private val blockedIPs = Seq("157.55.39.55", "115.246.167.90", "1.39.62.69","151.80.31.140","1.39.35.14", "50.22.144.34", "172.30.2.34", "120.61.53.48", "43.247.158.4", "208.123.223.201", "49.15.132.164")
-  private val blockedPrefixes = Seq("42.120.")
-}
-
 class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
-  import SearchRequestCompleter._
   val json4sFormats = DefaultFormats
 
+  private val blockedIPs = list[String]("search.block.ip")
+  private val blockedPrefixes = list[String]("search.block.ip-prefix")
+
   if(blockedPrefixes.exists(searchParams.req.trueClient.startsWith(_))
-    ||blockedIPs.exists(searchParams.req.trueClient == _)) {
+    || blockedIPs.exists(searchParams.req.trueClient == _)) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source")
   }
-  else if(searchParams.page.offset < 0 || searchParams.page.offset > 600) {
+  else if(searchParams.page.offset < int("search.offset.min") || searchParams.page.offset > int("search.offset.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid offset]")
     complete(BadRequest, "invalid offset: " + searchParams.page.offset)
   }
-  else if(searchParams.page.size < 0 || searchParams.page.size > 100) {
+  else if(searchParams.page.size < int("search.size.min") || searchParams.page.size > int("search.size.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid page size]")
     complete(BadRequest, "invalid page size: " + searchParams.page.size)
   }
-  else if(searchParams.limits.timeoutms>10000) {
+  else if(searchParams.limits.timeoutms>int("search.timeoutms.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid timeout requested]")
     complete(BadRequest, "invalid timeout: " + searchParams.limits.timeoutms)
   }
-  else if(searchParams.text.kw.length > 200) {
+  else if(searchParams.text.kw.length > int("search.kw-length.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid kw length]")
     complete(BadRequest, "invalid kw parameter size: " + searchParams.text.kw.length)
   }
-  else if(searchParams.geo.area.length > 100) {
+  else if(searchParams.geo.area.length > int("search.area-length.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid area length]")
     complete(BadRequest, "invalid area parameter size: " + searchParams.text.kw.length)
   }
@@ -70,7 +67,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     case tout: ReceiveTimeout => {
       val timeTaken = System.currentTimeMillis - searchParams.startTime
       warn("[timeout/" + (timeTaken) + "] [" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "]")
-      complete(GatewayTimeout, Timeout(timeTaken, searchParams.limits.timeoutms*2))
+      complete(GatewayTimeout, Timeout(timeTaken, searchParams.limits.timeoutms*5))
     }
     case err: ErrorResponse => complete(InternalServerError, err.message)
     case res: RestMessage => complete(OK, res)
