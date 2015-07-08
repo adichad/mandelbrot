@@ -1,14 +1,17 @@
 package com.askme.mandelbrot
 
-import java.util.{List, Map}
+import java.util.{Properties, List, Map}
 
 import com.typesafe.config.{Config, ConfigFactory}
+import grizzled.slf4j.Logging
+import org.elasticsearch.common.settings.ImmutableSettings
 
 import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
 import scala.reflect.ClassTag
+import scala.collection.JavaConversions._
 
 
-trait Configurable {
+trait Configurable extends Logging {
   protected[this] val config: Config
 
   protected[this] def conf(part: String) = config getConfig part
@@ -49,5 +52,23 @@ trait Configurable {
 
   protected[this] def backFillSystemProperties(propertyNames: String*) =
     for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
+
+  protected[this] def props(part: String) = {
+    val p = new Properties
+    val c = conf(part)
+    for( e <- c.entrySet())
+      p.setProperty(e.getKey, c.getString(e.getKey))
+    info(p)
+    p
+  }
+
+  protected[this] def settings(part: String) = {
+    val settings = ImmutableSettings.settingsBuilder()
+    val c = conf(part)
+    for( e <- c.entrySet() )
+      settings.put(e.getKey, c.getString(e.getKey))
+    settings.build()
+  }
+
 
 }

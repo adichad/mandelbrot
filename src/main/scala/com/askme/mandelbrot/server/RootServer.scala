@@ -8,94 +8,48 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.MandelbrotHandler
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.search.SearchType
+import org.elasticsearch.client.Client
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
-import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
+import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import spray.can.Http
+import scala.collection.JavaConversions._
+import scala.collection.convert.decorateAsScala._
 
 import scala.concurrent.duration.DurationInt
 
 object RootServer extends Logging {
+  private var defContext: SearchContext = null
+  def defaultContext = defContext
+  private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
+    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
+  private val vCache = new java.util.concurrent.ConcurrentHashMap[(String, String, String, String, String), Set[String]].asScala
+
+  def uniqueVals(index: String, esType: String, field: String, analysisField: String, sep: String, maxCount: Int): Set[String] = {
+    vCache.getOrElseUpdate((index, esType, field, analysisField, sep),
+      defaultContext.esClient.prepareSearch(index).setTypes(esType).setSearchType(SearchType.COUNT)
+        .setSize(0).setTerminateAfter(1000000).setTrackScores(false)
+        .setQuery(matchAllQuery).addAggregation(terms(field).field(field).size(maxCount)).execute().get()
+        .getAggregations.get(field).asInstanceOf[Terms].getBuckets
+        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKey).mkString(sep)).filter(!_.isEmpty).toSet)
+  }
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
 
-    /*
-    val conf = (new com.hazelcast.config.Config)
-      .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
-
-
-    private val netConf = conf.getNetworkConfig
-    private val joinConf = netConf.getJoin
-    joinConf.getMulticastConfig.setEnabled(boolean("hazel.multicast.enabled"))
-    joinConf.getTcpIpConfig.setEnabled(boolean("hazel.tcpip.enabled"))
-    joinConf.getTcpIpConfig.setMembers(list[String]("hazel.tcpip.members"))
-    joinConf.getTcpIpConfig.setRequiredMember(string("hazel.tcpip.required.member"))
-    netConf.setPort(int("hazel.port.number"))
-    netConf.setPortAutoIncrement(boolean("hazel.port.autoincrement"))
-    netConf.getInterfaces.setInterfaces(list[String]("hazel.interfaces"))
-    netConf.getInterfaces.setEnabled(boolean("hazel.interface.enabled"))
-    */
-    //val hazel = Hazelcast.newHazelcastInstance(conf)
-
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
-      .data(boolean("es.node.data")).settings(
-      ImmutableSettings.settingsBuilder()
-        .put("node.name", string("es.node.name"))
-        .put("node.master", string("es.node.master"))
-        .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
-        .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
-        .put("discovery.zen.minimum_master_nodes", string("es.discovery.zen.minimum_master_nodes"))
-        .put("network.host", string("es.network.host"))
-        .put("path.data", string("es.path.data"))
-        .put("path.logs", string("es.path.logs"))
-        .put("path.conf", string("es.path.conf"))
-        .put("indices.cache.query.size", string("es.indices.cache.query.size"))
-        .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
-        .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
-        .put("indices.memory.min_index_buffer_size",string("es.indices.memory.min_index_buffer_size"))
-        .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
-        .put("indices.fielddata.cache.size", string("es.indices.fielddata.cache.size"))
-        .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
-        .put("indices.store.throttle.type", string("es.indices.store.throttle.type"))
-        .put("gateway.recover_after_nodes", string("es.gateway.recover_after_nodes"))
-        .put("gateway.expected_nodes", string("es.gateway.expected_nodes"))
-        .put("gateway.recover_after_time", string("es.gateway.recover_after_time"))
-        .put("threadpool.search.type", string("es.threadpool.search.type"))
-        .put("threadpool.search.size", string("es.threadpool.search.size"))
-        .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
-        .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
-        .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
-        .put("script.native.docscore.type", "com.askme.mandelbrot.scripts.DocScore")
-    ).node
+      .data(boolean("es.node.data")).settings(settings("es")).node
     val esClient = esNode.client
+    RootServer.defContext = this
 
-    //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
-    //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
-/*
-    // http://spark.apache.org/docs/latest/configuration.html
-    private val sparkConf = (new SparkConf)
-      .setMaster(string("spark.master"))
-      .setAppName(string("spark.app.name"))
-      .set("spark.executor.memory", string("spark.executor.memory"))
-      .set("spark.shuffle.spill", string("spark.shuffle.spill"))
-      .set("spark.logConf", string("spark.logConf"))
-      .set("spark.local.dir", string("spark.local.dir"))
-      //.set("spark.serializer", classOf[KryoSerializer].getName)
-
-    val sparkContext = new SparkContext(sparkConf)
-    val sqlContext = new SQLContext(sparkContext)
-    val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
-*/
     private[RootServer] def close() {
-
-      //userExecutionContext.shutdown()
-      //batchExecutionContext.shutdown()
       esClient.close()
       esNode.close()
-      //sparkContext.stop()
-      //hazel.shutdown()
     }
   }
 

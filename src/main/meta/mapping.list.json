@@ -1,0 +1,174 @@
+{
+  "list": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "properties": {
+      "id": {
+        "type": "integer",
+        "store": true,
+        "index": "not_analyzed"
+      },
+      "label": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "copy_to": ["labelexact", "labelshingle"]
+      },
+      "labelexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "labelshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer"
+      },
+      "type": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "keywords": {
+        "type": "string",
+        "store": true,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "copy_to": [
+          "keywordsexact",
+          "keywordsaggr",
+          "keywordsshingle"
+        ]
+      },
+      "keywordsexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "keywordsshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_offset_gap": 100,
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false}
+      },
+      "keywordsaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "content": {
+        "type": "nested",
+        "include_in_root": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "store": false,
+            "ignore_malformed": false
+          },
+          "title": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "include_in_root": true,
+            "copy_to": [
+              "content.titleexact",
+              "content.titleshingle"
+            ]
+          },
+          "titleexact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false}
+          },
+          "titleshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer"
+          },
+          "imageurl": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "no"
+          },
+          "link": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "no"
+          },
+          "badge": {
+            "type": "string",
+            "store": true,
+            "include_in_root": true,
+            "index": "no"
+          },
+          "keywords": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "copy_to": [
+              "content.keywordsexact",
+              "content.keywordsaggr",
+              "content.keywordsshingle"
+            ]
+          },
+          "keywordsexact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "keywordsshingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_offset_gap": 100,
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "keywordsaggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "include_in_root": true
+          }
+        }
+      }
+    }
+  }
+}
