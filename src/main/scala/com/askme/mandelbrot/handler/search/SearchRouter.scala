@@ -26,12 +26,13 @@ case object SearchRouter extends Router {
               'source.as[Boolean] ? false, 'explain.as[Boolean] ? false, 'select ? "_id",
               'agg.as[Boolean] ? true,
               'collapse.as[Boolean] ? false,
+              'version.as[Int] ? 1,
               'client_ip.as[String] ? "") { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
                source, explain, select,
-               agg, collapse,
+               agg, collapse, version,
                trueClient) =>
               val fuzzyprefix = 2
               val fuzzysim = 1f
@@ -50,7 +51,7 @@ case object SearchRouter extends Router {
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
-                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse),
+                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, version),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
                   )))

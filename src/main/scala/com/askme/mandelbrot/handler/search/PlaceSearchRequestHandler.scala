@@ -353,7 +353,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
-      val areas = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
       areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
@@ -411,16 +411,22 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
-    val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setFetchSource(select.split(""","""), unselect.split(""","""))
       .setSearchType(SearchType.fromString(searchType))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
+
+    if(version<=1) {
+      search.setFetchSource(source)
+      search.addFields(select.split(""","""):_*)
+    } else {
+      search.setFetchSource(select.split(""","""), unselect.split(""","""))
+    }
 
     if(collapse) {
       val orders: List[Terms.Order] = (
