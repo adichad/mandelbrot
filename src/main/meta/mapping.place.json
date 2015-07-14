@@ -515,7 +515,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
-            "copy_to": ["nameexact"]
+            "copy_to": ["Product.nameexact"]
           },
           "nameexact": {
             "type": "string",
@@ -546,7 +546,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
-            "copy_to": ["brandexact"]
+            "copy_to": ["Product.brandexact"]
           },
           "brandexact": {
             "type": "string",

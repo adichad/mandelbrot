@@ -1,6 +1,6 @@
 {
   "settings" : {
-    "number_of_shards" : 18,
+    "number_of_shards" : 5,
     "number_of_replicas" : 2,
     "index.cache.query.enable": true,
     "refresh_interval": "60s",
@@ -56,14 +56,12 @@
             "tire => tyre",
             "sonytv => sony tv",
             "choco, choclat, choclate => chocolate",
-            "pvt ltd => private limited",
+            "pvt ltd, pltd => private limited",
             "ltd => limited",
             "path lab, patho lab, path laboratory, patho laboratory, pathology lab => pathology laboratory",
             "women => woman",
             "men => man",
-            "kidz => kid",
-            "lady hostel, woman hostel, women hostel => girl hostel",
-            "men hostel, man hostel, gent hostel => boy hostel"
+            "kidz => kid"
           ]
         },
         "plural_stem": {
@@ -83,10 +81,29 @@
         },
         "shingle": {
           "type": "shingle",
-          "max_shingle_size": 3,
+          "max_shingle_size": 2,
           "min_shingle_size": 2,
           "output_unigrams": false,
+          "token_separator": " ",
           "output_unigrams_if_no_shingles": true
+        },
+        "nospace_shingle": {
+          "type": "shingle",
+          "max_shingle_size": 2,
+          "min_shingle_size": 2,
+          "output_unigrams": false,
+          "token_separator": "",
+          "output_unigrams_if_no_shingles": true
+        },
+        "ngram": {
+          "type": "nGram",
+          "min_gram": 2,
+          "max_gram": 4
+        },
+        "edge_ngram": {
+          "type": "edgeNGram",
+          "min_gram": 2,
+          "max_gram": 20
         }
       },
       "analyzer": {
@@ -96,17 +113,71 @@
           "tokenizer": "standard",
           "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine"]
         },
+        "keyword_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine", "edge_ngram"]
+        },
+        "keyword_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine", "ngram"]
+        },
         "shingle_analyzer": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
           "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle"]
         },
-        "default": {
+        "shingle_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "edge_ngram"]
+        },
+        "shingle_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "ngram"]
+        },
+        "shingle_nospace_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle"]
+        },
+        "shingle_nospace_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle", "edge_ngram"]
+        },
+        "shingle_nospace_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle", "ngram"]
+        },
+        "token_analyzer": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
           "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym"]
+        },
+        "token_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "edge_ngram"]
+        },
+        "token_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "ngram"]
         }
       }
     }
