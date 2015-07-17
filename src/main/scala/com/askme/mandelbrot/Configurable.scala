@@ -2,6 +2,7 @@ package com.askme.mandelbrot
 
 import java.util.{Properties, List, Map}
 
+import akka.actor.{Props, ActorContext, ActorRef}
 import com.typesafe.config.{Config, ConfigFactory}
 import grizzled.slf4j.Logging
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -36,6 +37,13 @@ trait Configurable extends Logging {
 
   protected[this] def obj[T <: Configurable](conf: Config) = Class.forName(conf getString "type").getConstructor(classOf[Config]).newInstance(conf).asInstanceOf[T]
   protected[this] def obj[T <: Configurable](part: String): T = obj[T](conf(part))
+  protected[this] def objs[T <: Configurable](part: String): Seq[T] = confs(part).map(obj(_).asInstanceOf[T])
+
+  protected[this] def actor(context: ActorContext, conf: Config): ActorRef =
+    context.actorOf(Props(Class.forName(conf getString "type"), conf))
+
+  protected[this] def actor(context: ActorContext, part: String): ActorRef = actor(context, conf(part))
+  protected[this] def actors(context: ActorContext, part: String): Seq[ActorRef] = confs(part).map(actor(context, _))
 
   protected[this] def keys(part: String) = (config getAnyRef part).asInstanceOf[Map[String, Any]].keySet
   protected[this] def vals[T](part: String) = (config getAnyRef part).asInstanceOf[Map[String, T]].values
@@ -53,14 +61,15 @@ trait Configurable extends Logging {
   protected[this] def backFillSystemProperties(propertyNames: String*) =
     for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
 
-  protected[this] def props(part: String) = {
+  protected[this] def props(conf: Config) = {
     val p = new Properties
-    val c = conf(part)
-    for( e <- c.entrySet())
-      p.setProperty(e.getKey, c.getString(e.getKey))
-    info(p)
+    for( e <- conf.entrySet())
+      p.setProperty(e.getKey, conf.getString(e.getKey))
     p
   }
+
+  protected[this] def props(part: String): Properties = props(conf(part))
+
 
   protected[this] def settings(part: String) = {
     val settings = ImmutableSettings.settingsBuilder()

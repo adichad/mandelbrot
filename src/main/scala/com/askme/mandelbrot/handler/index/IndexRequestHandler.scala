@@ -29,6 +29,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         val json = parse(indexParams.data.data)
 
         val idField = string("mappings."+indexParams.idx.esType+".id")
+        val pipers = actors(context, "mappings."+indexParams.idx.esType+".pipers")
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
           val idraw = doc \ idField
@@ -42,6 +43,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
           )
+          pipers.foreach(_ ! doc)
         }
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
