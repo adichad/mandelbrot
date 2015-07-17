@@ -22,32 +22,36 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
 
   override def receive = {
     case doc: JValue =>
+      try {
+        val city = JArray((doc \ "CitySynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "City").asInstanceOf[JString])
+        val area = JArray((doc \ "AreaSynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "Area").asInstanceOf[JString])
+        val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
+        val masterid = (doc \ "MasterID").asInstanceOf[JInt]
 
-      val city = JArray((doc \ "CitySynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "City").asInstanceOf[JString])
-      val area = JArray((doc \ "AreaSynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "Area").asInstanceOf[JString])
-      val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
-      val masterid = (doc\"MasterID").asInstanceOf[JInt]
+        val label = (doc \ "LocationName").asInstanceOf[JString].values.trim
+        val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
 
-      val label = (doc \ "LocationName").asInstanceOf[JString].values.trim
-      val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
+        val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
+          ((doc \ "Product").children.map(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)).flatten ++ (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)) ++
+          (doc \ "Product").children.map(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)))).flatten.filter(
+            att => att._1.trim.toLowerCase().startsWith("brand") || att._1.trim.toLowerCase().startsWith("menu")
+          ).map(a => a._2.filter(!_.isEmpty)).flatten
 
-      val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
-        ((doc \ "Product").children.map(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)).flatten ++ (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)) ++
-        (doc \ "Product").children.map(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)))).flatten.filter(
-          att=>att._1.trim.toLowerCase().startsWith("brand")||att._1.trim.toLowerCase().startsWith("menu")
-        ).map(a=>a._2.filter(!_.isEmpty)).flatten
+        val suggestBulk = compact(suggestPlace(label, id, masterid, kw, city, area, coordinates, (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))
 
-      val suggestBulk = compact(suggestPlace(label, id, masterid, kw, city, area, coordinates, (doc\"DeleteFlag").asInstanceOf[JInt].values.toInt))
+        RootServer.defaultContext.esClient.prepareIndex(string("params.index"), string("params.type")).setId(id).setSource(suggestBulk).execute(new ActionListener[IndexResponse] {
+          override def onFailure(e: Throwable): Unit = {
+            error("[indexing place suggestion] [" + e.getMessage + "]", e)
+          }
 
-      RootServer.defaultContext.esClient.prepareIndex(string("params.index"), string("params.type")).setId(id).setSource(suggestBulk).execute(new ActionListener[IndexResponse] {
-        override def onFailure(e: Throwable): Unit = {
-          error("[indexing place suggestion] [" + e.getMessage + "]", e)
-        }
-
-        override def onResponse(response: IndexResponse): Unit = {
-          info("[indexed place suggestion] ["+response.getId+"]")
-        }
-      })
+          override def onResponse(response: IndexResponse): Unit = {
+            info("[indexed place suggestion] [" + response.getId + "]")
+          }
+        })
+        info(suggestBulk)
+      } catch {
+        case e => error("[indexing place suggestion] [" + e.getMessage + "]", e)
+      }
 
     //producer.send(KeyedMessage[String, String](string("params.topic"), key, key, (doc \ "LocationName").asInstanceOf[JString].values))
 
