@@ -38,13 +38,12 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
             case "string" => idraw.asInstanceOf[JString].values
             case _ => idraw.asInstanceOf[JString].values
           }
-
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
           )
-          pipers.foreach(_ ! doc)
         }
+        pipers.foreach(_ ! json)
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
