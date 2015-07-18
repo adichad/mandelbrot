@@ -42,16 +42,23 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
         RootServer.defaultContext.esClient.prepareIndex(string("params.index"), string("params.type")).setId(id).setSource(suggestBulk).execute(new ActionListener[IndexResponse] {
           override def onFailure(e: Throwable): Unit = {
             error("[indexing place suggestion] [" + e.getMessage + "]", e)
+            context.stop(self)
           }
 
           override def onResponse(response: IndexResponse): Unit = {
             info("[indexed place suggestion] [" + response.getId + "]")
+            context.stop(self)
           }
         })
         info(suggestBulk)
       } catch {
-        case e => error("[indexing place suggestion] [" + e.getMessage + "]", e)
+        case e =>
+          error("[indexing place suggestion] [" + e.getMessage + "]", e)
+          context.stop(self)
+      } finally {
+        info("in finally")
       }
+
 
     //producer.send(KeyedMessage[String, String](string("params.topic"), key, key, (doc \ "LocationName").asInstanceOf[JString].values))
 
