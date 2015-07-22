@@ -2,13 +2,13 @@ package com.askme.mandelbrot.piper
 
 import java.security.MessageDigest
 
-import com.askme.mandelbrot.handler.{IndexSuccessResult, IndexFailureResult}
 import com.askme.mandelbrot.server.RootServer
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.bulk.BulkResponse
-import org.elasticsearch.action.index.IndexResponse
+import org.elasticsearch.client.Client
 import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -26,6 +26,9 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
 
   val esClient = RootServer.defaultContext.esClient
 
+  private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
+    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+
   override def receive = {
     case json: JValue =>
       val startTime = System.currentTimeMillis()
@@ -34,21 +37,24 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
         for(doc <- json.children) {
           val city = JArray((doc \ "CitySynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "City").asInstanceOf[JString])
           val area = JArray((doc \ "AreaSynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "Area").asInstanceOf[JString])
+          val displayCity = (doc \ "City").asInstanceOf[JString]
+          val displayArea = (doc \ "Area").asInstanceOf[JString]
+          val categories = (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)
           val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
-          val masterid = (doc \ "MasterID").asInstanceOf[JInt]
+          val masterid = JString((doc \ "MasterID").asInstanceOf[JInt].values.toString())
 
           val label = (doc \ "LocationName").asInstanceOf[JString].values.trim
           val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
 
           val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
-            ((doc \ "Product").children.map(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)).flatten ++ (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)) ++
+            (doc \ "Product").children.map(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)).flatten ++ categories ++
             (doc \ "Product").children.map(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)))).flatten.filter(
               att => att._1.trim.toLowerCase().startsWith("brand") || att._1.trim.toLowerCase().startsWith("menu")
             ).map(a => a._2.filter(!_.isEmpty)).flatten
 
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id)
-              .setSource(compact(render(suggestPlace(label, id, masterid, kw, city, area, coordinates, (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+              .setSource(compact(render(suggestPlace(label, id, masterid, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
         }
         val reqSize = bulkRequest.numberOfActions()
@@ -60,30 +66,30 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
-                warn("[indexing place suggestion] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
+                warn("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
               }
               else {
                 val timeTaken = System.currentTimeMillis - startTime
-                info("[indexed place suggestion] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + respStr + "]")
+                info("[indexed place "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + respStr + "]")
               }
             } catch {
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - startTime
-                error("[indexing place suggestion] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
+                error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
                 throw e
             }
           }
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - startTime
-            error("[indexing place suggestion] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
+            error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
             throw e
           }
         })
 
       } catch {
-        case e =>
-          error("[indexing place suggestion] [" + e.getMessage + "]", e)
+        case e: Throwable =>
+          error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + e.getMessage + "]", e)
           throw e
       }
 
@@ -97,16 +103,29 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
       */
   }
 
-  def suggestPlace(label: String, id: String, masterid: JInt, kw: List[String], city: JValue, area: JValue, coordinates: JValue, deleteFlag: Int) = {
+  def suggestPlace(label: String, id: String, masterid: JValue, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
     val payload = JArray(
       List(
         JObject(
-          JField("query",
-            JObject(
-              JField("PlaceID", JString(id))
+          JField("queries",
+            JArray(
+              List(
+                JObject(
+                  JField("type", JString("outlet")),
+                  JField("id", JString(id))
+                )
+              )
             )
           ),
-          JField("label", JString(label))
+          JField("display",
+            JObject(
+              JField("label", JString(label)),
+              JField("city", displayCity),
+              JField("area", displayArea),
+              JField("categories", categories),
+              JField("type", JString("outlet"))
+            )
+          )
         )
       )
     )
@@ -119,19 +138,18 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
             JObject(
               JField("city", city),
               JField("area", area),
+              JField("areadocval", JArray(area.children.map(a=>JString(analyze(esClient, string("params.index"), string("params.type"), a.asInstanceOf[JString].values).mkString(" "))))),
               JField("coordinates", coordinates),
               JField("kw", JArray(kw.map(JString(_)))),
               JField("label", JString(label)),
-              JField("tags", JArray(List(JString("outlet"), JString("place"))))
+              JField("tag", JArray(List(JString("outlet"))))
             )
           )
         )
       ),
-      JField("payload",
-        payload
-      ),
+      JField("payload", payload),
       JField("deleted", JInt(deleteFlag)),
-      JField("masterid", masterid)
+      JField("groupby", masterid)
     )
 
   }

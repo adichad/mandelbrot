@@ -1,5 +1,5 @@
 {
-  "place": {
+  "suggestion": {
     "_source": {
       "enabled": true
     },
@@ -7,14 +7,7 @@
       "enabled": false
     },
     "transform" : [
-      {
-        "script" : "placesuggesttransform",
-        "params" : {
-          "index": "suggest",
-          "type": "place"
-        },
-        "lang": "native"
-      }
+
     ],
     "properties": {
       "id": {
@@ -26,20 +19,19 @@
       "payload": {
         "type": "nested",
         "properties": {
-          "query": {
+          "display": {
             "type": "object",
             "enabled": false
           },
-          "label": {
-            "type": "string",
-            "store": true,
-            "index": "no"
-          },
-          "template": {
+          "queries": {
             "type": "object",
             "enabled": false
           },
           "items": {
+            "type": "object",
+            "enabled": false
+          },
+          "payloads": {
             "type": "object",
             "enabled": false
           }
@@ -81,15 +73,12 @@
             "doc_values": true,
             "include_in_root": true
           },
-          "tags": {
+          "tag": {
             "type": "string",
             "store": true,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_offset_gap": 100,
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "index": "not_analyzed",
+            "include_in_root": true,
+            "doc_values": true
           },
           "kw": {
             "type": "multi_field",
@@ -341,9 +330,10 @@
         "ignore_malformed": false,
         "doc_values": true
       },
-      "masterid": {
-        "type": "integer",
+      "groupby": {
+        "type": "string",
         "store": false,
+        "index": "not_analyzed",
         "ignore_malformed": false,
         "doc_values": true
       },

@@ -4,9 +4,9 @@ import java.net.URLEncoder
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
-import com.askme.mandelbrot.handler.search.message.{SuggestResult, SearchParams, SearchResult}
+import com.askme.mandelbrot.handler.search.message.SuggestResult
+import com.askme.mandelbrot.handler.suggest.message.SuggestParams
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -36,7 +36,7 @@ import scala.collection.JavaConversions._
  */
 
 
-object PlaceSuggestRequestHandler extends Logging {
+object SuggestRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
@@ -65,7 +65,7 @@ object PlaceSuggestRequestHandler extends Logging {
   }
 
 
-  private[PlaceSuggestRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[SuggestRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
     /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -119,7 +119,7 @@ object PlaceSuggestRequestHandler extends Logging {
     }
   }
 
-  private[PlaceSuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
+  private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(fuzzy)
@@ -202,18 +202,18 @@ object PlaceSuggestRequestHandler extends Logging {
 
 }
 
-class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
-  import PlaceSuggestRequestHandler._
+class SuggestRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+  import SuggestRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var areaSlugs: String = ""
 
-  private def buildFilter(searchParams: SearchParams): FilterBuilder = {
-    import searchParams.filters._
-    import searchParams.geo._
-    import searchParams.idx._
-    import searchParams.limits._
-    import searchParams.view._
+  private def buildFilter(suggestParams: SuggestParams): FilterBuilder = {
+    import suggestParams.target._
+    import suggestParams.geo._
+    import suggestParams.idx._
+    import suggestParams.limits._
+    import suggestParams.view._
 
 
     // filters
@@ -222,6 +222,8 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
     if (id != "") {
       finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase): _*))
     }
+    if (tag!= "")
+      finalFilter.add(termsFilter("tag", tag.split(",").map(_.trim):_*))
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
@@ -257,9 +259,9 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
     finalFilter
   }
 
-  private def buildQuery(searchParams: SearchParams): QueryBuilder = {
-    import searchParams.text._
-    import searchParams.idx._
+  private def buildQuery(suggestParams: SuggestParams): QueryBuilder = {
+    import suggestParams.target._
+    import suggestParams.idx._
     val query = boolQuery()
     val wordskw = analyze(esClient, index, "targeting.kw.keyword", kw)
     val wordskwsh = analyze(esClient, index, "targeting.kw.shingle", kw)
@@ -290,12 +292,13 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
 
   }
 
-  private def buildSearch(searchParams: SearchParams): SearchRequestBuilder = {
-    import searchParams.geo._
-    import searchParams.idx._
-    import searchParams.limits._
-    import searchParams.page._
-    import searchParams.view._
+  private def buildSearch(suggestParams: SuggestParams): SearchRequestBuilder = {
+    import suggestParams.geo._
+    import suggestParams.idx._
+    import suggestParams.limits._
+    import suggestParams.page._
+    import suggestParams.view._
+    import suggestParams.target._
 
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score" else "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
@@ -318,7 +321,7 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
         Nil
       ).flatten
     val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
-    val masters = terms("suggestions").field("masterid").order(order).size(offset+size)
+    val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
       .subAggregation(topHits("toplocation").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
@@ -327,33 +330,34 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
     }
 
     masters.subAggregation(max("score").script("docscore").lang("native"))
+
     search.addAggregation(masters)
   }
 
 
   override def receive = {
-    case searchParams: SearchParams =>
+    case suggestParams: SuggestParams =>
       try {
-        import searchParams.text._
-        import searchParams.idx._
-        import searchParams.filters._
-        import searchParams.startTime
-        import searchParams.req._
-        import searchParams.limits._
+        import suggestParams.target._
+        import suggestParams.idx._
+        import suggestParams.startTime
+        import suggestParams.req._
+        import suggestParams.limits._
+        import suggestParams.view._
 
         w = analyze(esClient, index, "targeting.kw", kw)
         if (w.length>12) w = emptyStringArray
-        val query = if (w.length > 0) buildQuery(searchParams) else matchAllQuery()
+        val query = if (w.length > 0) buildQuery(suggestParams) else matchAllQuery()
         // filters
-        val finalFilter = buildFilter(searchParams)
+        val finalFilter = buildFilter(suggestParams)
 
-        val search = buildSearch(searchParams)
+        val search = buildSearch(suggestParams)
 
         search.setQuery(filteredQuery(query, finalFilter))
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            val parsed = JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.map(h=>(h\"toplocation"\"hits"\"hits").children.map(f=>f\"_source")).flatten)
+            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.map(h=>(h\"toplocation"\"hits"\"hits").children.map(f=>f\"_source")).flatten)
 
             val endTime = System.currentTimeMillis
             val timeTaken = endTime - startTime
@@ -363,7 +367,7 @@ class PlaceSuggestRequestHandler(val config: Config, serverContext: SearchContex
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q0] ["+e.getMessage+"] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            error("[" + timeTaken + "] ["+e.getMessage+"] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
             context.parent ! ErrorResponse(e.getMessage, e)
           }
         })

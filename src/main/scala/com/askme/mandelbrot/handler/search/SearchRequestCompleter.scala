@@ -6,7 +6,7 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.message.{ErrorResponse, RestMessage, Timeout}
 import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.search.message.SearchParams
-import com.askme.mandelbrot.handler.suggest.PlaceSuggestRequestHandler
+import com.askme.mandelbrot.handler.suggest.{SuggestRequestHandler}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -52,18 +52,11 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
   else {
 
     val target =
-    searchParams.idx.index match {
-      case x if x.startsWith("askme") =>
         searchParams.idx.esType match {
           case "list" => context.actorOf (Props (classOf[ListSearchRequestHandler], config, serverContext) )
           case "place" => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
           case _ => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
         }
-      case x if x.startsWith("suggest") =>
-        searchParams.idx.esType match {
-          case "place" => context.actorOf (Props (classOf[PlaceSuggestRequestHandler], config, serverContext))
-        }
-    }
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
     target ! searchParams
   }
