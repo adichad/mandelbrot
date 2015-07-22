@@ -56,6 +56,11 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
             esClient.prepareIndex(string("params.index"), string("params.type"), id)
               .setSource(compact(render(suggestPlace(label, id, masterid, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
+          bulkRequest.add(
+            esClient.prepareIndex(string("params.index"), string("params.type"), id+"-search")
+              .setSource(compact(render(suggestSearch(label, id, masterid, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+          )
+
         }
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
@@ -101,6 +106,56 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
         stream.iterator().foreach(m=>info("message: ["+m.key()+","+m.message()+":"+m.partition+","+m.offset))
       }
       */
+  }
+
+  def suggestSearch(label: String, id: String, masterid: JValue, city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
+    val payload = JArray(
+      List(
+        JObject(
+          JField("queries",
+            JArray(
+              List(
+                JObject(
+                  JField("type", JString("outlet")),
+                  JField("id", JString(id))
+                )
+              )
+            )
+          ),
+          JField("display",
+            JObject(
+              JField("label", JString(label)),
+              JField("city", displayCity),
+              JField("area", displayArea),
+              JField("categories", categories),
+              JField("type", JString("outlet"))
+            )
+          )
+        )
+      )
+    )
+
+    JObject(
+      JField("id", JString(id)),
+      JField("targeting",
+        JArray(
+          List(
+            JObject(
+              JField("city", city),
+              JField("area", area),
+              JField("areadocval", JArray(area.children.map(a=>JString(analyze(esClient, string("params.index"), string("params.type"), a.asInstanceOf[JString].values).mkString(" "))))),
+              JField("coordinates", coordinates),
+              JField("kw", JArray(List(JString(label)))),
+              JField("label", JString(label)),
+              JField("tag", JArray(List(JString("search"))))
+            )
+          )
+        )
+      ),
+      JField("payload", payload),
+      JField("deleted", JInt(deleteFlag)),
+      JField("groupby", masterid)
+    )
   }
 
   def suggestPlace(label: String, id: String, masterid: JValue, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
