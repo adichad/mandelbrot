@@ -19,16 +19,16 @@ import scala.collection.mutable
  * Created by adichad on 20/05/15.
  */
 
-class PlaceSuggestTransform extends NativeScriptFactory {
+class SuggestionTransform extends NativeScriptFactory {
 
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     val index = params.get("index").asInstanceOf[String]
     val esType = params.get("type").asInstanceOf[String]
-    new PlaceSuggestTransformScript(RootServer.defaultContext.esClient, index, esType)
+    new SuggestionTransformScript(RootServer.defaultContext.esClient, index, esType)
   }
 }
 
-class PlaceSuggestTransformScript(private val esClient: Client, index: String, esType: String) extends AbstractExecutableScript with Logging {
+class SuggestionTransformScript(private val esClient: Client, index: String, esType: String) extends AbstractExecutableScript with Logging {
   val vars = new util.HashMap[String, AnyRef]()
 
   override def setNextVar(name: String, value: AnyRef): Unit = {

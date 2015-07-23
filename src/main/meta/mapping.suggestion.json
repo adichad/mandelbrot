@@ -7,7 +7,14 @@
       "enabled": false
     },
     "transform" : [
-
+      {
+        "script" : "suggestiontransform",
+        "params" : {
+          "index": "askme_suggest_index_incremental",
+          "type": "suggestion"
+        },
+        "lang": "native"
+      }
     ],
     "properties": {
       "id": {

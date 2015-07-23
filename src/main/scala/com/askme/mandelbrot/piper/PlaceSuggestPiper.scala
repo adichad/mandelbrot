@@ -43,7 +43,8 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
           val masterid = JString((doc \ "MasterID").asInstanceOf[JInt].values.toString())
 
-          val label = (doc \ "LocationName").asInstanceOf[JString].values.trim
+          val labelPlace = (doc \ "LocationName").asInstanceOf[JString].values.trim
+          val labelSearch = (doc \ "LocationName").asInstanceOf[JString].values.trim + ", "+(doc \ "Area").asInstanceOf[JString].values.trim + ", "+(doc \ "City").asInstanceOf[JString].values.trim
           val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
 
           val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
@@ -54,11 +55,11 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
 
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id)
-              .setSource(compact(render(suggestPlace(label, id, masterid, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+              .setSource(compact(render(suggestPlace(labelPlace, id, masterid, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id+"-search")
-              .setSource(compact(render(suggestSearch(label, id, masterid, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+              .setSource(compact(render(suggestSearch(labelSearch, id, masterid, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
 
         }
@@ -143,7 +144,6 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
             JObject(
               JField("city", city),
               JField("area", area),
-              JField("areadocval", JArray(area.children.map(a=>JString(analyze(esClient, string("params.index"), string("params.type"), a.asInstanceOf[JString].values).mkString(" "))))),
               JField("coordinates", coordinates),
               JField("kw", JArray(List(JString(label)))),
               JField("label", JString(label)),
@@ -193,7 +193,6 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
             JObject(
               JField("city", city),
               JField("area", area),
-              JField("areadocval", JArray(area.children.map(a=>JString(analyze(esClient, string("params.index"), string("params.type"), a.asInstanceOf[JString].values).mkString(" "))))),
               JField("coordinates", coordinates),
               JField("kw", JArray(kw.map(JString(_)))),
               JField("label", JString(label)),
