@@ -193,7 +193,7 @@ object SuggestRequestHandler extends Logging {
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, index+"_index_incremental", text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
   private val emptyStringArray = new Array[String](0)
@@ -336,15 +336,15 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
   override def receive = {
-    case suggestParams: SuggestParams =>
-      try {
-        import suggestParams.target._
-        import suggestParams.idx._
-        import suggestParams.startTime
-        import suggestParams.req._
-        import suggestParams.limits._
-        import suggestParams.view._
 
+    case suggestParams: SuggestParams =>
+      import suggestParams.target._
+      import suggestParams.idx._
+      import suggestParams.startTime
+      import suggestParams.req._
+      import suggestParams.limits._
+      import suggestParams.view._
+      try {
         w = analyze(esClient, index, "targeting.kw", kw)
         if (w.length>12) w = emptyStringArray
         val query = if (w.length > 0) buildQuery(suggestParams) else matchAllQuery()
@@ -367,19 +367,18 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] ["+e.getMessage+"] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            error("[" + timeTaken + "] ["+e.getMessage+"] [" + clip.toString + "]->[" + httpReq.uri + "]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
           }
         })
       } catch {
         case e: Throwable =>
+          val timeTaken = System.currentTimeMillis() - startTime
+          error("[" + timeTaken + "] ["+e.getMessage+"] [" + clip.toString + "]->[" + httpReq.uri + "]", e)
           context.parent ! ErrorResponse(e.getMessage, e)
       }
 
   }
-
-  def urlize(k: String) =
-    URLEncoder.encode(k.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8")
 
 }
 

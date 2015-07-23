@@ -19,7 +19,7 @@ case object SuggestRouter extends Router {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         jsonpWithParameter("callback") {
-          path("suggest" / Segment / Segment) { (index, esType) =>
+          path("suggest" / Segment) { (index) =>
             parameters('kw.as[String] ? "", 'city ? "", 'area ? "", 'pin ? "",
               'tag ? "", 'id ? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
@@ -42,7 +42,7 @@ case object SuggestRouter extends Router {
               respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SuggestRequestCompleter], config, serverContext, ctx, SuggestParams(
                     RequestParams(httpReq, clip, trueClient),
-                    IndexParams(index, esType),
+                    IndexParams(index, "suggestion"),
                     TargetingParams(kw, tag, id),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     PageParams(size, offset),
