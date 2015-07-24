@@ -122,9 +122,9 @@ object SuggestRequestHandler extends Logging {
   private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(fuzzy)
+      if(x.size>6 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(Fuzziness.AUTO))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>10) Fuzziness.TWO else Fuzziness.ONE ))
       else
         spanTermQuery(field, x)
     )
