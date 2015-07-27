@@ -49,7 +49,11 @@ object PlaceSearchRequestHandler extends Logging {
           param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
         case "_distance" => SortBuilders.scriptSort("geobucket", "number").lang("native")
-          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC)
+          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs)
+          .param("areafield", "AreaDocVal")
+          .param("synfield", "AreaSynonymsDocVal")
+          .param("skufield", "SKUAreasDocVal")
+          .order(SortOrder.ASC)
         case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
         case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
         case x =>
@@ -359,7 +363,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areaSlugs = areas.map(_.replace(' ', '-')).mkString("#")
+      areaSlugs = areas.mkString("#")
     }
 
     if (lat != 0.0d || lon != 0.0d)
@@ -409,7 +413,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
-    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
+    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -432,7 +436,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if(collapse) {
       val orders: List[Terms.Order] = (
         Some(Terms.Order.aggregation("exactname", true)) ::
-          (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+          (if (lat != 0.0d || lon != 0.0d || areaSlugs.size>0) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -447,7 +451,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       diamond.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
-      if(lat != 0.0d || lon !=0.0d) {
+      if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) {
         platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }

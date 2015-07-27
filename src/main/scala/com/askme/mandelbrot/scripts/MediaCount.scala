@@ -86,6 +86,11 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
             if (source.get("AreaSynonyms") == null) new util.ArrayList[String]()
             else new util.ArrayList[AnyRef](source.get("AreaSynonyms").asInstanceOf[util.ArrayList[AnyRef]].map(a => analyze(esClient, index, "AreaSynonymsExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
           source.put("AreaSynonymsDocVal", areaSyns)
+
+          val skuAreas =
+            if (source.get("SKUAreas") == null) new util.ArrayList[String]()
+            else new util.ArrayList[AnyRef](source.get("SKUAreas").asInstanceOf[util.ArrayList[AnyRef]].map(a => analyze(esClient, index, "AreaSynonymsExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
+          source.put("SKUAreasDocVal", skuAreas)
         }
         // return the context
         return ctx

@@ -187,9 +187,16 @@
         "position_offset_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
-        "norms": {"enabled": false}
+        "norms": {"enabled": false},
+        "copy_to": ["SKUAreasAggr"]
       },
       "SKUAreasAggr": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "SKUAreasDocVal": {
         "type": "string",
         "store": true,
         "index": "not_analyzed",
