@@ -466,9 +466,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         val areaFilter = boolFilter().cache(false)
         area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
           .map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
-        boolFilter().must(areaFilter).must(termFilter("CustomerType", "550"))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "550")).must(existsFilter("SKUAreasDocVal"))
       } else {
-        termFilter("CustomerType", "550")
+        boolFilter().must(termFilter("CustomerType", "550")).must(existsFilter("SKUAreasDocVal"))
       }
 
 
@@ -476,9 +476,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         val areaFilter = boolFilter().cache(false)
         area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
           .map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
-        boolFilter().must(areaFilter).must(termFilter("CustomerType", "450"))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "450")).must(existsFilter("SKUAreasDocVal"))
       } else {
-        termFilter("CustomerType", "450")
+        boolFilter().must(termFilter("CustomerType", "450")).must(existsFilter("SKUAreasDocVal"))
       }
       search.addAggregation(filter("platinum").filter(platinumFilter).subAggregation(platinum))
       search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(platinum))
