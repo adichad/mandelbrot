@@ -339,10 +339,19 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
 
     // filters
-    val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
+    val finalFilter = andFilter().cache(false)
 
     if (id != "" || !kwids.isEmpty) {
+      finalFilter.add(
+        boolFilter()
+          .should(termFilter("DeleteFlag", 0l).cache(false))
+          .should(
+            andFilter()
+              .add(existsFilter("MergedToID"))
+              .add(notFilter(termFilter("MergedToID","").cache(false)).cache(false))))
       finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
+    } else {
+      finalFilter.add(notFilter(termFilter("DeleteFlag", 1l).cache(false)))
     }
     if(userid != 0) {
       finalFilter.add(termFilter("UserID", userid).cache(false))
