@@ -80,8 +80,8 @@
         "participle_stem": {
           "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
           "stemmer": "participle",
-          "min-len": 5,
-          "exclude": ["inning"]
+          "min-len": 6,
+          "exclude": ["inning", "something", "notting"]
         },
         "recombine": {
           "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
