@@ -55,6 +55,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
         searchParams.idx.esType match {
           case "list" => context.actorOf (Props (classOf[ListSearchRequestHandler], config, serverContext) )
           case "place" => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
+          case "deal" => context.actorOf (Props (classOf[DealSearchRequestHandler], config, serverContext) )
           case _ => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
         }
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
