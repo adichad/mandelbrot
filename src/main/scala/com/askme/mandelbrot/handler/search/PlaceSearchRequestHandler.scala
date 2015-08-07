@@ -642,7 +642,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val matchedCat = catBucks
               .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
               || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
-              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(k.getKey))
+              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(analyze(esClient, index, "Product.l3categoryexact", k.getKey).mkString(" ")))
             val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
             val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))
