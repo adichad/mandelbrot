@@ -25,13 +25,12 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
             if (boolean("enabled")) {
               extract(_.request.entity.data.toByteArray) { rawdata=>
               //entity(as[Array[Byte]]) { rawdata =>
-                info("["+httpReq.headers.map(h=>h.toString()).mkString("][")+"]")
                 var detected = false
                 var source_charset = charset_source
                 val data = if(source_charset == "") {
                   val detector = new CharsetDetector()
                   val charsetsMatched = detector.setText(rawdata).detectAll()
-                  //info("charsets: " + charsetsMatched.map(_.getName).mkString(", "))
+                  debug("charsets: " + charsetsMatched.map(_.getName).mkString(", "))
                   val charsetMatch = charsetsMatched(0)
                   source_charset = if (charsetMatch == null) charset_source else charsetMatch.getName
                   detected = charsetMatch != null
@@ -40,7 +39,6 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                 } else {
                   new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
                 }
-                //extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
                 respondWithMediaType(`application/json`) {
                   ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                     IndexingParams(
