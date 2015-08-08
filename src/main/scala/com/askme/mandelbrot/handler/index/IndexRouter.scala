@@ -21,17 +21,29 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          parameters('charset_source.as[String] ? "utf-8", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
+          parameters('charset_source.as[String] ? "", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
-              entity(as[Array[Byte]]) { rawdata =>
-                val detector = new CharsetDetector()
-                val charsetMatch = detector.setText(rawdata).detect()
-                val source_charset = if(charsetMatch == null) charset_source else charsetMatch.getName
-                val detected = charsetMatch != null
+              extract(_.request.encoding) { http_encoding =>
+                info("http content-encoding: " + http_encoding.value)
+                extract(_.request.entity.data.toByteArray) { rawdata=>
+                //entity(as[Array[Byte]]) { rawdata =>
+                  var detected = false
+                  var source_charset = if(http_encoding.value == "identity") charset_source else http_encoding.value
+                  val data = if(source_charset == "") {
 
+                    val detector = new CharsetDetector()
+                    val charsetsMatched = detector.setText(rawdata).detectAll()
 
-                val data = new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
-                //extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
+                    info("charsets: " + charsetsMatched.map(_.getName).mkString(", "))
+                    val charsetMatch = charsetsMatched(0)
+                    source_charset = if (charsetMatch == null) charset_source else charsetMatch.getName
+                    detected = charsetMatch != null
+
+                    new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
+                  } else {
+                    new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
+                  }
+                  //extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
                   respondWithMediaType(`application/json`) {
                     ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                       IndexingParams(
@@ -41,7 +53,8 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                         System.currentTimeMillis
                       )))
                   }
-                //}
+                  //}
+                }
               }
             } else {
               respondWithMediaType(`application/json`) {
