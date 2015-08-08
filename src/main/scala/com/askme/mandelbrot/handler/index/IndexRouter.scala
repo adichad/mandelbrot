@@ -20,18 +20,21 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          parameters('charset.as[String] ? "utf-8") { (charset) =>
+          parameters('charset_source.as[String] ? "windows-1252", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
-              extract(_.request.entity.data.asString(Charset.forName(charset))) {data =>
-                respondWithMediaType(`application/json`) {
-                  ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
-                    IndexingParams(
-                      RequestParams(httpReq, clip, clip.toString),
-                      IndexParams(index, esType),
-                      RawData(data),
-                      System.currentTimeMillis
-                    )))
-                }
+              entity(as[Array[Byte]]) { rawdata =>
+                val data = new String(new String(rawdata, Charset.forName(charset_target)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
+                //extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
+                  respondWithMediaType(`application/json`) {
+                    ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
+                      IndexingParams(
+                        RequestParams(httpReq, clip, clip.toString),
+                        IndexParams(index, esType),
+                        RawData(data),
+                        System.currentTimeMillis
+                      )))
+                  }
+                //}
               }
             } else {
               respondWithMediaType(`application/json`) {
