@@ -10,7 +10,7 @@ case class RequestParams(httpReq: HttpRequest, clip: RemoteAddress, trueClient: 
 case class EmptyResponse(reason: String) extends RestMessage
 
 case class IndexingParams(req: RequestParams, idx: IndexParams, data: RawData, startTime: Long) extends RestMessage
-case class RawData(data: String) extends RestMessage
+case class RawData(data: String, source_charset: String, detected: Boolean) extends RestMessage
 
 case class IndexFailureResult(response: JValue) extends RestMessage
 case class IndexSuccessResult(response: JValue) extends RestMessage

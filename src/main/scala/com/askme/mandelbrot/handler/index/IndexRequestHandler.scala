@@ -43,6 +43,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               .setSource(compact(render(doc)))
           )
         }
+        val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
         pipers.foreach(_ ! json)
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
@@ -54,25 +55,25 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               val resp = parse(respStr)
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                warn("[indexing] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
+                warn("[indexing] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + response.buildFailureMessage() + "] "+charset+" [" + respStr + "]")
                 completer ! IndexFailureResult(resp)
               }
               else {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + respStr + "]")
+                info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + respStr + "]")
                 completer ! IndexSuccessResult(resp)
               }
             } catch {
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + e.getMessage + "]", e)
+                error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
                 throw e
             }
           }
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - indexParams.startTime
-            error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + e.getMessage + "]", e)
+            error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
             throw e
           }
         })
