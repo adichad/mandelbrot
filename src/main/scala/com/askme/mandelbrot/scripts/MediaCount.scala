@@ -63,13 +63,23 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
 
           // augment noisy attribute values with pkws
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
-            val catkwraw = p.asInstanceOf[util.Map[String, AnyRef]].get("categorykeywords")
-            val cats = (if(catkwraw == null) new util.ArrayList[AnyRef] else catkwraw.asInstanceOf[util.ArrayList[AnyRef]])
-            val catkws = new util.ArrayList[AnyRef](cats.filter(!XContentMapValues.nodeStringValue(_, "").trim.isEmpty))
-            catkws.append(XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String, AnyRef]].get("l3category"), ""))
-            p.asInstanceOf[util.Map[String, AnyRef]].get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
-              a.asInstanceOf[util.Map[String, AnyRef]].put("answerexact", new util.ArrayList[AnyRef](a.asInstanceOf[util.Map[String, AnyRef]].get("answer").asInstanceOf[util.ArrayList[AnyRef]].map(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws)).flatten))
+            val prod = p.asInstanceOf[util.Map[String, AnyRef]]
+            val kwraw = prod.get("categorykeywords")
+            val kw = new util.ArrayList[String](((if(kwraw == null) new util.ArrayList[AnyRef] else kwraw.asInstanceOf[util.ArrayList[AnyRef]]))
+              .map(XContentMapValues.nodeStringValue(_, "").trim)
+              .filter(!_.isEmpty).map(analyze(esClient, index, "Product.categorykeywordsexact", _).mkString(" ")))
+            val catkws = new util.ArrayList[AnyRef](kw)
+            val cat = XContentMapValues.nodeStringValue(prod.get("l3category"), "")
+            catkws.append(cat)
+            prod.put("categorykeywordsdocval", kw)
+            prod.put("l3categorydocval", cat)
+
+            prod.get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
+              val att = a.asInstanceOf[util.Map[String, AnyRef]]
+              att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
+                .map(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws)).flatten))
             }
+            prod.get("l3category")
           }
 
           // create analyzed doc-value fields

@@ -126,7 +126,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "copy_to": ["LocationTypeExact"]
+        "copy_to": ["LocationTypeExact", "LocationTypeAggr"]
       },
       "LocationTypeExact": {
         "type": "string",
@@ -135,13 +135,19 @@
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
       },
+      "LocationTypeAggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
       "BusinessType": {
         "type": "string",
         "store": true,
         "index": "analyzed",
         "position_offset_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": ["BusinessTypeExact"]
+        "copy_to": ["BusinessTypeExact", "BusinessTypeAggr"]
       },
       "BusinessTypeExact": {
         "type": "string",
@@ -151,6 +157,12 @@
         "norms": {"enabled": false},
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
+      },
+      "BusinessTypeAggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "Address": {
         "type": "string",
@@ -669,6 +681,13 @@
             "norms": {"enabled": false},
             "include_in_root": true
           },
+          "l3categorydocval": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "include_in_root": true
+          },
           "l3categoryslug": {
             "type": "string",
             "store": true,
@@ -718,6 +737,13 @@
             "include_in_root": true
           },
           "categorykeywordsaggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "include_in_root": true
+          },
+          "categorykeywordsdocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
