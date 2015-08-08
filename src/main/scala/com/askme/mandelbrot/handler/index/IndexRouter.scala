@@ -23,7 +23,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
           parameters('charset_source.as[String] ? "windows-1252", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
               entity(as[Array[Byte]]) { rawdata =>
-                val data = new String(new String(rawdata, Charset.forName(charset_target)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
+                val data = new String(new String(rawdata, Charset.forName(charset_source)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
                 //extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
                   respondWithMediaType(`application/json`) {
                     ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
