@@ -9,12 +9,19 @@ import com.askme.mandelbrot.handler.message.IndexParams
 import com.typesafe.config.Config
 import spray.http.MediaTypes._
 import spray.http.{HttpRequest, RemoteAddress, StatusCodes}
+import org.apache.tika.parser.txt.CharsetDetector
 import org.mozilla.universalchardet.UniversalDetector
 
 /**
  * Created by adichad on 31/03/15.
  */
 case class IndexRouter(val config: Config) extends Router with Configurable {
+
+  private def detectCharsetTika(bytes: Array[Byte]) = {
+    val detector = new CharsetDetector
+    val charsetMatch = detector.setText(bytes).detect()
+    if(charsetMatch == null) null else charsetMatch.getName
+  }
 
   private def detectCharset(bytes: Array[Byte]) = {
     val detector = new UniversalDetector(null)
@@ -24,20 +31,20 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     detector.reset()
     charset
   }
+
   override def apply(implicit service: MandelbrotHandler) = {
     import service._
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          parameters('charset_source.as[String] ? "cp1252", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
+          parameters('charset_source.as[String] ? "", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
               extract(_.request.entity.data.toByteArray) { rawdata=>
               //entity(as[Array[Byte]]) { rawdata =>
                 var detected = false
                 var source_charset = charset_source
                 val data = if(source_charset == "") {
-                  val charsetMatch = detectCharset(rawdata)
-                  info("detected charset: "+charsetMatch)
+                  val charsetMatch = detectCharsetTika(rawdata)
                   source_charset = if (charsetMatch == null) charset_source else charsetMatch
                   detected = charsetMatch != null
 
