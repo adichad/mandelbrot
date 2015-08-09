@@ -23,7 +23,10 @@ class MediaCount extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     val index = params.get("index").asInstanceOf[String]
     val esType = params.get("type").asInstanceOf[String]
-    val catkws = RootServer.uniqueVals(index, esType, "Product.categorykeywordsaggr", "Product.categorykeywordsexact", " ", 100000)
+    val catkws = RootServer.uniqueVals(index, esType, "Product.categorykeywordsaggr", "Product.categorykeywordsexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "Product.l3categoryaggr", "Product.l3categoryexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "Product.l2categoryaggr", "Product.l2categoryexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "Product.l1categoryaggr", "Product.l1categoryexact", " ", 100000)
     new MediaCountScript(RootServer.defaultContext.esClient, index, esType, catkws)
   }
 }
@@ -69,10 +72,18 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
               .map(XContentMapValues.nodeStringValue(_, "").trim)
               .filter(!_.isEmpty).map(analyze(esClient, index, "Product.categorykeywordsexact", _).mkString(" ")))
             val catkws = new util.ArrayList[AnyRef](kw)
-            val cat = XContentMapValues.nodeStringValue(prod.get("l3category"), "")
-            catkws.append(cat)
+            val cat3 = analyze(esClient, index, "Product.l3categoryexact", XContentMapValues.nodeStringValue(prod.get("l3category"), "")).mkString(" ")
+            val cat2 = analyze(esClient, index, "Product.l2categoryexact", XContentMapValues.nodeStringValue(prod.get("l2category"), "")).mkString(" ")
+            val cat1 = analyze(esClient, index, "Product.l1categoryexact", XContentMapValues.nodeStringValue(prod.get("l1category"), "")).mkString(" ")
+
+            catkws.append(cat3)
+            catkws.append(cat2)
+            catkws.append(cat1)
             prod.put("categorykeywordsdocval", kw)
-            prod.put("l3categorydocval", cat)
+            prod.put("l3categorydocval", cat3)
+            prod.put("l2categorydocval", cat2)
+            prod.put("l1categorydocval", cat1)
+
 
             prod.get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
               val att = a.asInstanceOf[util.Map[String, AnyRef]]
