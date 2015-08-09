@@ -615,6 +615,13 @@
             "norms": {"enabled": false},
             "include_in_root": true
           },
+          "l1categorydocval": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "include_in_root": true
+          },
           "l2category": {
             "type": "string",
             "store": true,
@@ -646,6 +653,13 @@
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
+            "include_in_root": true
+          },
+          "l2categorydocval": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
             "include_in_root": true
           },
           "l3category": {
