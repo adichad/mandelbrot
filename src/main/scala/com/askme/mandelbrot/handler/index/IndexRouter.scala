@@ -29,7 +29,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("index" / Segment / Segment ) { (index, esType) =>
-          parameters('charset_source.as[String] ? "", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
+          parameters('charset_source.as[String] ? "cp1252", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
               extract(_.request.entity.data.toByteArray) { rawdata=>
               //entity(as[Array[Byte]]) { rawdata =>
