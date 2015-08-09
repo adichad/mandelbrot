@@ -37,6 +37,7 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                 var source_charset = charset_source
                 val data = if(source_charset == "") {
                   val charsetMatch = detectCharset(rawdata)
+                  info("detected charset: "+charsetMatch)
                   source_charset = if (charsetMatch == null) charset_source else charsetMatch
                   detected = charsetMatch != null
 
