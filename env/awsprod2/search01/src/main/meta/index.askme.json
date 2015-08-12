@@ -68,14 +68,21 @@
             "men => man",
             "kidz => kid",
             "lady hostel, woman hostel, women hostel => girl hostel",
-            "men hostel, man hostel, gent hostel => boy hostel"
+            "men hostel, man hostel, gent hostel => boy hostel",
+            "wholeseller, wholesaler => wholesale",
+            "producer => production",
+            "distributor, distributer => distribution",
+            "importer=>import",
+            "exporter=>export",
+            "retailer,retailor=>retail",
+            "ties=>tie"
           ]
         },
         "plural_stem": {
           "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
           "stemmer": "plural",
           "min-len": 3,
-          "exclude": ["ins", "tvs"]
+          "exclude": ["ins", "tvs", "ties"]
         },
         "participle_stem": {
           "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",

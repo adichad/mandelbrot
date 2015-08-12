@@ -149,8 +149,12 @@ object PlaceSearchRequestHandler extends Logging {
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       val lboost = boost * superBoost(len)
       w.sliding(len).foreach { shingle =>
-        val phrase = shingle.mkString(" ")
-        fieldQuery.should(fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
+        if(shingle.size<4)
+          shingle.permutations.foreach { perm =>
+            fieldQuery.should(fuzzyOrTermQuery(field, perm.mkString(" "), lboost, fuzzyprefix, fuzzy))
+          }
+        else
+          fieldQuery.should(fuzzyOrTermQuery(field, shingle.mkString(" "), lboost, fuzzyprefix, fuzzy))
       }
     }
     nestIfNeeded(field, fieldQuery)
@@ -306,7 +310,7 @@ object PlaceSearchRequestHandler extends Logging {
     //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
     (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6

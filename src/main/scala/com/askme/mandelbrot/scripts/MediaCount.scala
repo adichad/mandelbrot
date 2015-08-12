@@ -61,7 +61,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
           val mediaCount: Int = source.get("Media").asInstanceOf[util.ArrayList[AnyRef]].size +
             (if (XContentMapValues.nodeStringValue(source.get("CompanyLogoURL"), "") == "") 0 else 1) +
             source.get("Product").asInstanceOf[util.ArrayList[AnyRef]]
-              .map(p => XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String, AnyRef]].get("imageurls"), "")).filter(_ != "").length
+              .map(p => XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String, AnyRef]].get("imageurls"), "")).count(_ != "")
           source.put("MediaCount", new java.lang.Integer(mediaCount))
 
           // augment noisy attribute values with pkws
@@ -92,6 +92,17 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
             }
             prod.get("l3category")
           }
+
+          val biztypes = new util.ArrayList[String](source.get("BusinessType").asInstanceOf[util.ArrayList[AnyRef]].flatMap(bt=>XContentMapValues.nodeStringValue(bt, "").split("""[/,#]""").map(_.trim).filter(!_.isEmpty)))
+
+          source.put("BusinessType", biztypes)
+          source.put("BusinessTypeExact", biztypes)
+
+          val loctypes = new util.ArrayList[String](source.get("LocationType").asInstanceOf[String].split("""[/,#]""").map(_.trim).filter(!_.isEmpty).toBuffer)
+
+          source.put("LocationType", loctypes)
+          source.put("LocationTypeExact", loctypes)
+
 
           // create analyzed doc-value fields
           source.put("LocationNameDocVal", analyze(esClient, index, "LocationNameExact", source.get("LocationName").asInstanceOf[String]).mkString(" "))

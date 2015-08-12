@@ -534,6 +534,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
+            "position_offset_gap": 100,
             "copy_to": ["Product.nameexact"]
           },
           "nameexact": {
@@ -557,7 +558,17 @@
             "index": "analyzed",
             "position_offset_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true
+            "include_in_root": true,
+            "copy_to": ["Product.keywordsexact"]
+          },
+          "keywordsexact": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "norms": {"enabled": false},
+            "include_in_root": true,
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
           },
           "brand": {
             "type": "string",
@@ -565,6 +576,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
+            "position_offset_gap": 100,
             "copy_to": ["Product.brandexact"]
           },
           "brandexact": {
