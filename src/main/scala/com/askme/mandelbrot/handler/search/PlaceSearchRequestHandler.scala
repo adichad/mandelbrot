@@ -149,12 +149,7 @@ object PlaceSearchRequestHandler extends Logging {
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       val lboost = boost * superBoost(len)
       w.sliding(len).foreach { shingle =>
-        if(shingle.size<4)
-          shingle.permutations.foreach { perm =>
-            fieldQuery.should(fuzzyOrTermQuery(field, perm.mkString(" "), lboost, fuzzyprefix, fuzzy))
-          }
-        else
-          fieldQuery.should(fuzzyOrTermQuery(field, shingle.mkString(" "), lboost, fuzzyprefix, fuzzy))
+        fieldQuery.should(fuzzyOrTermQuery(field, shingle.mkString(" "), lboost, fuzzyprefix, fuzzy))
       }
     }
     nestIfNeeded(field, fieldQuery)
