@@ -209,6 +209,17 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.idx._
 
     val finalFilter = andFilter(boolFilter.must(termFilter("Published", 1l).cache(false))).cache(false)
+    // Add area filters
+    val locFilter = boolFilter.cache(false)
+    if (area != "") {
+      val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      finalFilter.add(locFilter)
+    }
+
     finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
     if (city != "") {
       val cityFilter = boolFilter.cache(false)
