@@ -329,7 +329,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     masters.subAggregation(max("score").script("docscore").lang("native"))
-    masters.subAggregation(max("count").field("count"))
+    masters.subAggregation(sum("count").field("count"))
     search.addAggregation(masters)
   }
 

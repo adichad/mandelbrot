@@ -154,7 +154,8 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
       ),
       JField("payload", payload),
       JField("deleted", JInt(deleteFlag)),
-      JField("groupby", masterid)
+      JField("groupby", masterid),
+      JField("count", JInt(1))
     )
   }
 

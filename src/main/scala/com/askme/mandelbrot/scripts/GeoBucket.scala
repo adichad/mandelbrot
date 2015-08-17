@@ -33,11 +33,12 @@ object GeoBucketScript {
 class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: String, areafield: String, synfield: String, skufield: String, buckets: Array[Double]) extends AbstractLongSearchScript {
   import GeoBucketScript._
   override def runAsLong: Long = {
-    if(doc.get(areafield).asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
+    val mdoc = doc.asInstanceOf[util.Map[String, util.AbstractList[String]]]
+    if(mdoc.getOrDefault(areafield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
       0
-    else if(doc.asInstanceOf[util.Map[String, util.List[String]]].getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
+    else if(mdoc.getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
       0
-    else if(doc.asInstanceOf[util.Map[String, util.List[String]]].getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
+    else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
       0
     else
       buckets.indexWhere(
