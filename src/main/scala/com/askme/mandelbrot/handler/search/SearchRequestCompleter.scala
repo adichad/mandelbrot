@@ -45,6 +45,10 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid kw length]")
     complete(BadRequest, "invalid kw parameter size: " + searchParams.text.kw.length)
   }
+  else if(searchParams.text.kw.toLowerCase.contains("utm_")) {
+    warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid kw: utm_]")
+    complete(BadRequest, "invalid kw parameter: " + searchParams.text.kw)
+  }
   else if(searchParams.geo.area.length > int("search.area-length.max")) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid area length]")
     complete(BadRequest, "invalid area parameter size: " + searchParams.text.kw.length)
