@@ -41,6 +41,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val displayArea = (doc \ "Area").asInstanceOf[JString]
           val categories = (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)
           val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
+          val ctype = (doc \ "CustomerType").asInstanceOf[JString].toString.toInt
           val masterid = JString((doc \ "MasterID").asInstanceOf[JInt].values.toString())
 
           val labelPlace = (doc \ "LocationName").asInstanceOf[JString].values.trim
@@ -55,11 +56,11 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
 
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id)
-              .setSource(compact(render(suggestPlace(labelPlace, id, masterid, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+              .setSource(compact(render(suggestPlace(labelPlace, id, masterid, if(ctype>=350) ctype else 1, kw, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id+"-search")
-              .setSource(compact(render(suggestSearch(labelSearch, id, masterid, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
+              .setSource(compact(render(suggestSearch(labelSearch, id, masterid, if(ctype>=350) ctype else 1, city, area, coordinates, displayCity, displayArea, JArray(categories.map(JString(_))), (doc \ "DeleteFlag").asInstanceOf[JInt].values.toInt))))
           )
 
         }
@@ -109,7 +110,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
       */
   }
 
-  def suggestSearch(label: String, id: String, masterid: JValue, city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
+  def suggestSearch(label: String, id: String, masterid: JValue, ctype: Int, city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
     val payload = JArray(
       List(
         JObject(
@@ -155,11 +156,11 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
       JField("payload", payload),
       JField("deleted", JInt(deleteFlag)),
       JField("groupby", masterid),
-      JField("count", JInt(1))
+      JField("count", JInt(ctype))
     )
   }
 
-  def suggestPlace(label: String, id: String, masterid: JValue, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
+  def suggestPlace(label: String, id: String, masterid: JValue, ctype: Int, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, categories: JValue, deleteFlag: Int) = {
     val payload = JArray(
       List(
         JObject(
@@ -204,7 +205,8 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
       ),
       JField("payload", payload),
       JField("deleted", JInt(deleteFlag)),
-      JField("groupby", masterid)
+      JField("groupby", masterid),
+      JField("count", JInt(ctype))
     )
 
   }

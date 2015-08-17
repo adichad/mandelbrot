@@ -6,6 +6,7 @@ import java.util
 import com.askme.mandelbrot.server.RootServer
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.get.GetRequest
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.client.Client
@@ -56,6 +57,18 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
         val ctx = vars.get("ctx").asInstanceOf[util.Map[String, AnyRef]]
         if (ctx.containsKey("_source") && ctx.get("_source").isInstanceOf[util.Map[String, AnyRef]]) {
           val source = ctx.get("_source").asInstanceOf[util.Map[String, AnyRef]]
+          val placeID = XContentMapValues.nodeStringValue(source.get("PlaceID"), "")
+          val placeTags = esClient.get(new GetRequest(index, "placetags", placeID)).get()
+          if(placeTags.isExists) {
+            val tags = new util.ArrayList[String](placeTags.getField("PlaceTags").getValues.map(t=>analyze(esClient, index, "CuratedTagsExact", t.asInstanceOf[String]).mkString(" ")))
+            source.put("CuratedTags", tags)
+            source.put("CuratedTagsExact", tags)
+            source.put("CuratedTagsDocVal", tags)
+            source.put("CuratedTagsShingle", tags)
+            source.put("CuratedTagsAggr", tags)
+          }
+
+
 
           // media count
           val mediaCount: Int = source.get("Media").asInstanceOf[util.ArrayList[AnyRef]].size +
