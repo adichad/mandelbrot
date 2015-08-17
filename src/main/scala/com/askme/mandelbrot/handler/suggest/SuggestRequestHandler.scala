@@ -311,10 +311,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
       .setSearchType(SearchType.fromString(searchType))
-      .addSorts(sorters)
       .setFrom(0).setSize(0)
-      .setFetchSource(select.split(""","""), unselect.split(""","""))
-      .addHighlightedField("kw", 100, 2, 0)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -324,7 +321,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       ).flatten
     val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("kw", 100, 2, 0).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).param("coordfield", "targeting.coordinates")
