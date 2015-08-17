@@ -308,7 +308,7 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    //(queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6
+    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6
     // relaxed-shingle exact full matches
 
     (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 1)//7
