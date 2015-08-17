@@ -23,7 +23,7 @@ import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
+import org.elasticsearch.search.aggregations.metrics.tophits.{TopHits, TopHitsBuilder}
 import org.elasticsearch.search.sort._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -48,6 +48,7 @@ object SuggestRequestHandler extends Logging {
         case "_name" => SortBuilders.scriptSort("exactnamematch", "number").lang("native").order(SortOrder.ASC).
           param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
+        case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
         case "_distance" => SortBuilders.scriptSort("geobucket", "number").lang("native")
           .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs)
           .param("coordfield", "targeting.coordinates")
@@ -300,7 +301,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     import suggestParams.view._
     import suggestParams.target._
 
-    val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score" else "_score"
+    val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -313,16 +314,17 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .addSorts(sorters)
       .setFrom(0).setSize(0)
       .setFetchSource(select.split(""","""), unselect.split(""","""))
-
+      .addHighlightedField("kw", 100, 2, 0)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
-        Some(Terms.Order.aggregation("score", false)) ::
-        Nil
+          Some(Terms.Order.aggregation("score", false)) ::
+          Some(Terms.Order.aggregation("count", false)) ::
+          Nil
       ).flatten
     val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("toplocation").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).param("coordfield", "targeting.coordinates")
@@ -330,7 +332,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     masters.subAggregation(max("score").script("docscore").lang("native"))
-
+    masters.subAggregation(max("count").field("count"))
     search.addAggregation(masters)
   }
 
@@ -357,7 +359,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.map(h=>(h\"toplocation"\"hits"\"hits").children.map(f=>f\"_source")).flatten)
+            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.map(h=>(h\"topHit"\"hits"\"hits").children.map(f=>f\"_source" ++ f\"highlight")).flatten)
 
             val endTime = System.currentTimeMillis
             val timeTaken = endTime - startTime

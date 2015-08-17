@@ -32,7 +32,7 @@
         },
         "stopword": {
           "type": "stop",
-          "stopwords": ["the"]
+          "stopwords": ["the", "and", "in", "of"]
         },
         "word_delimiter": {
           "type": "word_delimiter"
@@ -63,7 +63,18 @@
             "men => man",
             "kidz => kid",
             "lady hostel, woman hostel, women hostel => girl hostel",
-            "men hostel, man hostel, gent hostel => boy hostel"
+            "men hostel, man hostel, gent hostel => boy hostel",
+            "10 => ten",
+            "9 => nine",
+            "8 => eight",
+            "7 => seven",
+            "6 => six",
+            "5 => five",
+            "4 => four",
+            "3 => three",
+            "2 => two",
+            "1 => one",
+            "0 => zero"
           ]
         },
         "plural_stem": {
