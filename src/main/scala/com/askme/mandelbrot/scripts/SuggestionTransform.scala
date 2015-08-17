@@ -47,10 +47,11 @@ class SuggestionTransformScript(private val esClient: Client, index: String, esT
 
           source.get("targeting").asInstanceOf[util.ArrayList[AnyRef]].foreach { t =>
             val target = t.asInstanceOf[util.Map[String, AnyRef]]
-            target.put("areadocval",
-              new util.ArrayList[String](target.get("area").asInstanceOf[util.ArrayList[AnyRef]]
-                .map(a=>analyze(esClient, index, "targeting.area", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
-            )
+            if(target.containsKey("area"))
+              target.put("areadocval",
+                new util.ArrayList[String](target.get("area").asInstanceOf[util.ArrayList[AnyRef]]
+                  .map(a=>analyze(esClient, index, "targeting.area", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
+              )
           }
         }
         // return the context
