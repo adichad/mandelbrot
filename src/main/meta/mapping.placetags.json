@@ -1,0 +1,25 @@
+{
+  "placetags": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "transform" : [
+    ],
+    "properties": {
+      "PlaceID": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "PlaceTags": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed"
+      }
+    }
+  }
+}
