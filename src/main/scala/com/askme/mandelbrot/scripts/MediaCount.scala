@@ -32,7 +32,11 @@ class MediaCount extends NativeScriptFactory {
   }
 }
 
+object MediaCountScript {
+  val emptyArray = new util.ArrayList[AnyRef]()
+}
 class MediaCountScript(private val esClient: Client, index: String, esType: String, catkws: Set[String]) extends AbstractExecutableScript with Logging {
+  import MediaCountScript._
   val vars = new util.HashMap[String, AnyRef]()
 
   override def setNextVar(name: String, value: AnyRef): Unit = {
@@ -81,7 +85,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
             val prod = p.asInstanceOf[util.Map[String, AnyRef]]
             val kwraw = prod.get("categorykeywords")
-            val kw = new util.ArrayList[String](((if(kwraw == null) new util.ArrayList[AnyRef] else kwraw.asInstanceOf[util.ArrayList[AnyRef]]))
+            val kw = new util.ArrayList[String]((if(kwraw == null) new util.ArrayList[AnyRef] else kwraw.asInstanceOf[util.ArrayList[AnyRef]])
               .map(XContentMapValues.nodeStringValue(_, "").trim)
               .filter(!_.isEmpty).map(analyze(esClient, index, "Product.categorykeywordsexact", _).mkString(" ")))
             val catkws = new util.ArrayList[AnyRef](kw)
@@ -101,9 +105,9 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
             prod.get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
               val att = a.asInstanceOf[util.Map[String, AnyRef]]
               att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
-                .map(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws)).flatten))
+                .flatMap(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws))))
             }
-            prod.get("l3category")
+            prod.put("parkedkeywordsdocval", new util.ArrayList[String](prod.getOrDefault("parkedkeywords", emptyArray).asInstanceOf[util.ArrayList[AnyRef]].map(parked=>analyze(esClient, index, "Product.parkedkeywordsexact", XContentMapValues.nodeStringValue(parked, "")).mkString(" ")).filter(!_.isEmpty)))
           }
 
           val biztypes = new util.ArrayList[String](source.get("BusinessType").asInstanceOf[util.ArrayList[AnyRef]].flatMap(bt=>XContentMapValues.nodeStringValue(bt, "").split("""[/,#]""").map(_.trim).filter(!_.isEmpty)))

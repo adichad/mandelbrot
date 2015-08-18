@@ -813,16 +813,16 @@
             "doc_values": true,
             "include_in_root": true
           },
-          "ParkedKeywords": {
+          "parkedkeywords": {
             "type": "string",
             "store": true,
             "index": "analyzed",
             "position_offset_gap": 100,
             "norms": {"enabled": false},
             "include_in_root": true,
-            "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr", "Product.categorykeywordsshingle"]
+            "copy_to": ["Product.parkedkeywordsexact", "Product.parkedkeywordsaggr", "Product.parkedkeywordsshingle"]
           },
-          "ParkedKeywordsExact": {
+          "parkedkeywordsexact": {
             "type": "string",
             "store": false,
             "index": "analyzed",
@@ -832,7 +832,7 @@
             "norms": {"enabled": false},
             "include_in_root": true
           },
-          "ParkedKeywordsShingle": {
+          "parkedkeywordsshingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
@@ -842,14 +842,14 @@
             "norms": {"enabled": false},
             "include_in_root": true
           },
-          "ParkedKeywordsAggr": {
+          "parkedkeywordsaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
             "include_in_root": true
           },
-          "ParkedKeywordsDocVal": {
+          "parkedkeywordsdocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",

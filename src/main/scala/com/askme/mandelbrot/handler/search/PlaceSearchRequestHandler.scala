@@ -54,6 +54,9 @@ object PlaceSearchRequestHandler extends Logging {
           .param("synfield", "AreaSynonymsDocVal")
           .param("skufield", "SKUAreasDocVal")
           .order(SortOrder.ASC)
+        case "_tags" => SortBuilders.scriptSort("curatedtag", "number").lang("native")
+          .param("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
+          .order(SortOrder.DESC)
         case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
         case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
         case x =>
@@ -261,6 +264,7 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessType"->1000f,
     "Product.name" -> 1000f,
     "Product.brand" -> 10000f,
+    "CuratedTags"-> 10000f,
     "Product.categorykeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
@@ -275,6 +279,7 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessTypeExact"->1000f,
     "Product.nameexact" -> 1000f,
     "Product.brandexact" -> 10000f,
+    "CuratedTagsExact"-> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
     "Product.stringattribute.answerexact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
@@ -421,7 +426,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
-    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,"+"_mc," + "_score"
+    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,_tags"+"_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -445,6 +450,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val orders: List[Terms.Order] = (
         Some(Terms.Order.aggregation("exactname", true)) ::
           (if (lat != 0.0d || lon != 0.0d || areaSlugs.size>0) Some(Terms.Order.aggregation("geo", true)) else None) ::
+          Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -464,9 +470,11 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
 
+      platinum.subAggregation(max("tags").script("curatedtag").script("native"))
       platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       platinum.subAggregation(max("score").script("docscore").lang("native"))
 
+      diamond.subAggregation(max("tags").script("curatedtag").script("native"))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
 
@@ -548,6 +556,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
           if (w.length>12) w = emptyStringArray
+          w = w.take(8)
           if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
             context.parent ! EmptyResponse("empty search criteria")
           }
