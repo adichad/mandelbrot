@@ -58,7 +58,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
         if (ctx.containsKey("_source") && ctx.get("_source").isInstanceOf[util.Map[String, AnyRef]]) {
           val source = ctx.get("_source").asInstanceOf[util.Map[String, AnyRef]]
           val placeID = XContentMapValues.nodeStringValue(source.get("PlaceID"), "")
-          val placeTags = esClient.get(new GetRequest(index, "placetags", placeID)).get()
+          val placeTags = esClient.get(new GetRequest(index, "placetags", placeID).fields("PlaceTags")).get()
           if(placeTags.isExists) {
             val tags = new util.ArrayList[String](placeTags.getField("PlaceTags").getValues.map(t=>analyze(esClient, index, "CuratedTagsExact", t.asInstanceOf[String]).mkString(" ")))
             source.put("CuratedTags", tags)
