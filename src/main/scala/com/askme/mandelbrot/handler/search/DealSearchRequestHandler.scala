@@ -205,10 +205,15 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   private var w = emptyStringArray
 
   private def buildFilter(searchParams: SearchParams): FilterBuilder = {
+    import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
 
     val finalFilter = andFilter(boolFilter.must(termFilter("Published", 1l).cache(false))).cache(false)
+
+    if (id != "" || !kwids.isEmpty) {
+      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
+    }
     // Add area filters
     val locFilter = boolFilter.cache(false)
     if (area != "") {
@@ -259,9 +264,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         import searchParams.filters._
         import searchParams.startTime
         import searchParams.req._
-        w = analyze(esClient, index, "Title", kw)
+
+        kwids = esType.split(",").map(_.trim.toUpperCase)
+        w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
-        if (w.isEmpty) {
+        if (w.isEmpty && kwids.isEmpty) {
           context.parent ! EmptyResponse("empty search criteria")
         }
         else {

@@ -86,19 +86,469 @@
         "type": "date",
         "format": "date_hour_minute_second",
         "store": true,
-        "ignore_malformed": false,
         "doc_values": true
       },
       "EndDate": {
         "type": "date",
         "format": "date_hour_minute_second",
         "store": true,
-        "ignore_malformed": false
+        "doc_values": true
       },
       "ShowOnHomePage": {
         "type": "boolean",
         "store": true,
         "doc_values": true
+      },
+      "IsFeatured": {
+        "type": "boolean",
+        "store": true,
+        "doc_values": true
+      },
+      "FeaturedStart": {
+        "type": "date",
+        "format": "date_hour_minute_second",
+        "store": true,
+        "doc_values": true
+      },
+      "FeaturedEnd": {
+        "type": "date",
+        "format": "date_hour_minute_second",
+        "store": true,
+        "doc_values": true
+      },
+      "PromotedPlaces": {
+        "type": "nested",
+        "include_in_root": true,
+        "properties": {
+          "gid": {
+            "type": "integer",
+            "store": true,
+            "index": "no"
+          },
+          "LatLong": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "normalize": true,
+            "doc_values": true
+          },
+          "City": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "City": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CityExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CityAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "norms": {"enabled": false},
+                "include_in_root": true,
+                "doc_values": true
+              }
+            }
+          },
+          "CitySynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "CitySynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CitySynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CitySynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "State": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "State": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "StateSynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "StateSynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateSynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateSynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "Country": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "Country": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountryExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountryAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "CountrySynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "CountrySynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountrySynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountrySynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          }
+        }
+      },
+      "VisiblePlaces": {
+        "type": "nested",
+        "include_in_root": true,
+        "properties": {
+          "gid": {
+            "type": "integer",
+            "store": true,
+            "index": "no"
+          },
+          "LatLong": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "normalize": true,
+            "doc_values": true
+          },
+          "City": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "City": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CityExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CityAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "norms": {"enabled": false},
+                "include_in_root": true,
+                "doc_values": true
+              }
+            }
+          },
+          "CitySynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "CitySynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CitySynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CitySynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "State": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "State": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "StateSynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "StateSynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateSynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "StateSynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "Country": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "Country": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountryExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountryAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          },
+          "CountrySynonyms": {
+            "type": "multi_field",
+            "path": "full",
+            "fields": {
+              "CountrySynonyms": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountrySynonymsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "include_in_root": true
+              },
+              "CountrySynonymsAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "include_in_root": true,
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "doc_values": true
+              }
+            }
+          }
+        }
       },
       "MetaKeywords": {
         "type": "string",
@@ -622,6 +1072,16 @@
             "type": "string",
             "store": true,
             "index": "no"
+          },
+          "LatLong": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "normalize": true,
+            "doc_values": true
           },
           "Area": {
             "type": "multi_field",
