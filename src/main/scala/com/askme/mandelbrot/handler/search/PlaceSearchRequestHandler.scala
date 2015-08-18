@@ -426,7 +426,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
-    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,_tags,"+"_mc," + "_score"
+    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,"+"_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
@@ -450,7 +450,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val orders: List[Terms.Order] = (
         Some(Terms.Order.aggregation("exactname", true)) ::
           (if (lat != 0.0d || lon != 0.0d || areaSlugs.size>0) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          Some(Terms.Order.aggregation("tags", false)) ::
+          //Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -470,11 +470,11 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
 
-      platinum.subAggregation(max("tags").script("curatedtag").script("native"))
+      //platinum.subAggregation(max("tags").script("curatedtag").script("native"))
       platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       platinum.subAggregation(max("score").script("docscore").lang("native"))
 
-      diamond.subAggregation(max("tags").script("curatedtag").script("native"))
+      //diamond.subAggregation(max("tags").script("curatedtag").script("native"))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
 
