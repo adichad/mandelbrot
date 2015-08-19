@@ -24,7 +24,7 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "Default") { (kw, city, area, id, applicableTo) =>
+            'applicableto ? "default") { (kw, city, area, id, applicableTo) =>
             val size = 20
             val offset = 0
             val source = true
