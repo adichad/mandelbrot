@@ -426,7 +426,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.view._
 
     //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
-    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,"+"_mc," + "_score"
+    val sort = (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") + "_ct,"+"_name,_tags,"+"_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
