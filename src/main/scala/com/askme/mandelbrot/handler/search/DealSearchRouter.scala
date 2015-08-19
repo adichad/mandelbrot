@@ -6,7 +6,7 @@ import akka.actor.Props
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler._
 import com.askme.mandelbrot.handler.message.IndexParams
-import com.askme.mandelbrot.handler.search.SearchRequestCompleter
+import com.askme.mandelbrot.handler.search.DealSearchRequestCompleter
 import com.askme.mandelbrot.handler.search.message._
 import com.typesafe.config.Config
 import org.json4s.jackson.JsonMethods._
@@ -23,7 +23,8 @@ case object DealSearchRouter extends Router {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
-          parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "") { (kw, city, area, id) =>
+          parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
+            'applicableto ? "Default") { (kw, city, area, id, applicableTo) =>
             val size = 20
             val offset = 0
             val source = true
@@ -39,12 +40,12 @@ case object DealSearchRouter extends Router {
             val timeoutms = 600l
             val aggbuckets = 10
             respondWithMediaType(`application/json`) {
-               ctx => context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
+               ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
                   idx = IndexParams("askme", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
-                  filters = FilterParams("", id, 0, ""), page = PageParams(size, offset),
+                  filters = DealFilterParams(id, applicableTo), page = PageParams(size, offset),
                   view = ViewParams(source, agg, aggbuckets, false, "", unselect, searchType, slugFlag, false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
