@@ -116,6 +116,14 @@
         "store": true,
         "doc_values": true
       },
+      "ApplicableTo": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "position_offset_gap": 100,
+        "norms": {"enabled": false},
+        "doc_values": true
+      },
       "PromotedPlaces": {
         "type": "nested",
         "include_in_root": true,
@@ -126,14 +134,8 @@
             "index": "no"
           },
           "LatLong": {
-            "type": "geo_point",
-            "lat_lon": true,
-            "geohash": true,
-            "geohash_precision": "1m",
-            "geohash_prefix": true,
-            "store": true,
-            "normalize": true,
-            "doc_values": true
+            "type": "object",
+            "enabled": false
           },
           "City": {
             "type": "multi_field",
@@ -343,14 +345,8 @@
             "index": "no"
           },
           "LatLong": {
-            "type": "geo_point",
-            "lat_lon": true,
-            "geohash": true,
-            "geohash_precision": "1m",
-            "geohash_prefix": true,
-            "store": true,
-            "normalize": true,
-            "doc_values": true
+            "type": "object",
+            "enabled": false
           },
           "City": {
             "type": "multi_field",
@@ -1074,14 +1070,8 @@
             "index": "no"
           },
           "LatLong": {
-            "type": "geo_point",
-            "lat_lon": true,
-            "geohash": true,
-            "geohash_precision": "1m",
-            "geohash_prefix": true,
-            "store": true,
-            "normalize": true,
-            "doc_values": true
+            "type": "object",
+            "enabled": false
           },
           "Area": {
             "type": "multi_field",

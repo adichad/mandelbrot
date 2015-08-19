@@ -6,7 +6,7 @@ import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
-import com.askme.mandelbrot.handler.search.message.{SearchResult, SearchParams}
+import com.askme.mandelbrot.handler.search.message.{SearchResult, DealSearchParams}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -48,8 +48,8 @@ object DealSearchRequestHandler extends Logging {
   }
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
-  private case class WrappedResponse(searchParams: SearchParams, result: SearchResponse, relaxLevel: Int)
-  private case class ReSearch(searchParams: SearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
+  private case class WrappedResponse(searchParams: DealSearchParams, result: SearchResponse, relaxLevel: Int)
+  private case class ReSearch(searchParams: DealSearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
     if(word.length > 8 && fuzzy)
@@ -204,42 +204,47 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   private var kwids: Array[String] = emptyStringArray
   private var w = emptyStringArray
 
-  private def buildFilter(searchParams: SearchParams): FilterBuilder = {
+  private def buildFilter(searchParams: DealSearchParams): FilterBuilder = {
     import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
 
-    val finalFilter = andFilter(boolFilter.must(termFilter("Published", 1l).cache(false))).cache(false)
+    val finalFilter = andFilter().cache(false)
 
-    if (id != "" || !kwids.isEmpty) {
-      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
-    }
-    // Add area filters
-    val locFilter = boolFilter.cache(false)
-    if (area != "") {
-      val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-      areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      finalFilter.add(locFilter)
-    }
-
-    finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
-    if (city != "") {
-      val cityFilter = boolFilter.cache(false)
-      city.split( """,""").map(analyze(esClient, index, "Locations.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termFilter("Locations.City", c).cache(false))
-        cityFilter.should(termFilter("Locations.CitySynonyms", c).cache(false))
+    if (!kwids.isEmpty) {
+      finalFilter.add(idsFilter(esType).addIds(kwids: _*))
+    } else {
+      finalFilter.add(boolFilter.must(termFilter("Published", 1l).cache(false)))
+      if (applicableTo != "") {
+        finalFilter.add(termFilter("ApplicableTo", applicableTo).cache(false))
+      }
+      // Add area filters
+      val locFilter = boolFilter.cache(false)
+      if (area != "") {
+        val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+        areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+        areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+        areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+        areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+        finalFilter.add(locFilter)
       }
 
-      if (cityFilter.hasClauses)
-        finalFilter.add(cityFilter)
+      finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
+      if (city != "") {
+        val cityFilter = boolFilter.cache(false)
+        city.split( """,""").map(analyze(esClient, index, "Locations.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+          cityFilter.should(termFilter("Locations.City", c).cache(false))
+          cityFilter.should(termFilter("Locations.CitySynonyms", c).cache(false))
+        }
+
+        if (cityFilter.hasClauses)
+          finalFilter.add(cityFilter)
+      }
     }
     finalFilter
   }
 
-  private def buildSearch(searchParams: SearchParams): SearchRequestBuilder = {
+  private def buildSearch(searchParams: DealSearchParams): SearchRequestBuilder = {
     import searchParams.idx._
     import searchParams.limits._
     import searchParams.page._
@@ -257,7 +262,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   }
 
   override def receive = {
-    case searchParams: SearchParams =>
+    case searchParams: DealSearchParams =>
       try {
         import searchParams.text._
         import searchParams.idx._
@@ -265,10 +270,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         import searchParams.startTime
         import searchParams.req._
 
-        kwids = esType.split(",").map(_.trim.toUpperCase)
+        kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
-        if (w.isEmpty && kwids.isEmpty) {
+        // If we are looking for Idea, Airtel etc deal then do not make w mandatory.
+        if (w.isEmpty && kwids.isEmpty && applicableTo == "Default") {
           context.parent ! EmptyResponse("empty search criteria")
         }
         else {

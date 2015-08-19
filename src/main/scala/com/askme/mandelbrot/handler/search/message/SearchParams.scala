@@ -8,3 +8,6 @@ import com.askme.mandelbrot.handler.message.{IndexParams, RestMessage}
  */
 case class SearchParams(req: RequestParams, idx: IndexParams, text: TextParams, geo: GeoParams, filters: FilterParams, page: PageParams, view: ViewParams, limits: LimitParams,
                         startTime: Long) extends RestMessage
+
+case class DealSearchParams(req: RequestParams, idx: IndexParams, text: TextParams, geo: GeoParams, filters: DealFilterParams, page: PageParams, view: ViewParams, limits: LimitParams,
+                        startTime: Long) extends RestMessage
