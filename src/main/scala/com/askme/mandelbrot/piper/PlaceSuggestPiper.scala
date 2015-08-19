@@ -41,7 +41,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val displayArea = (doc \ "Area").asInstanceOf[JString]
           val categories = (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)
           val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
-          val ctype = (doc \ "CustomerType").asInstanceOf[JString].toString.toInt
+          val ctype = (doc \ "CustomerType").asInstanceOf[JInt].values.toInt
           val masterid = JString((doc \ "MasterID").asInstanceOf[JInt].values.toString())
 
           val labelPlace = (doc \ "LocationName").asInstanceOf[JString].values.trim
