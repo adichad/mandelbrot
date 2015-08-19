@@ -266,6 +266,7 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.brand" -> 10000f,
     "CuratedTags"-> 10000f,
     "Product.categorykeywords" -> 10000000f,
+    "Product.parkedkeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"Address"->1f)
@@ -281,6 +282,7 @@ object PlaceSearchRequestHandler extends Logging {
     "Product.brandexact" -> 10000f,
     "CuratedTagsExact"-> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
+    "Product.parkedkeywordsexact"->10000000000f,
     "Product.stringattribute.answerexact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"AddressExact"->1f)
