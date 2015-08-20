@@ -216,6 +216,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     } else {
       finalFilter.add(boolFilter.must(termFilter("Published", 1l).cache(false)))
       if (applicableTo != "") {
+        info("Adding the applicable to flag |" + applicableTo + "|")
         finalFilter.add(termFilter("ApplicableTo", applicableTo).cache(false))
       }
       // Add area filters
