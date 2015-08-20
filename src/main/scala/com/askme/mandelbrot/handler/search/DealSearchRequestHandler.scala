@@ -274,7 +274,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
         // If we are looking for Idea, Airtel etc deal then do not make w mandatory.
-        if (w.isEmpty && kwids.isEmpty && applicableTo == "default") {
+        if (w.isEmpty && kwids.isEmpty && applicableTo == "") {
           context.parent ! EmptyResponse("empty search criteria")
         }
         else {

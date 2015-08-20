@@ -21,12 +21,17 @@
       "MerchantName": {
         "type": "string",
         "store": true,
-        "index": "not_analyzed"
+        "index": "analyzed"
       },
       "ContactNO": {
         "type": "string",
         "store": true,
         "index": "not_analyzed"
+      },
+      "USSDMessage": {
+        "type": "string",
+        "store": true,
+        "index": "no"
       },
       "Title": {
         "type": "multi_field",
