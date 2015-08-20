@@ -1078,6 +1078,11 @@
             "type": "object",
             "enabled": false
           },
+          "PinCode": {
+            "type": "string",
+            "store": true,
+            "index": "no"
+          },
           "Area": {
             "type": "multi_field",
             "path": "full",
