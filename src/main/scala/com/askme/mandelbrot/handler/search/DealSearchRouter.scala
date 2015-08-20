@@ -24,7 +24,7 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "default") { (kw, city, area, id, applicableTo) =>
+            'applicableto ? "") { (kw, city, area, id, applicableTo) =>
             val size = 20
             val offset = 0
             val source = true
@@ -42,7 +42,7 @@ case object DealSearchRouter extends Router {
             respondWithMediaType(`application/json`) {
                ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
-                  idx = IndexParams("askme", "deal"),
+                  idx = IndexParams("askmedeal", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
                   filters = DealFilterParams(id, applicableTo), page = PageParams(size, offset),
