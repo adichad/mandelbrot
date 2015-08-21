@@ -320,6 +320,9 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .addSorts(sorters)
       .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(query)
 
+    val options = new java.util.HashMap[String, AnyRef]
+    options.put("force_source", true)
+    
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("score", false)) ::
@@ -328,7 +331,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.kw*").setHighlighterQuery(query).setHighlighterOptions(Map[String, AnyRef]("force_source"->true)).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.kw*").setHighlighterQuery(query).setHighlighterOptions(options).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
