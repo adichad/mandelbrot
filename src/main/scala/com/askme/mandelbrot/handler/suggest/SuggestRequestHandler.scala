@@ -130,7 +130,7 @@ object SuggestRequestHandler extends Logging {
       //var i = 100000
       val slop = if(sloppy) len/3 else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost) // * math.max(1,i)
         shingle.foreach(nearQuery.clause)
         fieldQuery1.should(nearQuery)
         //i /= 10
@@ -267,8 +267,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
       query
-        .add(shingleSpan("targeting.kw.keyword", 1e11.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
-        .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e10.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
+        .add(shingleSpan("targeting.kw.keyword", 1e15.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
+        .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e14.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
         .add(shingleSpan("targeting.kw.shingle", 1e9.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("3"))
         .add(shingleSpan("targeting.kw.token", 1e8.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4"))
         .add(shingleSpan("targeting.kw.shingle_nospace", 1e7.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("5"))
@@ -278,8 +278,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
         .add(shingleSpan("targeting.kw.keyword_ngram", 1e3.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("9"))
         .add(shingleSpan("targeting.kw.keyword_ngram", 1e2.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("10"))
         .add(shingleSpan("targeting.kw.shingle_nospace_ngram", 1e1.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("11"))
-        .add(shingleSpan("targeting.label.keyword", 1e18.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_1"))
-        .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e17.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_2"))
+        .add(shingleSpan("targeting.label.keyword", 1e25.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_1"))
+        .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e24.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_2"))
         .add(shingleSpan("targeting.label.shingle", 1e16.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_3"))
         .add(shingleSpan("targeting.label.token", 1e15.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_4"))
         .add(shingleSpan("targeting.label.shingle_nospace", 1e14.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_5"))
@@ -289,7 +289,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
         .add(shingleSpan("targeting.label.keyword_ngram", 1e10.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
         .add(shingleSpan("targeting.label.keyword_ngram", 1e9.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
         .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e8.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
-    
+
 
   }
 
