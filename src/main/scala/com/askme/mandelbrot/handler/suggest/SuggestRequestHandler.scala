@@ -321,8 +321,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(query)
 
     val options = new java.util.HashMap[String, AnyRef]
-    options.put("force_source", true)
-    
+    options.put("force_source", new java.lang.Boolean(true))
+
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("score", false)) ::
