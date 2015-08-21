@@ -90,6 +90,7 @@
           "kw": {
             "type": "multi_field",
             "path": "full",
+            "include_in_root": true,
             "fields": {
               "kw": {
                 "type": "string",
@@ -224,6 +225,7 @@
           "label": {
             "type": "multi_field",
             "path": "full",
+            "include_in_root": true,
             "fields": {
               "label": {
                 "type": "string",

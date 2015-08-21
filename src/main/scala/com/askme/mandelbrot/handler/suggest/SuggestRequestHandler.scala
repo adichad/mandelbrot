@@ -265,7 +265,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val wordskwng = analyze(esClient, index, "targeting.kw.keyword_ngram", kw)
     val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", kw)
 
-    nestedQuery("targeting",
+
       query
         .add(shingleSpan("targeting.kw.keyword", 1e11.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
         .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e10.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
@@ -289,7 +289,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
         .add(shingleSpan("targeting.label.keyword_ngram", 1e10.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
         .add(shingleSpan("targeting.label.keyword_ngram", 1e9.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
         .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e8.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
-    )
+    
 
   }
 
