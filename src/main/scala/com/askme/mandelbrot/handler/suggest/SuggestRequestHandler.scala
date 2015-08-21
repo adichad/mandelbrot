@@ -278,17 +278,17 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
         .add(shingleSpan("targeting.kw.keyword_ngram", 1e3.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("9"))
         .add(shingleSpan("targeting.kw.keyword_ngram", 1e2.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("10"))
         .add(shingleSpan("targeting.kw.shingle_nospace_ngram", 1e1.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("11"))
-        .add(shingleSpan("targeting.label.keyword", 1e22.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_1"))
-        .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e21.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_2"))
-        .add(shingleSpan("targeting.label.shingle", 1e20.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_3"))
-        .add(shingleSpan("targeting.label.token", 1e19.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_4"))
-        .add(shingleSpan("targeting.label.shingle_nospace", 1e18.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_5"))
-        .add(shingleSpan("targeting.label.shingle_edge_ngram", 1e17.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_6"))
-        .add(shingleSpan("targeting.label.token_edge_ngram", 1e16.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_7"))
-        .add(shingleSpan("targeting.label.shingle_nospace_edge_ngram", 1e15.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_8"))
-        .add(shingleSpan("targeting.label.keyword_ngram", 1e14.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
-        .add(shingleSpan("targeting.label.keyword_ngram", 1e13.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
-        .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e12.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
+        .add(shingleSpan("targeting.label.keyword", 1e18.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_1"))
+        .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e17.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_2"))
+        .add(shingleSpan("targeting.label.shingle", 1e16.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_3"))
+        .add(shingleSpan("targeting.label.token", 1e15.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_4"))
+        .add(shingleSpan("targeting.label.shingle_nospace", 1e14.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_5"))
+        .add(shingleSpan("targeting.label.shingle_edge_ngram", 1e13.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_6"))
+        .add(shingleSpan("targeting.label.token_edge_ngram", 1e12.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_7"))
+        .add(shingleSpan("targeting.label.shingle_nospace_edge_ngram", 1e11.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_8"))
+        .add(shingleSpan("targeting.label.keyword_ngram", 1e10.toInt, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
+        .add(shingleSpan("targeting.label.keyword_ngram", 1e9.toInt, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
+        .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e8.toInt, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
     )
 
   }
@@ -311,7 +311,11 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
       .setSearchType(SearchType.fromString(searchType))
-      .setFrom(0).setSize(0)
+      .setFrom(offset).setSize(size)
+      .setFetchSource(select.split(""","""), unselect.split(""","""))
+      .addHighlightedField("targeting.label")
+      .addHighlightedField("targeting.kw")
+      .addSorts(sorters)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -350,7 +354,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
         val search = buildSearch(suggestParams)
 
-        search.setQuery(filteredQuery(query, finalFilter))
+        search.setQuery(filteredQuery(query, finalFilter)).setHighlighterQuery(query)
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
