@@ -34,11 +34,11 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: 
   import GeoBucketScript._
   override def runAsLong: Long = {
     val mdoc = doc.asInstanceOf[util.Map[String, util.AbstractList[String]]]
-    if(mdoc.getOrDefault(areafield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
+    if(mdoc.getOrDefault(areafield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
-    else if(mdoc.getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
+    else if(mdoc.getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
-    else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains(_)))
+    else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
     else
       buckets.indexWhere(

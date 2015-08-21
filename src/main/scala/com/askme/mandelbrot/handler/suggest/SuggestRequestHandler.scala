@@ -41,18 +41,14 @@ object SuggestRequestHandler extends Logging {
   val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
 
-  private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = "", w: Array[String]) = {
+  private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areas: String = "") = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map(
       _ match {
-        case "_name" => SortBuilders.scriptSort("exactnamematch", "number").lang("native").order(SortOrder.ASC).
-          param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
         case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
-        case "_distance" => SortBuilders.scriptSort("geobucket", "number").lang("native")
-          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs)
-          .param("coordfield", "targeting.coordinates")
-          .param("areafield", "targeting.areadocval").order(SortOrder.ASC)
+        case "_distance" => SortBuilders.scriptSort("geobucketsuggest", "number").lang("native")
+          .param("lat", lat).param("lon", lon).param("areas", areas)
         case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
         case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
         case x =>
@@ -123,7 +119,7 @@ object SuggestRequestHandler extends Logging {
   private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(x.size>6 && fuzzy)
+      if(x.length>6 && fuzzy)
         spanMultiTermQueryBuilder(
           fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>10) Fuzziness.TWO else Fuzziness.ONE ))
       else
@@ -206,8 +202,7 @@ object SuggestRequestHandler extends Logging {
 class SuggestRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import SuggestRequestHandler._
   private val esClient: Client = serverContext.esClient
-  private var w = emptyStringArray
-  private var areaSlugs: String = ""
+  private var areas: String = ""
 
   private def buildFilter(suggestParams: SuggestParams): FilterBuilder = {
     import suggestParams.target._
@@ -230,7 +225,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     if (area != "") {
       val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "targeting.area", _).mkString(" ")).filter(!_.isEmpty)
       areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areaSlugs = areas.map(analyze(esClient, index, "targeting.area", _).mkString(" ")).mkString("#")
+      this.areas = areas.map(analyze(esClient, index, "targeting.area", _).mkString(" ")).mkString("#")
     }
 
     if (lat != 0.0d || lon != 0.0d)
@@ -313,7 +308,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     import suggestParams.target._
 
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
-    val sorters = getSort(sort, lat, lon, areaSlugs, w)
+    val sorters = getSort(sort, lat, lon, areas)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
@@ -330,13 +325,12 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           Some(Terms.Order.aggregation("count", false)) ::
           Nil
       ).flatten
-    val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
+    val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.kw.*", 100, 2, 0).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.label", 100, 1, 0).addHighlightedField("targeting.kw", 100, 1, 0).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
-      masters.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).param("coordfield", "targeting.coordinates")
-        .param("areafield", "targeting.areadocval"))
+      masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
     }
 
     masters.subAggregation(max("score").script("docscore").lang("native"))
@@ -354,10 +348,9 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       import suggestParams.req._
       import suggestParams.limits._
       import suggestParams.view._
+      import suggestParams.page._
       try {
-        w = analyze(esClient, index, "targeting.kw", kw)
-        if (w.length>12) w = emptyStringArray
-        val query = if (w.length > 0) buildQuery(suggestParams) else matchAllQuery()
+        val query = if (kw.length < 20) buildQuery(suggestParams) else matchAllQuery()
         // filters
         val finalFilter = buildFilter(suggestParams)
 
@@ -367,7 +360,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.map(h=>(h\"topHit"\"hits"\"hits").children.map(f=>f\"_source" ++ f\"highlight")).flatten)
+            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.drop(offset).flatMap(h=>(h\"topHit"\"hits"\"hits").children.map(f=>f\"_source" ++ f\"highlight")))
 
             val endTime = System.currentTimeMillis
             val timeTaken = endTime - startTime
