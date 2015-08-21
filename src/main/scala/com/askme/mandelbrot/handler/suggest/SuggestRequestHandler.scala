@@ -315,6 +315,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setFetchSource(select.split(""","""), unselect.split(""","""))
       .addHighlightedField("targeting.label")
       .addHighlightedField("targeting.kw")
+      .setHighlighterForceSource(true)
+      .addFields(select.split(""","""):_*)
       .addSorts(sorters)
 
     val orders: List[Terms.Order] = (
