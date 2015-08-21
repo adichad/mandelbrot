@@ -51,7 +51,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
             try {
               val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+idField+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
               val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
-              val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
+              val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + ", \"host\": " + "\"" + System.getenv("HOSTNAME") + "\"" + "}"
               val resp = parse(respStr)
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
