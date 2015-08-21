@@ -93,7 +93,7 @@
             "fields": {
               "kw": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
@@ -101,7 +101,7 @@
               },
               "keyword": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
@@ -111,7 +111,7 @@
               },
               "keyword_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
@@ -121,7 +121,7 @@
               },
               "keyword_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
@@ -131,7 +131,7 @@
               },
               "shingle": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
@@ -141,7 +141,7 @@
               },
               "shingle_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
@@ -151,7 +151,7 @@
               },
               "shingle_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
@@ -161,7 +161,7 @@
               },
               "shingle_nospace": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
@@ -171,7 +171,7 @@
               },
               "shingle_nospace_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
@@ -181,7 +181,7 @@
               },
               "shingle_nospace_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
@@ -191,7 +191,7 @@
               },
               "token": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
@@ -201,7 +201,7 @@
               },
               "token_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
@@ -211,7 +211,7 @@
               },
               "token_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
@@ -227,7 +227,7 @@
             "fields": {
               "label": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "position_offset_gap": 100,
                 "norms": {"enabled": false},
@@ -235,7 +235,7 @@
               },
               "keyword": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
@@ -245,7 +245,7 @@
               },
               "keyword_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
@@ -255,7 +255,7 @@
               },
               "keyword_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
@@ -265,7 +265,7 @@
               },
               "shingle": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
@@ -275,7 +275,7 @@
               },
               "shingle_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
@@ -285,7 +285,7 @@
               },
               "shingle_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
@@ -295,7 +295,7 @@
               },
               "shingle_nospace": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
@@ -305,7 +305,7 @@
               },
               "shingle_nospace_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
@@ -315,7 +315,7 @@
               },
               "shingle_nospace_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
@@ -325,7 +325,7 @@
               },
               "token": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
@@ -335,7 +335,7 @@
               },
               "token_edge_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
@@ -345,7 +345,7 @@
               },
               "token_ngram": {
                 "type": "string",
-                "store": false,
+                "store": true,
                 "index": "analyzed",
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
