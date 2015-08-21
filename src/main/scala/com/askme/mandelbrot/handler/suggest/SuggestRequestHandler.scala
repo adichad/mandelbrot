@@ -304,6 +304,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
+    val query = if (kw.length < 20) buildQuery(suggestParams) else matchAllQuery()
+
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
@@ -316,6 +318,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .addHighlightedField("targeting.kw*")
       .setHighlighterForceSource(true)
       .addSorts(sorters)
+      .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(query)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -325,7 +328,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.kw*").setHighlighterOptions(Map[String, AnyRef]("force_source"->true)).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).addHighlightedField("targeting.kw*").setHighlighterQuery(query).setHighlighterOptions(Map[String, AnyRef]("force_source"->true)).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
@@ -348,13 +351,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       import suggestParams.view._
       import suggestParams.page._
       try {
-        val query = if (kw.length < 20) buildQuery(suggestParams) else matchAllQuery()
-        // filters
-        val finalFilter = buildFilter(suggestParams)
 
         val search = buildSearch(suggestParams)
 
-        search.setQuery(filteredQuery(query, finalFilter)).setHighlighterQuery(matchQuery("targeting.kw", kw))
+
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
