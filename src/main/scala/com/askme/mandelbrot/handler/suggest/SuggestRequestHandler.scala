@@ -275,9 +275,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", kw)
 
 
+
     query
-      .add(shingleSpan("targeting.kw.keyword", 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
-      .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
+      .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
+      .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
       .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("3"))
       .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4"))
       .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("5"))
