@@ -45,10 +45,10 @@ object SuggestRequestHandler extends Logging {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map(
       _ match {
-        case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
+        case "_score" => SortBuilders.scriptSort("docscoreexponent", "number").lang("native").order(SortOrder.DESC)
         case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
         case "_distance" => SortBuilders.scriptSort("geobucketsuggest", "number").lang("native")
-          .param("lat", lat).param("lon", lon).param("areas", areas)
+          .param("lat", lat).param("lon", lon).param("areas", areas).order(SortOrder.ASC)
         case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
         case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
         case x =>
