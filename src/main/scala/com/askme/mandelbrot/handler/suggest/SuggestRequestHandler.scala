@@ -361,7 +361,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
     }
 
-    masters.subAggregation(max("score").script("docscore").lang("native"))
+    masters.subAggregation(max("score").script("docscoreexponent").lang("native"))
     masters.subAggregation(sum("count").field("count"))
     search.addAggregation(masters)
   }
