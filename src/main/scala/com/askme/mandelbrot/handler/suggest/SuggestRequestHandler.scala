@@ -299,6 +299,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .add(shingleSpan("targeting.label.keyword_ngram", 1e9f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
       .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e8f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
 
+    val highlightQuery = termsQuery("targeting.label.keyword_ngram",wordskwng:_*)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
@@ -313,7 +314,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       //.setHighlighterForceSource(true)
       .setHighlighterType("plain")
       .addSorts(sorters)
-      .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(query)
+      .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(highlightQuery)
 
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
@@ -326,7 +327,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).setHighlighterType("plain").addHighlightedField("targeting.kw.keyword_ngram").setHighlighterQuery(query).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).setHighlighterType("plain").addHighlightedField("targeting.kw.keyword_ngram").setHighlighterQuery(highlightQuery).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
