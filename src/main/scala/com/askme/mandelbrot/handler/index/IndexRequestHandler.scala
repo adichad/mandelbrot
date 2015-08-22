@@ -44,7 +44,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
           )
         }
         val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
-        piperseq.foreach(_ pipe json)
+
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
@@ -61,6 +61,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               else {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
                 info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + respStr + "]")
+                piperseq.foreach(_ pipe json)
                 completer ! IndexSuccessResult(resp)
               }
             } catch {
