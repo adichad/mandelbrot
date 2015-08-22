@@ -29,8 +29,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
-  override def receive = {
-    case json: JValue =>
+  override def pipe(json: JValue): Unit = {
       val startTime = System.currentTimeMillis()
       try {
         val bulkRequest = RootServer.defaultContext.esClient.prepareBulk

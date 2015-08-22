@@ -29,7 +29,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         val json = parse(indexParams.data.data)
 
         val idField = string("mappings."+indexParams.idx.esType+".id")
-        val pipers = actors(context, "mappings."+indexParams.idx.esType+".pipers")
+        val piperseq = pipers("mappings."+indexParams.idx.esType+".pipers")
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
           val idraw = doc \ idField
@@ -44,7 +44,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
           )
         }
         val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
-        pipers.foreach(_ ! json)
+        piperseq.foreach(_ pipe json)
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {

@@ -3,6 +3,7 @@ package com.askme.mandelbrot
 import java.util.{Properties, List, Map}
 
 import akka.actor.{Props, ActorContext, ActorRef}
+import com.askme.mandelbrot.piper.Piper
 import com.typesafe.config.{Config, ConfigFactory}
 import grizzled.slf4j.Logging
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -39,11 +40,11 @@ trait Configurable extends Logging {
   protected[this] def obj[T <: Configurable](part: String): T = obj[T](conf(part))
   protected[this] def objs[T <: Configurable](part: String): Seq[T] = confs(part).map(obj(_).asInstanceOf[T])
 
-  protected[this] def actor(context: ActorContext, conf: Config): ActorRef =
-    context.actorOf(Props(Class.forName(conf getString "type"), conf))
+  protected[this] def piper(conf: Config): Piper =
+    Class.forName(conf getString "type").getConstructor(classOf[Config]).newInstance(conf).asInstanceOf[Piper]
 
-  protected[this] def actor(context: ActorContext, part: String): ActorRef = actor(context, conf(part))
-  protected[this] def actors(context: ActorContext, part: String): Seq[ActorRef] = confs(part).map(actor(context, _))
+  protected[this] def piper(part: String): Piper = piper(conf(part))
+  protected[this] def pipers(part: String): Seq[Piper] = confs(part).map(piper)
 
   protected[this] def keys(part: String) = (config getAnyRef part).asInstanceOf[Map[String, Any]].keySet
   protected[this] def vals[T](part: String) = (config getAnyRef part).asInstanceOf[Map[String, T]].values
