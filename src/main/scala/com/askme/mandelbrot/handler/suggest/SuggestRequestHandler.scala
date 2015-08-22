@@ -314,7 +314,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       //.setHighlighterForceSource(true)
       .setHighlighterType("fast-vector-highlighter")
       .addSorts(sorters)
-      .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(query).setHighlighterFragmenter("span")
+      .setQuery(filteredQuery(query, buildFilter(suggestParams))).setHighlighterQuery(highlightQuery).setHighlighterFragmenter("span")
 
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
@@ -327,7 +327,18 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
-      .subAggregation(topHits("topHit").setFetchSource(select.split(""","""), unselect.split(""",""")).setHighlighterType("fast-vector-highlighter").setHighlighterFragmenter("span").addHighlightedField("targeting.kw.keyword_ngram").setHighlighterQuery(query).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      .subAggregation(
+        topHits("topHit")
+          .setFetchSource(select.split(""","""), unselect.split(""","""))
+          .setHighlighterType("fast-vector-highlighter")
+          .setHighlighterFragmenter("span")
+          .addHighlightedField("targeting.kw.keyword_ngram")
+          .setHighlighterQuery(highlightQuery)
+          .setSize(1)
+          .setExplain(explain)
+          .setTrackScores(true)
+          .addSorts(sorters)
+      )
 
     if(lat != 0.0d || lon !=0.0d) {
       masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
