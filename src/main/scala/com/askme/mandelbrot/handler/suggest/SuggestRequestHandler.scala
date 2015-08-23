@@ -331,7 +331,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .subAggregation(
         topHits("topHit")
           .setFetchSource(select.split(""","""), unselect.split(""","""))
-          .setHighlighterType("plain")
+          .setHighlighterType("postings-highlighter")
           .setHighlighterRequireFieldMatch(true)
           .addHighlightedField("targeting.kw.keyword_ngram", 100, 5, 0)
           .addHighlightedField("targeting.kw.shingle_nospace_ngram", 100, 5, 0)
