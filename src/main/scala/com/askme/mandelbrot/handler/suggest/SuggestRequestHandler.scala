@@ -316,9 +316,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
 
-    val hquery = disMaxQuery()
-      .add(termsQuery("targeting.kw.keyword_ngram", wordskw:_*))
-      .add(termsQuery("targeting.kw.shingle_nospace_ngram", wordsshnspng:_*))
+    val hquery = queryStringQuery(kw).defaultField("targeting.kw.highlight")
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -333,8 +331,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           .setFetchSource(select.split(""","""), unselect.split(""","""))
           .setHighlighterType("postings-highlighter")
           .setHighlighterRequireFieldMatch(true)
-          .addHighlightedField("targeting.kw.keyword_ngram", 100, 5, 0)
-          .addHighlightedField("targeting.kw.shingle_nospace_ngram", 100, 5, 0)
+          .addHighlightedField("targeting.kw.highlight", 100, 5, 0)
           .setHighlighterQuery(hquery)
           .setSize(1)
           .setExplain(explain)
