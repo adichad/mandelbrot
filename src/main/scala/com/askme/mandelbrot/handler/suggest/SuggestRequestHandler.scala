@@ -316,7 +316,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
 
-    val hquery = queryStringQuery(kw).defaultField("targeting.kw.highlight")
+    val hquery = termsQuery("targeting.kw.highlight", wordskw:_*)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
