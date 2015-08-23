@@ -91,6 +91,17 @@
             "type": "multi_field",
             "path": "full",
             "fields": {
+              "highlight": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "index_analyzer": "highlighting_analyzer_index",
+                "search_analyzer": "highlighting_analyzer_search",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "term_vector" : "with_positions_offsets",
+                "index_options": "offsets"
+              },
               "kw": {
                 "type": "string",
                 "store": true,
@@ -238,6 +249,17 @@
             "type": "multi_field",
             "path": "full",
             "fields": {
+              "highlight": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "index_analyzer": "highlighting_analyzer_index",
+                "search_analyzer": "highlighting_analyzer_search",
+                "position_offset_gap": 100,
+                "norms": {"enabled": false},
+                "term_vector" : "with_positions_offsets",
+                "index_options": "offsets"
+              },
               "label": {
                 "type": "string",
                 "store": true,

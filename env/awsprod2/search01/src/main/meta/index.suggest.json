@@ -21,6 +21,14 @@
           "type":"html_strip"
         }
       },
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": "1",
+          "max_gram": "15",
+          "token_chars": [ "letter", "digit" ]
+        }
+      },
       "filter" : {
         "light_stemmer": {
           "type": "stemmer",
@@ -127,6 +135,16 @@
         }
       },
       "analyzer": {
+        "highlighting_analyzer_index": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [ "lowercase" ]
+        },
+        "highlighting_analyzer_search": {
+          "type": "custom",
+          "tokenizer": "keyword",
+          "filter": [ "lowercase" ]
+        },
         "keyword_analyzer": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
