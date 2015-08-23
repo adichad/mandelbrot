@@ -299,9 +299,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
       .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
       .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
-      .add(termsQuery("targeting.kw.highlight", wordskw:_*))
-    //val highlightQuery = termsQuery("targeting.label.keyword_edge_ngram",wordskw:_*)
-
+    
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
@@ -316,7 +314,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
 
-    val hquery = termsQuery("targeting.kw.highlight", wordskw:_*)
+    val hquery = matchQuery("targeting.kw.highlight", kw)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -329,7 +327,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .subAggregation(
         topHits("topHit")
           .setFetchSource(select.split(""","""), unselect.split(""","""))
-          .setHighlighterType("plain")
+          .setHighlighterType("fast-vector-highlighter")
           .addHighlightedField("targeting.kw.highlight", 100, 5, 0)
           .setHighlighterQuery(hquery)
           .setSize(1)
