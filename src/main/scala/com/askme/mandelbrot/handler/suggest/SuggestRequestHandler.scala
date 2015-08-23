@@ -329,8 +329,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .subAggregation(
         topHits("topHit")
           .setFetchSource(select.split(""","""), unselect.split(""","""))
-          .setHighlighterType("postings-highlighter")
-          .setHighlighterRequireFieldMatch(true)
+          .setHighlighterType("fast-vector-highlighter")
           .addHighlightedField("targeting.kw.highlight", 100, 5, 0)
           .setHighlighterQuery(hquery)
           .setSize(1)
