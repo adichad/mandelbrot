@@ -299,7 +299,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
       .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
       .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
-
+      .add(termsQuery("targeting.kw.highlight", wordskw:_*))
     //val highlightQuery = termsQuery("targeting.label.keyword_edge_ngram",wordskw:_*)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
