@@ -316,6 +316,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val options = new java.util.HashMap[String, AnyRef]
     options.put("force_source", new java.lang.Boolean(true))
 
+    val hquery = disMaxQuery()
+      .add(termsQuery("targeting.kw.keyword_ngram", wordskw:_*))
+      .add(termsQuery("targeting.kw.shingle_nospace_ngram", wordsshnspng:_*))
+
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("score", false)) ::
@@ -327,31 +331,11 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .subAggregation(
         topHits("topHit")
           .setFetchSource(select.split(""","""), unselect.split(""","""))
-          /*
-          .setHighlighterType("fast-vector-highlighter")
-          .setHighlighterNoMatchSize()
+          .setHighlighterType("plain")
           .setHighlighterRequireFieldMatch(true)
-          .addHighlightedField("targeting.label.keyword", 100, 1, 0)
-          .addHighlightedField("targeting.label.keyword_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.label.shingle", 100, 1, 0)
-          .addHighlightedField("targeting.label.token", 100, 1, 0)
-          .addHighlightedField("targeting.label.shingle_nospace", 100, 1, 0)
-          .addHighlightedField("targeting.label.shingle_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.label.token_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.label.shingle_nospace_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.label.keyword_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.label.shingle_nospace_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.kw.keyword", 100, 1, 0)
-          .addHighlightedField("targeting.kw.keyword_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.kw.shingle", 100, 1, 0)
-          .addHighlightedField("targeting.kw.token", 100, 1, 0)
-          .addHighlightedField("targeting.kw.shingle_nospace", 100, 1, 0)
-          .addHighlightedField("targeting.kw.shingle_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.kw.token_edge_ngram", 100, 1, 0)
-          .addHighlightedField("targeting.kw.shingle_nospace_edge_ngram", 100, 1, 0)
           .addHighlightedField("targeting.kw.keyword_ngram", 100, 1, 0)
           .addHighlightedField("targeting.kw.shingle_nospace_ngram", 100, 1, 0)
-          */
+          .setHighlighterQuery(hquery)
           .setSize(1)
           .setExplain(explain)
           .setTrackScores(true)
