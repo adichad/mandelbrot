@@ -119,9 +119,9 @@ object SuggestRequestHandler extends Logging {
   private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
-      if(x.length>6 && fuzzy)
+      if(x.length>3 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>10) Fuzziness.TWO else Fuzziness.ONE ))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>8) Fuzziness.TWO else Fuzziness.ONE ))
       else
         spanTermQuery(field, x)
     )
@@ -278,11 +278,17 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
     query
       .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
+      .add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
       .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
+      .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
       .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("3"))
+      .add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
       .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4"))
+      .add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
       .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("5"))
+      .add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
       .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("6"))
+      .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
       .add(shingleSpan("targeting.kw.token_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("7"))
       .add(shingleSpan("targeting.kw.shingle_nospace_edge_ngram", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("8"))
       .add(shingleSpan("targeting.kw.keyword_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("9"))
@@ -299,7 +305,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
       .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
       .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
-    
+
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
@@ -311,10 +317,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setFetchSource(false)
       .setQuery(filteredQuery(query, buildFilter(suggestParams)))
 
-    val options = new java.util.HashMap[String, AnyRef]
-    options.put("force_source", new java.lang.Boolean(true))
+    //val options = new java.util.HashMap[String, AnyRef]
+    //options.put("force_source", new java.lang.Boolean(true))
 
-    val hquery = matchQuery("targeting.kw.highlight", kw)
+    //val hquery = matchQuery("targeting.kw.highlight", kw)
 
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
@@ -327,9 +333,11 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .subAggregation(
         topHits("topHit")
           .setFetchSource(select.split(""","""), unselect.split(""","""))
-          .setHighlighterType("fast-vector-highlighter")
+          /*
+          .setHighlighterType("postings-highlighter")
           .addHighlightedField("targeting.kw.highlight", 100, 5, 0)
           .setHighlighterQuery(hquery)
+          */
           .setSize(1)
           .setExplain(explain)
           .setTrackScores(true)
