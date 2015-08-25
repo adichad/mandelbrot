@@ -24,9 +24,8 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "", 'wantaggr ? "no") { (kw, city, area, id, applicableTo, wantaggrs) =>
-            val size = 20
-            val offset = 0
+            'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0)
+          { (kw, city, area, id, applicableTo, wantaggrs, size, offset) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
