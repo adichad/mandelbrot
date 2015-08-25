@@ -18,6 +18,8 @@ import org.elasticsearch.common.unit.{TimeValue, Fuzziness}
 import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder, SortBuilders}
 import org.json4s.jackson.JsonMethods._
 import scala.collection.JavaConversions._
@@ -232,9 +234,10 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
       if (city != "") {
         val cityFilter = boolFilter.cache(false)
-        city.split( """,""").map(analyze(esClient, index, "Locations.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-          cityFilter.should(termFilter("Locations.City", c).cache(false))
-          cityFilter.should(termFilter("Locations.CitySynonyms", c).cache(false))
+        city.split( """,""").map(analyze(esClient, index, "VisiblePlaces.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+          cityFilter.should(termFilter("VisiblePlaces.City", c).cache(false))
+          cityFilter.should(termFilter("VisiblePlaces.CitySynonyms", c).cache(false))
+          cityFilter.should(termFilter("DealDetail.VisibleToAllCities", true).cache(false))
         }
 
         if (cityFilter.hasClauses)
@@ -258,6 +261,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setExplain(explain)
       .setSearchType(SearchType.fromString(searchType))
       .setFrom(offset).setSize(size)
+    if (agg) {
+      search.addAggregation(
+        terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+          .subAggregation(sum("sum_score").script("docscore").lang("native")))
+    }
     search
   }
 

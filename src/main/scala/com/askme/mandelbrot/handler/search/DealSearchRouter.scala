@@ -24,11 +24,10 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "") { (kw, city, area, id, applicableTo) =>
+            'applicableto ? "", 'agg ? true) { (kw, city, area, id, applicableTo, aggr) =>
             val size = 20
             val offset = 0
             val source = true
-            val agg = true
             val version = 1
             val fuzzyprefix = 2
             val fuzzysim = 1f
@@ -46,7 +45,7 @@ case object DealSearchRouter extends Router {
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
                   filters = DealFilterParams(id, applicableTo), page = PageParams(size, offset),
-                  view = ViewParams(source, agg, aggbuckets, false, "", unselect, searchType, slugFlag, false, version),
+                  view = ViewParams(source, aggr, aggbuckets, false, "", unselect, searchType, slugFlag, false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))
