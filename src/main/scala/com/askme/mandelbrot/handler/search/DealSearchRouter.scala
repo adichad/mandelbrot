@@ -24,7 +24,7 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "", 'agg ? true) { (kw, city, area, id, applicableTo, aggr) =>
+            'applicableto ? "", 'wantaggr ? "no") { (kw, city, area, id, applicableTo, wantaggrs) =>
             val size = 20
             val offset = 0
             val source = true
@@ -38,6 +38,10 @@ case object DealSearchRouter extends Router {
             val searchType = "query_then_fetch"
             val timeoutms = 600l
             val aggbuckets = 10
+            var aggr = false
+            if (wantaggrs == "yes") {
+              aggr = true
+            }
             respondWithMediaType(`application/json`) {
                ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
