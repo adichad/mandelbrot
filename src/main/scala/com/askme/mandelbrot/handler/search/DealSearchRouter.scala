@@ -24,11 +24,9 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "") { (kw, city, area, id, applicableTo) =>
-            val size = 20
-            val offset = 0
+            'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0)
+          { (kw, city, area, id, applicableTo, wantaggrs, size, offset) =>
             val source = true
-            val agg = true
             val version = 1
             val fuzzyprefix = 2
             val fuzzysim = 1f
@@ -39,6 +37,10 @@ case object DealSearchRouter extends Router {
             val searchType = "query_then_fetch"
             val timeoutms = 600l
             val aggbuckets = 10
+            var aggr = false
+            if (wantaggrs == "yes") {
+              aggr = true
+            }
             respondWithMediaType(`application/json`) {
                ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
@@ -46,7 +48,7 @@ case object DealSearchRouter extends Router {
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
                   filters = DealFilterParams(id, applicableTo), page = PageParams(size, offset),
-                  view = ViewParams(source, agg, aggbuckets, false, "", unselect, searchType, slugFlag, false, version),
+                  view = ViewParams(source, aggr, aggbuckets, false, "", unselect, searchType, slugFlag, false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))
