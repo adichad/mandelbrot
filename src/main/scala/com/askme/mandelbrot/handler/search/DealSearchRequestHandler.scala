@@ -268,7 +268,6 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     }
     if(select == "") {
       search.setFetchSource(source)
-      search.addFields(select.split(""","""):_*)
     } else {
       search.setFetchSource(select.split(""","""), unselect.split(""","""))
     }
