@@ -266,6 +266,12 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script("docscore").lang("native")))
     }
+    if(search == "") {
+      search.setFetchSource(source)
+      search.addFields(select.split(""","""):_*)
+    } else {
+      search.setFetchSource(select.split(""","""), unselect.split(""","""))
+    }
     search
   }
 
