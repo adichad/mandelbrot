@@ -44,11 +44,11 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
                 var detected = false
                 var source_charset = charset_source
                 val data = if(source_charset == "") {
-                  val charsetMatch = detectCharsetTika(rawdata)
+                  val charsetMatch = detectCharset(rawdata)
                   source_charset = if (charsetMatch == null) charset_source else charsetMatch
                   detected = charsetMatch != null
-
-                  new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
+                  new String(rawdata, Charset.forName(charset_target))
+                  //new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
                 } else {
                   new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
                 }
