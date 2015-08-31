@@ -36,7 +36,7 @@ case object SuggestRouter extends Router {
               val sort = "_distance,_score"
               val unselect = ""
               val searchType = "dfs_query_then_fetch"
-              val timeoutms = 600l
+              val timeoutms = 100l
 
 
               respondWithMediaType(`application/json`) { ctx =>
