@@ -266,6 +266,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script("docscore").lang("native")))
     }
+    if(select == "") {
+      search.setFetchSource(source)
+    } else {
+      search.setFetchSource(select.split(""","""), unselect.split(""","""))
+    }
     search
   }
 
@@ -281,36 +286,29 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
-        // If we are looking for Idea, Airtel etc deal then do not make w mandatory.
-        if (w.isEmpty && kwids.isEmpty && applicableTo == "") {
-          context.parent ! EmptyResponse("empty search criteria")
-        }
-        else {
-          val query =
-            if (w.length > 0) qDefs(0)._1(w, w.length)
-            else matchAllQuery()
-          val leastCount = qDefs(0)._2
-          val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
-          val finalFilter = buildFilter(searchParams)
-          val search = buildSearch(searchParams)
-          val me = context.self
-          search.setQuery(filteredQuery(query, finalFilter))
-          search.execute(new ActionListener[SearchResponse] {
-            override def onResponse(response: SearchResponse): Unit = {
-              if (response.getHits.totalHits() >= leastCount || isMatchAll)
-                me ! WrappedResponse(searchParams, response, 0)
-              else
-                me ! ReSearch(searchParams, finalFilter, search, 1, response)
-            }
+        val query =
+          if (w.length > 0) qDefs(0)._1(w, w.length)
+          else matchAllQuery()
+        val leastCount = qDefs(0)._2
+        val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
+        val finalFilter = buildFilter(searchParams)
+        val search = buildSearch(searchParams)
+        val me = context.self
+        search.setQuery(filteredQuery(query, finalFilter))
+        search.execute(new ActionListener[SearchResponse] {
+          override def onResponse(response: SearchResponse): Unit = {
+            if (response.getHits.totalHits() >= leastCount || isMatchAll)
+              me ! WrappedResponse(searchParams, response, 0)
+            else
+              me ! ReSearch(searchParams, finalFilter, search, 1, response)
+          }
 
-            override def onFailure(e: Throwable): Unit = {
-              val timeTaken = System.currentTimeMillis() - startTime
-              error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
-              context.parent ! ErrorResponse(e.getMessage, e)
-            }
-          })
-        }
-
+          override def onFailure(e: Throwable): Unit = {
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            context.parent ! ErrorResponse(e.getMessage, e)
+          }
+        })
       } catch {
         case e: Throwable =>
           context.parent ! ErrorResponse(e.getMessage, e)
