@@ -32,7 +32,7 @@ case object SuggestRouter extends Router {
                lat, lon, fromkm, tokm,
                explain, select, version,
                trueClient) =>
-              val maxdocspershard = 500000
+              val maxdocspershard = 50000
               val sort = "_distance,_score"
               val unselect = ""
               val searchType = "dfs_query_then_fetch"

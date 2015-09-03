@@ -57,7 +57,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     val target =
         context.actorOf (Props (classOf[SuggestRequestHandler], config, serverContext))
 
-    context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 5, MILLISECONDS))
+    context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 10, MILLISECONDS))
     target ! suggestParams
   }
 
