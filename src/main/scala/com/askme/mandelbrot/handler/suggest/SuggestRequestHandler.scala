@@ -308,10 +308,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
-      .setTrackScores(true)
+      .setTrackScores(false)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
-      .setExplain(explain)
+      .setExplain(false)
       .setSearchType(SearchType.fromString(searchType))
       .setFrom(0).setSize(0)
       .setFetchSource(false)
@@ -339,7 +339,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           .setHighlighterQuery(hquery)
           */
           .setSize(1)
-          .setExplain(explain)
+          .setExplain(false)
           .setTrackScores(true)
           .addSorts(sorters)
       )
