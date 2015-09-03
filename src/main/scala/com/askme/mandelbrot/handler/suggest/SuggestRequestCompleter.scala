@@ -70,7 +70,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     case tout: ReceiveTimeout => {
       val timeTaken = System.currentTimeMillis - suggestParams.startTime
       warn("[timeout/" + (timeTaken) + "] [" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "]")
-      complete(GatewayTimeout, Timeout(timeTaken, suggestParams.limits.timeoutms*5))
+      complete(GatewayTimeout, Timeout(timeTaken, suggestParams.limits.timeoutms*10))
     }
     case err: ErrorResponse => complete(InternalServerError, err.message)
     case res: RestMessage => complete(OK, res)
