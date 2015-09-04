@@ -25,8 +25,9 @@ case object DealSearchRouter extends Router {
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
             'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0,
-            'select ? "", 'screentype ? "")
-          { (kw, city, area, id, applicableTo, wantaggrs, size, offset, select, screentype) =>
+            'select ? "", 'screentype ? "", 'category ? "")
+          { (kw, city, area, id, applicableTo, wantaggrs, size, offset, select,
+             screentype, category) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
@@ -48,7 +49,7 @@ case object DealSearchRouter extends Router {
                   idx = IndexParams("askmedeal", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
-                  filters = DealFilterParams(id, applicableTo, screentype), page = PageParams(size, offset),
+                  filters = DealFilterParams(id, applicableTo, screentype, category), page = PageParams(size, offset),
                   view = ViewParams(source, aggr, aggbuckets, false, select, unselect, searchType, slugFlag, false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis

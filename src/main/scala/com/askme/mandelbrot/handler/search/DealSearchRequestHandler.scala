@@ -231,6 +231,13 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         finalFilter.add(locFilter)
       }
 
+      if (category != "") {
+        val catFilter = boolFilter.cache(false)
+        val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories.Name.NameExact", _).mkString(" ")).filter(!_.isEmpty)
+        categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, true)).foreach(a => catFilter should queryFilter(a).cache(false))
+        finalFilter.add(catFilter)
+      }
+
       finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
       if (city != "") {
         val cityFilter = boolFilter.cache(false)
