@@ -243,6 +243,9 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         if (cityFilter.hasClauses)
           finalFilter.add(cityFilter)
       }
+      if (screentype == "home") {
+        finalFilter.add(andFilter(boolFilter.must(termFilter("ShowOnHomePage", 1l).cache(false))).cache(false))
+      }
     }
     finalFilter
   }
