@@ -121,7 +121,7 @@ object SuggestRequestHandler extends Logging {
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length>3 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>8) Fuzziness.TWO else Fuzziness.ONE ))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>7) Fuzziness.TWO else Fuzziness.ONE ))
       else
         spanTermQuery(field, x)
     )
@@ -267,28 +267,30 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
+    val smallkw = kw.take(9)
+
     val query = disMaxQuery()
-    val wordskw = analyze(esClient, index, "targeting.kw.keyword", kw)
-    val wordskwsh = analyze(esClient, index, "targeting.kw.shingle", kw)
-    val wordskweng = analyze(esClient, index, "targeting.kw.keyword_edge_ngram", kw)
-    val wordskwng = analyze(esClient, index, "targeting.kw.keyword_ngram", kw)
-    val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", kw)
+    val wordskw = analyze(esClient, index, "targeting.kw.keyword", smallkw)
+    //val wordskwsh = analyze(esClient, index, "targeting.kw.shingle", smallkw)
+    //val wordskweng = analyze(esClient, index, "targeting.kw.keyword_edge_ngram", smallkw)
+    val wordskwng = analyze(esClient, index, "targeting.kw.keyword_ngram", smallkw)
+    val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", smallkw)
 
 
 
     query
       .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("1")*/)
-      //.add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
+      .add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
       .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("2")*/)
-      //.add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
+      .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
       .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("3")*/)
-      //.add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
+      .add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
       .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("4")*/)
-      //.add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
+      .add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
       .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("5")*/)
-      //.add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
+      .add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
       .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("6")*/)
-      //.add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
+      .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
       .add(shingleSpan("targeting.kw.token_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("7")*/)
       .add(shingleSpan("targeting.kw.shingle_nospace_edge_ngram", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("8")*/)
       .add(shingleSpan("targeting.kw.keyword_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("9")*/)
