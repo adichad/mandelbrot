@@ -182,16 +182,13 @@ object DealSearchRequestHandler extends Logging {
     //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 2, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, true, true, true, 2, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6
-    // relaxed-shingle exact full matches
-
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 1), //7
+    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 1), 1), //7
     // relaxed-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 2), 1) //7
+    // (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 2), 1) //7
     // relaxed-shingle exact span matches
 
 
@@ -292,10 +289,15 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         import searchParams.filters._
         import searchParams.startTime
         import searchParams.req._
+        import searchParams.geo._
 
         kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
+        w = w.take(8)
+        if (w.isEmpty && kwids.isEmpty && category == "" && area == "" && screentype == "" && city == "" && applicableTo == "") {
+          context.parent ! EmptyResponse("empty search criteria")
+        }
         val query =
           if (w.length > 0) qDefs(0)._1(w, w.length)
           else matchAllQuery()
