@@ -185,13 +185,11 @@ object DealSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, true, true, true, 2, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 1), 1), //7
+    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 1), 1) //7
     // relaxed-shingle exact span matches
 
     // (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 2), 1) //7
     // relaxed-shingle exact span matches
-
-
   )
 }
 
