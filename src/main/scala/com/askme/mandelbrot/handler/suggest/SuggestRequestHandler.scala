@@ -359,8 +359,6 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
   override def receive = {
 
     case suggestParams: SuggestParams =>
-      import suggestParams.target._
-      import suggestParams.idx._
       import suggestParams.startTime
       import suggestParams.req._
       import suggestParams.limits._
@@ -369,8 +367,6 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       try {
 
         val search = buildSearch(suggestParams)
-
-
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
