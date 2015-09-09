@@ -33,7 +33,7 @@ case object DealSearchRouter extends Router {
             val fuzzyprefix = 2
             val fuzzysim = 1f
             val slugFlag = true
-            val maxdocspershard = 50000
+            val maxdocspershard = 1000
             val sort = "_distance,_score"
             val unselect = ""
             val searchType = "query_then_fetch"
