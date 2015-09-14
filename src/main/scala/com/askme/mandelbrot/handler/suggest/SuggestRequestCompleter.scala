@@ -23,8 +23,8 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
   private val blockedIPs = list[String]("search.block.ip")
   private val blockedPrefixes = list[String]("search.block.ip-prefix")
 
-  if(blockedPrefixes.exists(suggestParams.req.trueClient.startsWith(_))
-    || blockedIPs.exists(suggestParams.req.trueClient == _)) {
+  if(blockedPrefixes.exists(suggestParams.req.trueClient.startsWith)
+    || blockedIPs.contains(suggestParams.req.trueClient)) {
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source")
   }

@@ -273,7 +273,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
     val query =
-      if(wordskw.length>0) {
+      if(wordskw.length>0 && kw.trim.length>1) {
         val query = disMaxQuery()
           .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("1")*/)
           .add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
