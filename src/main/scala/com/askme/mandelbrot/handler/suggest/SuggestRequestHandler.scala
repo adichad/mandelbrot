@@ -267,7 +267,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
-    val smallkw = kw.take(9)
+    val smallkw = kw
 
     val query = disMaxQuery()
     val wordskw = analyze(esClient, index, "targeting.kw.keyword", smallkw)
