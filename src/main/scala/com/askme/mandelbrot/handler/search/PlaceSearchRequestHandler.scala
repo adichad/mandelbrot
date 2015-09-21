@@ -166,9 +166,9 @@ object PlaceSearchRequestHandler extends Logging {
       disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
     else {
       disMaxQuery.addAll(recomFields.map(field =>
-        if(field=="LocationNameExact")
+        if(field._1=="LocationNameExact")
           shingleSpan("LocationName", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field=="CompanyAliasesExact")
+        else if(field._1=="CompanyAliasesExact")
           shingleSpan("CompanyAliases", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else
           shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
