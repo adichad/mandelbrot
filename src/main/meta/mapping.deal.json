@@ -1445,7 +1445,7 @@
                 "position_offset_gap": 100,
                 "include_in_root": true
               },
-              "SynonymExact": {
+              "SynonymAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",

@@ -18,9 +18,10 @@ import org.elasticsearch.common.unit.{TimeValue, Fuzziness}
 import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.sort.{FieldSortBuilder, ScoreSortBuilder, SortOrder, SortBuilders}
+import org.elasticsearch.search.sort._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.JavaConversions._
 
@@ -29,6 +30,16 @@ import scala.collection.JavaConversions._
  */
 
 object DealSearchRequestHandler extends Logging {
+
+  private def getSort(sort: String) = {
+    val parts = for (x <- sort.split(",")) yield x.trim
+    parts.map(
+      _ match {
+        case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
+        case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
+      }
+    )
+  }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
@@ -92,15 +103,28 @@ object DealSearchRequestHandler extends Logging {
     "Locations.City"->1f, "Locations.CitySynonyms"->1f)
 
   private val fullFields2 = Map(
-    "TitleExact"->100000000000f, "HeadlineExact"->100000000000f,
-    "Categories.NameExact"->10000000000f,
-    "Categories.SynonymExact"->10000000f,
-    "DealTagsExact"->10000000f,
-    "Offers.NameExact"->1000f,
-    "DescriptionShortExact"->1000f,
-    "Offers.DescriptionShortExact" -> 1000f,
-    "Locations.AreaExact"->10f, "Locations.AreaSynonymsExact"->10f,
-    "Locations.CityExact"->1f, "Locations.CitySynonymsExacts"->1f)
+    "Title.TitleExact"->100000000000f, "Headline.HeadlineExact"->100000000000f,
+    "Categories.Name.NameExact"->10000000000f,
+    "Categories.Synonym.SynonymExact"->10000000f,
+    "DealTags.DealTagsExact"->10000000f,
+    "Offers.Name.NameExact"->1000f,
+    "DescriptionShort.DescriptionShortExact"->1000f,
+    "Offers.DescriptionShort.DescriptionShortExact" -> 1000f,
+    "Locations.Area.AreaExact"->10f, "Locations.AreaSynonyms.AreaSynonymsExact"->10f,
+    "Locations.City.CityExact"->1f, "Locations.CitySynonyms.CitySynonymsExacts"->1f)
+
+  private val exactToFieldMap = Map("Title.TitleExact" -> "Title",
+    "Headline.HeadlineExact"-> "Headline",
+    "Offers.Name.NameExact"-> "Offers.Name",
+    "DescriptionShort.DescriptionShortExact" -> "DescriptionShort",
+    "Offers.DescriptionShort.DescriptionShortExact" -> "Offers.DescriptionShort")
+
+  private implicit class SearchPimp(val search: SearchRequestBuilder) {
+    def addSorts(sorts: Iterable[SortBuilder]) = {
+      sorts.foreach(search.addSort)
+      search
+    }
+  }
 
   private[DealSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
@@ -143,7 +167,11 @@ object DealSearchRequestHandler extends Logging {
     if(span)
       disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
     else
-      disMaxQuery.addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
+      disMaxQuery.addAll(recomFields.map(field =>
+        if(exactToFieldMap isDefinedAt field._1)
+          shingleSpan(exactToFieldMap(field._1), field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else
+          shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
   }
 
   private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
@@ -245,8 +273,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         if (cityFilter.hasClauses)
           finalFilter.add(cityFilter)
       }
-      if (screentype == "home") {
-        finalFilter.add(andFilter(boolFilter.must(termFilter("ShowOnHomePage", 1l).cache(false))).cache(false))
+      if (featured == "true") {
+        finalFilter.add(andFilter(boolFilter.must(termFilter("IsFeatured", 1l).cache(false))).cache(false))
+      }
+      if (dealsource != "") {
+        finalFilter.add(andFilter(boolFilter.must(termFilter("DealSource.Name", dealsource).cache(false))).cache(false))
       }
     }
     finalFilter
@@ -257,7 +288,14 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.limits._
     import searchParams.page._
     import searchParams.view._
+    import searchParams.filters._
 
+    var sort = "_score"
+    if (screentype == "home") {
+      sort = "_home"
+    }
+
+    val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
@@ -265,6 +303,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
       .setSearchType(SearchType.fromString(searchType))
+      .addSorts(sorters)
       .setFrom(offset).setSize(size)
     if (agg) {
       search.addAggregation(
@@ -293,7 +332,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 12) w = emptyStringArray
         w = w.take(8)
-        if (w.isEmpty && kwids.isEmpty && category == "" && area == "" && screentype == "" && city == "" && applicableTo == "") {
+        if (w.isEmpty && kwids.isEmpty && category == "" && area == "" && screentype == "" &&
+            city == "" && applicableTo == "" && featured == "" && dealsource == "") {
           context.parent ! EmptyResponse("empty search criteria")
         }
         val query =
