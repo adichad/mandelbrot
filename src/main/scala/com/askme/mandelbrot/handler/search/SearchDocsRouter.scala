@@ -135,8 +135,8 @@ case object SearchDocsRouter extends Router {
              |   "select": {
              |     "type": "String",
              |     "required": false,
-             |     "default": "_id",
-             |     "description": "list of field values to retrieve for each hit, caveat: nested fields are returned flattened",
+             |     "default": "*",
+             |     "description": "list of field values to retrieve for each hit, nested fields are returned in the same structure as they exist in the source",
              |     "multivalued": true,
              |     "seperator": ","
              |   },
@@ -154,11 +154,18 @@ case object SearchDocsRouter extends Router {
              |     "description": "number of buckets to return for each aggregation",
              |     "multivalued": false
              |   },
-             |   "source": {
+             |   "collapse": {
              |     "type": "Boolean",
              |     "required": false,
              |     "default": false,
-             |     "description": "whether to include raw _source depicting the indexed document for every result",
+             |     "description": "whether to return seperate sections for PAID/SKU records or not (in aggregations)",
+             |     "multivalued": false
+             |   },
+             |   "version": {
+             |     "type": "Integer",
+             |     "required": false,
+             |     "default": 2,
+             |     "description": "API version supported",
              |     "multivalued": false
              |   }
              | },

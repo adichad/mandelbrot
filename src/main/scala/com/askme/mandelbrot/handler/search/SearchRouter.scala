@@ -26,7 +26,7 @@ case object SearchRouter extends Router {
               'source.as[Boolean] ? false, 'explain.as[Boolean] ? false, 'select ? "_id",
               'agg.as[Boolean] ? true,
               'collapse.as[Boolean] ? false,
-              'version.as[Int] ? 1,
+              'version.as[Int] ? 2,
               'client_ip.as[String] ? "") { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,

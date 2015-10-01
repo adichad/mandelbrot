@@ -23,8 +23,8 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
   private val blockedIPs = list[String]("search.block.ip")
   private val blockedPrefixes = list[String]("search.block.ip-prefix")
 
-  if(blockedPrefixes.exists(suggestParams.req.trueClient.startsWith(_))
-    || blockedIPs.exists(suggestParams.req.trueClient == _)) {
+  if(blockedPrefixes.exists(suggestParams.req.trueClient.startsWith)
+    || blockedIPs.contains(suggestParams.req.trueClient)) {
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source")
   }
@@ -40,7 +40,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid timeout requested]")
     complete(BadRequest, "invalid timeout: " + suggestParams.limits.timeoutms)
   }
-  else if(suggestParams.target.kw.length > int("search.kw-length.max")) {
+  else if(suggestParams.target.kw.length > 18) {
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid kw length]")
     complete(BadRequest, "invalid kw parameter size: " + suggestParams.target.kw.length)
   }
@@ -57,7 +57,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     val target =
         context.actorOf (Props (classOf[SuggestRequestHandler], config, serverContext))
 
-    context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 5, MILLISECONDS))
+    context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 10, MILLISECONDS))
     target ! suggestParams
   }
 
@@ -70,7 +70,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     case tout: ReceiveTimeout => {
       val timeTaken = System.currentTimeMillis - suggestParams.startTime
       warn("[timeout/" + (timeTaken) + "] [" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "]")
-      complete(GatewayTimeout, Timeout(timeTaken, suggestParams.limits.timeoutms*5))
+      complete(GatewayTimeout, Timeout(timeTaken, suggestParams.limits.timeoutms*10))
     }
     case err: ErrorResponse => complete(InternalServerError, err.message)
     case res: RestMessage => complete(OK, res)

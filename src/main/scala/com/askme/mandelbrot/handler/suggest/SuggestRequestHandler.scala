@@ -121,7 +121,7 @@ object SuggestRequestHandler extends Logging {
     val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
       if(x.length>3 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.size>8) Fuzziness.TWO else Fuzziness.ONE ))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>7) Fuzziness.TWO else Fuzziness.ONE ))
       else
         spanTermQuery(field, x)
     )
@@ -213,7 +213,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
     // filters
-    val finalFilter = andFilter(boolFilter.mustNot(termFilter("deleted", 1l).cache(false))).cache(false)
+    val finalFilter = andFilter(boolFilter.mustNot(termFilter("deleted", 1l).cache(true))).cache(false)
 
     if (id != "") {
       finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase): _*))
@@ -224,7 +224,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val locFilter = boolFilter.cache(false)
     if (area != "") {
       val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "targeting.area", _).mkString(" ")).filter(!_.isEmpty)
-      areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
+      areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(true))
       this.areas = areas.map(analyze(esClient, index, "targeting.area", _).mkString(" ")).mkString("#")
     }
 
@@ -241,7 +241,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     if (city != "") {
       val cityFilter = boolFilter.cache(false)
       city.split( """,""").map(analyze(esClient, index, "targeting.city", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termFilter("targeting.city", c).cache(false))
+        cityFilter.should(termFilter("targeting.city", c).cache(true))
       }
 
       if(cityFilter.hasClauses)
@@ -267,51 +267,62 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
-    val query = disMaxQuery()
     val wordskw = analyze(esClient, index, "targeting.kw.keyword", kw)
-    val wordskwsh = analyze(esClient, index, "targeting.kw.shingle", kw)
-    val wordskweng = analyze(esClient, index, "targeting.kw.keyword_edge_ngram", kw)
     val wordskwng = analyze(esClient, index, "targeting.kw.keyword_ngram", kw)
     val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", kw)
 
 
+    val query =
+      if(wordskw.length>0 && kw.trim.length>1) {
+        val query = disMaxQuery()
+          .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("1")*/)
+          .add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
+          .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("2")*/)
+          .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
+          .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("3")*/)
+          .add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
+          .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("4")*/)
+          .add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
+          .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("5")*/)
+          .add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
+          .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("6")*/)
+          .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
+          .add(shingleSpan("targeting.kw.token_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("7")*/)
+          .add(shingleSpan("targeting.kw.shingle_nospace_edge_ngram", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("8")*/)
+          .add(shingleSpan("targeting.kw.keyword_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("9")*/)
+          .add(shingleSpan("targeting.label.keyword", 1e18f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_1")*/)
+          .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e17f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_2")*/)
+          .add(shingleSpan("targeting.label.shingle", 1e12f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_3")*/)
+          .add(shingleSpan("targeting.label.token", 1e11f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_4")*/)
+          .add(shingleSpan("targeting.label.shingle_nospace", 1e10f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_5")*/)
+          .add(shingleSpan("targeting.label.shingle_edge_ngram", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_6")*/)
+          .add(shingleSpan("targeting.label.token_edge_ngram", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_7")*/)
+          .add(shingleSpan("targeting.label.shingle_nospace_edge_ngram", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_8")*/)
+          .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_9")*/)
 
-    query
-      .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("1"))
-      //.add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
-      .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("2"))
-      //.add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
-      .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("3"))
-      //.add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
-      .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4"))
-      //.add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
-      .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("5"))
-      //.add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
-      .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("6"))
-      //.add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
-      .add(shingleSpan("targeting.kw.token_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("7"))
-      .add(shingleSpan("targeting.kw.shingle_nospace_edge_ngram", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("8"))
-      .add(shingleSpan("targeting.kw.keyword_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("9"))
-      .add(shingleSpan("targeting.kw.keyword_ngram", 1e2f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("10"))
-      .add(shingleSpan("targeting.kw.shingle_nospace_ngram", 1e1f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("11"))
-      .add(shingleSpan("targeting.label.keyword", 1e18f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_1"))
-      .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e17f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_2"))
-      .add(shingleSpan("targeting.label.shingle", 1e12f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_3"))
-      .add(shingleSpan("targeting.label.token", 1e11f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_4"))
-      .add(shingleSpan("targeting.label.shingle_nospace", 1e10f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_5"))
-      .add(shingleSpan("targeting.label.shingle_edge_ngram", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_6"))
-      .add(shingleSpan("targeting.label.token_edge_ngram", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_7"))
-      .add(shingleSpan("targeting.label.shingle_nospace_edge_ngram", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_8"))
-      .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("label_9"))
-      .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false).queryName("label_10"))
-      .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false).queryName("label_11"))
+        if(wordskwng.length>0)
+          query
+            .add(shingleSpan("targeting.kw.keyword_ngram", 1e2f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false)/*.queryName("10")*/)
+            .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false)/*.queryName("label_10")*/)
+        if(wordsshnspng.length>0)
+          query
+            .add(shingleSpan("targeting.kw.shingle_nospace_ngram", 1e1f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false)/*.queryName("11")*/)
+            .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false)/*.queryName("label_11")*/)
 
-    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+        query
+      }
+      else
+        matchAllQuery
+
+
+
+
+    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
       .setTypes(esType.split(","): _*)
-      .setTrackScores(true)
+      .setTrackScores(false)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
-      .setExplain(explain)
+      .setExplain(false)
       .setSearchType(SearchType.fromString(searchType))
       .setFrom(0).setSize(0)
       .setFetchSource(false)
@@ -339,8 +350,8 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           .setHighlighterQuery(hquery)
           */
           .setSize(1)
-          .setExplain(explain)
-          .setTrackScores(true)
+          .setExplain(false)
+          .setTrackScores(false)
           .addSorts(sorters)
       )
 
@@ -357,8 +368,6 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
   override def receive = {
 
     case suggestParams: SuggestParams =>
-      import suggestParams.target._
-      import suggestParams.idx._
       import suggestParams.startTime
       import suggestParams.req._
       import suggestParams.limits._
@@ -367,8 +376,6 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       try {
 
         val search = buildSearch(suggestParams)
-
-
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
