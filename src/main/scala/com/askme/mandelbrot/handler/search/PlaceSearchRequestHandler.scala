@@ -451,15 +451,15 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         gold.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
 
-      platinum.subAggregation(max("tags").script("curatedtag").script("native"))
+      platinum.subAggregation(max("tags").script("curatedtag").lang("native"))
       platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       platinum.subAggregation(max("score").script("docscore").lang("native"))
 
-      diamond.subAggregation(max("tags").script("curatedtag").script("native"))
+      diamond.subAggregation(max("tags").script("curatedtag").lang("native"))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
 
-      gold.subAggregation(max("tags").script("curatedtag").script("native"))
+      gold.subAggregation(max("tags").script("curatedtag").lang("native"))
       gold.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       gold.subAggregation(max("score").script("docscore").lang("native"))
 
