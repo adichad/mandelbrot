@@ -19,7 +19,7 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.search.aggregations.{AggregationBuilders, AbstractAggregationBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -45,6 +45,7 @@ object PlaceSearchRequestHandler extends Logging {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map(
       _ match {
+        case "_random"=> SortBuilders.scriptSort("randomizer", "number").lang("native").order(SortOrder.ASC).param("buckets", 5)
         case "_name" => SortBuilders.scriptSort("exactnamematch", "number").lang("native").order(SortOrder.ASC).
           param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
@@ -417,7 +418,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       val orders: List[Terms.Order] = (
         Some(Terms.Order.aggregation("exactname", true)) ::
           (if (lat != 0.0d || lon != 0.0d || areaSlugs.size>0) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          //Some(Terms.Order.aggregation("tags", false)) ::
+          (if(goldcollapse)Some(Terms.Order.aggregation("random", true)) else None) ::
+          Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -431,6 +433,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val gold = terms("masters").field("MasterID").order(order).size(25)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+
+      
+      if(goldcollapse) {
+        platinum.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+        diamond.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+        gold.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+      }
 
 
       platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
