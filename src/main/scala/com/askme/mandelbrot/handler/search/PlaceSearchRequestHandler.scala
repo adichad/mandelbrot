@@ -426,12 +426,17 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
       val diamond = terms("masters").field("MasterID").order(order).size(15)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      val gold = terms("masters").field("MasterID").order(order).size(25)
+        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+
 
       platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       diamond.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
+      gold.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) {
         platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
+        gold.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
 
       //platinum.subAggregation(max("tags").script("curatedtag").script("native"))
@@ -441,6 +446,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       //diamond.subAggregation(max("tags").script("curatedtag").script("native"))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
+
+      //gold.subAggregation(max("tags").script("curatedtag").script("native"))
+      gold.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      gold.subAggregation(max("score").script("docscore").lang("native"))
 
       val platinumFilter = if (area != "") {
         val areaFilter = boolFilter().cache(false)
@@ -460,8 +469,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       } else {
         boolFilter().must(termFilter("CustomerType", "450")).must(existsFilter("SKUAreasDocVal"))
       }
+
+      val goldFilter = termFilter("CustomerType", "350")
+
       search.addAggregation(filter("platinum").filter(platinumFilter).subAggregation(platinum))
-      search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(platinum))
+      search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(diamond))
+      search.addAggregation(filter("gold").filter(goldFilter).subAggregation(gold))
+
 
     }
 
