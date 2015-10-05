@@ -422,9 +422,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
 
-      val platinum = terms("masters").field("MasterID").order(order).size(offset+size)
+      val platinum = terms("masters").field("MasterID").order(order).size(10)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
-      val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
+      val diamond = terms("masters").field("MasterID").order(order).size(15)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
       platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
