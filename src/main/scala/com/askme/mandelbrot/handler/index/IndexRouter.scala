@@ -39,25 +39,13 @@ case class IndexRouter(val config: Config) extends Router with Configurable {
         path("index" / Segment / Segment ) { (index, esType) =>
           parameters('charset_source.as[String] ? "", 'charset_target.as[String] ? "utf-8") { (charset_source, charset_target) =>
             if (boolean("enabled")) {
-              extract(_.request.entity.data.toByteArray) { rawdata=>
-              //entity(as[Array[Byte]]) { rawdata =>
-                var detected = false
-                var source_charset = charset_source
-                val data = if(source_charset == "") {
-                  val charsetMatch = detectCharset(rawdata)
-                  source_charset = if (charsetMatch == null) charset_source else charsetMatch
-                  detected = charsetMatch != null
-                  new String(rawdata, Charset.forName(charset_target))
-                  //new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
-                } else {
-                  new String(new String(rawdata, Charset.forName(source_charset)).getBytes(Charset.forName(charset_target)), Charset.forName(charset_target))
-                }
+              entity(as[String]) { data =>
                 respondWithMediaType(`application/json`) {
                   ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
                     IndexingParams(
                       RequestParams(httpReq, clip, clip.toString),
                       IndexParams(index, esType),
-                      RawData(data, source_charset, detected),
+                      RawData(data, "", false),
                       System.currentTimeMillis
                     )))
                 }
