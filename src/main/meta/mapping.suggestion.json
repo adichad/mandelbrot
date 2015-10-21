@@ -98,18 +98,14 @@
                 "index_analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "kw": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword": {
                 "type": "string",
@@ -118,9 +114,7 @@
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword_edge_ngram": {
                 "type": "string",
@@ -129,9 +123,7 @@
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword_ngram": {
                 "type": "string",
@@ -140,9 +132,7 @@
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle": {
                 "type": "string",
@@ -151,9 +141,7 @@
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_edge_ngram": {
                 "type": "string",
@@ -162,9 +150,7 @@
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_ngram": {
                 "type": "string",
@@ -173,9 +159,7 @@
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace": {
                 "type": "string",
@@ -184,9 +168,7 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace_edge_ngram": {
                 "type": "string",
@@ -195,9 +177,7 @@
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace_ngram": {
                 "type": "string",
@@ -206,9 +186,7 @@
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token": {
                 "type": "string",
@@ -217,9 +195,7 @@
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token_edge_ngram": {
                 "type": "string",
@@ -228,9 +204,7 @@
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token_ngram": {
                 "type": "string",
@@ -239,9 +213,7 @@
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               }
             }
           },
@@ -256,18 +228,14 @@
                 "index_analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "label": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword": {
                 "type": "string",
@@ -276,9 +244,7 @@
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword_edge_ngram": {
                 "type": "string",
@@ -287,9 +253,7 @@
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "keyword_ngram": {
                 "type": "string",
@@ -298,9 +262,7 @@
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle": {
                 "type": "string",
@@ -309,9 +271,7 @@
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_edge_ngram": {
                 "type": "string",
@@ -320,9 +280,7 @@
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_ngram": {
                 "type": "string",
@@ -331,9 +289,7 @@
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace": {
                 "type": "string",
@@ -342,9 +298,7 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace_edge_ngram": {
                 "type": "string",
@@ -353,9 +307,7 @@
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "shingle_nospace_ngram": {
                 "type": "string",
@@ -364,9 +316,7 @@
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token": {
                 "type": "string",
@@ -375,9 +325,7 @@
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token_edge_ngram": {
                 "type": "string",
@@ -386,9 +334,7 @@
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               },
               "token_ngram": {
                 "type": "string",
@@ -397,9 +343,7 @@
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
                 "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "term_vector" : "with_positions_offsets",
-                "index_options": "offsets"
+                "norms": {"enabled": false}
               }
             }
           }
