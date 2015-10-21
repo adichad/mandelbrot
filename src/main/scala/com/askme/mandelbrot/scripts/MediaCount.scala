@@ -127,6 +127,10 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
           val aliases =
             if (source.get("CompanyAliases") == null) new util.ArrayList[String]()
             else new util.ArrayList[AnyRef](source.get("CompanyAliases").asInstanceOf[util.ArrayList[AnyRef]].map(a => analyze(esClient, index, "CompanyAliasesExact", XContentMapValues.nodeStringValue(a, "")).mkString(" ")))
+          aliases.add(analyze(esClient, index, "CompanyAliasesExact", source.get("LocationName").asInstanceOf[String] + " " + source.get("Area").asInstanceOf[String] + " " + source.get("City").asInstanceOf[String]).mkString(" "))
+          aliases.add(analyze(esClient, index, "CompanyAliasesExact", source.get("LocationName").asInstanceOf[String] + " " + source.get("Area").asInstanceOf[String]).mkString(" "))
+          aliases.add(analyze(esClient, index, "CompanyAliasesExact", source.get("LocationName").asInstanceOf[String] + " " + source.get("City").asInstanceOf[String]).mkString(" "))
+
           source.put("CompanyAliasesDocVal", aliases)
 
           source.put("AreaDocVal", analyze(esClient, index, "AreaExact", source.get("Area").asInstanceOf[String]).mkString(" "))
