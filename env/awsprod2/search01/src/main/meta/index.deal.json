@@ -7,7 +7,7 @@
     "index.merge.policy.max_merge_at_once": "2",
     "index.merge.policy.max_merged_segment": "20gb",
     "index.merge.policy.segments_per_tier": "2",
-    "refresh_interval": "60s",
+    "refresh_interval": "120s",
 
     "analysis": {
       "char_filter": {
