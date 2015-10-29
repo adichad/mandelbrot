@@ -19,7 +19,7 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.search.aggregations.{AggregationBuilders, AbstractAggregationBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -45,11 +45,19 @@ object PlaceSearchRequestHandler extends Logging {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map(
       _ match {
+        case "_random"=> SortBuilders.scriptSort("randomizer", "number").lang("native").order(SortOrder.ASC).param("buckets", 5)
         case "_name" => SortBuilders.scriptSort("exactnamematch", "number").lang("native").order(SortOrder.ASC).
           param("name", w.mkString(" "))
         case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
         case "_distance" => SortBuilders.scriptSort("geobucket", "number").lang("native")
-          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs).order(SortOrder.ASC)
+          .param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs)
+          .param("areafield", "AreaDocVal")
+          .param("synfield", "AreaSynonymsDocVal")
+          .param("skufield", "SKUAreasDocVal")
+          .order(SortOrder.ASC)
+        case "_tags" => SortBuilders.scriptSort("curatedtag", "number").lang("native")
+          .param("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
+          .order(SortOrder.DESC)
         case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
         case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
         case x =>
@@ -145,8 +153,7 @@ object PlaceSearchRequestHandler extends Logging {
     (minShingle to math.min(maxShingle, w.length)).foreach { len =>
       val lboost = boost * superBoost(len)
       w.sliding(len).foreach { shingle =>
-        val phrase = shingle.mkString(" ")
-        fieldQuery.should(fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
+        fieldQuery.should(fuzzyOrTermQuery(field, shingle.mkString(" "), lboost, fuzzyprefix, fuzzy))
       }
     }
     nestIfNeeded(field, fieldQuery)
@@ -155,10 +162,25 @@ object PlaceSearchRequestHandler extends Logging {
   private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
                 w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
+
     if(span)
       disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
-    else
-      disMaxQuery.addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
+    else {
+      disMaxQuery.addAll(recomFields.map(field =>
+        if(field._1=="LocationNameExact")
+          shingleSpan("LocationName", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="CompanyAliasesExact")
+          shingleSpan("CompanyAliases", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="Product.l3categoryexact")
+          shingleSpan("Product.l3category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="Product.l2categoryexact")
+          shingleSpan("Product.l2category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="Product.l1categoryexact")
+          shingleSpan("Product.l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else
+          shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
+      )
+    }
   }
 
   private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
@@ -202,53 +224,6 @@ object PlaceSearchRequestHandler extends Logging {
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
-  private val searchFieldsName = Map(
-    "LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
-    "Product.l3category" -> 10000000f,
-    "Product.categorykeywords" -> 10000000f,
-    "Product.l2category" -> 1000f,
-    "Product.l1category" -> 100f,
-    "LocationType"->1000f,
-    "BusinessType"->1000f,
-    "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f)
-
-
-  private val fullFieldsName = Map(
-    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
-    "Product.l3categoryexact"->10000000000f,
-    "Product.categorykeywordsexact"->10000000000f,
-    "Product.l2categoryexact"->10000000f,
-    "Product.l1categoryexact"->10000000f,
-    "LocationTypeExact"->1000f,
-    "BusinessTypeExact"->1000f,
-    "AreaExact"->10f, "AreaSynonymsExact"->10f,
-    "City"->1f, "CitySynonyms"->1f)
-
-  private val searchFields = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
-    "Product.l3category" -> 10000000f,
-    "Product.l2category" -> 1000f,
-    "Product.l1category" -> 100f,
-    "LocationType"->1000f,
-    "BusinessType"->1000f,
-    "Product.name" -> 1000f,
-    "Product.brand" -> 10000f,
-    "Product.categorykeywords" -> 10000000f,
-    "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f)
-
-  private val fullFields = Map(
-    "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
-    "Product.l3categoryexact"->10000000000f,
-    "Product.l2categoryexact"->10000000f,
-    "Product.l1categoryexact"->10000000f,
-    "LocationTypeExact"->1000f,
-    "BusinessTypeExact"->1000f,
-    "Product.nameexact" -> 1000f,
-    "Product.brandexact" -> 10000f,
-    "Product.categorykeywordsexact"->10000000000f,
-    "AreaExact"->10f, "AreaSynonymsExact"->10f,
-    "City"->1f, "CitySynonyms"->1f)
 
   private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
     "Product.l3category" -> 10000000f,
@@ -258,10 +233,12 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessType"->1000f,
     "Product.name" -> 1000f,
     "Product.brand" -> 10000f,
+    "CuratedTags"-> 10000f,
     "Product.categorykeywords" -> 10000000f,
+    "Product.parkedkeywords" -> 10000000f,
     "Product.stringattribute.answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f)
+    "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"Address"->1f)
 
   private val fullFields2 = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
@@ -272,10 +249,12 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessTypeExact"->1000f,
     "Product.nameexact" -> 1000f,
     "Product.brandexact" -> 10000f,
+    "CuratedTagsExact"-> 10000f,
     "Product.categorykeywordsexact"->10000000000f,
+    "Product.parkedkeywordsexact"->10000000000f,
     "Product.stringattribute.answerexact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
-    "City"->1f, "CitySynonyms"->1f)
+    "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"AddressExact"->1f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -299,19 +278,19 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 1), //3
     // full-shingle fuzzy full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
+    //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, true, true, 10, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, false, true, true, 1, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
     (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 1), 1), //6
     // relaxed-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 1), //7
+    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 1), 1)//7
     // relaxed-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, false, false, true, 2, 2), 1) //7
+    //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 2), 1) //7
     // relaxed-shingle exact span matches
 
 
@@ -335,10 +314,19 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
 
     // filters
-    val finalFilter = andFilter(boolFilter.mustNot(termFilter("DeleteFlag", 1l).cache(false))).cache(false)
+    val finalFilter = andFilter().cache(false)
 
     if (id != "" || !kwids.isEmpty) {
+      finalFilter.add(
+        boolFilter()
+          .should(termFilter("DeleteFlag", 0l).cache(false))
+          .should(
+            andFilter()
+              .add(existsFilter("MergedToID"))
+              .add(notFilter(termFilter("MergedToID","").cache(false)).cache(false))))
       finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase) ++ kwids: _*))
+    } else {
+      finalFilter.add(notFilter(termFilter("DeleteFlag", 1l).cache(false)))
     }
     if(userid != 0) {
       finalFilter.add(termFilter("UserID", userid).cache(false))
@@ -353,13 +341,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     val locFilter = boolFilter.cache(false)
     if (area != "") {
-      val areas = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
       areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("City", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
       areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-      areaSlugs = areas.map(_.replace(' ', '-')).mkString("#")
+      areaSlugs = areas.mkString("#")
     }
 
     if (lat != 0.0d || lon != 0.0d)
@@ -408,24 +396,36 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.page._
     import searchParams.view._
 
-    val sort = "_name," + (if(lat != 0.0d || lon !=0.0d) "_distance," else "") + "_ct,_mc," + "_score"
+    //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
+    val sort =
+      (if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) "_distance," else "") +
+        (if(!goldcollapse)"_ct," else "") +
+        "_name,_tags,"+"_mc," + "_score"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
-    val search = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setFetchSource(select.split(""","""), unselect.split(""","""))
       .setSearchType(SearchType.fromString(searchType))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
 
+    if(version<=1) {
+      search.setFetchSource(source)
+      search.addFields(select.split(""","""):_*)
+    } else {
+      search.setFetchSource(select.split(""","""), unselect.split(""","""))
+    }
+
     if(collapse) {
       val orders: List[Terms.Order] = (
         Some(Terms.Order.aggregation("exactname", true)) ::
-          (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+          (if (lat != 0.0d || lon != 0.0d || areaSlugs.size>0) Some(Terms.Order.aggregation("geo", true)) else None) ::
+          (if(goldcollapse)Some(Terms.Order.aggregation("random", true)) else None) ::
+          Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
           Nil
@@ -433,31 +433,49 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val order = if(orders.size==1) orders(0) else Terms.Order.compound(orders)
 
-      val platinum = terms("masters").field("MasterID").order(order).size(offset+size)
+      val platinum = terms("masters").field("MasterID").order(order).size(10)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
-      val diamond = terms("masters").field("MasterID").order(order).size(offset+size)
+      val diamond = terms("masters").field("MasterID").order(order).size(15)
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+      val gold = terms("masters").field("MasterID").order(order).size(25)
+        .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
+
+
+      if(goldcollapse) {
+        platinum.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+        diamond.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+        gold.subAggregation(min("random").script("randomizer").lang("native").param("buckets", 5))
+      }
+
 
       platinum.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
       diamond.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
-      if(lat != 0.0d || lon !=0.0d) {
+      gold.subAggregation(min("exactname").script("exactnamematch").lang("native").param("name", w.mkString(" ")))
+      if(lat != 0.0d || lon !=0.0d || areaSlugs.size>0) {
         platinum.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
         diamond.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
+        gold.subAggregation(min("geo").script("geobucket").lang("native").param("lat", lat).param("lon", lon).param("areaSlugs", areaSlugs))
       }
 
+      platinum.subAggregation(max("tags").script("curatedtag").lang("native").param("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#")))
       platinum.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       platinum.subAggregation(max("score").script("docscore").lang("native"))
 
+      diamond.subAggregation(max("tags").script("curatedtag").lang("native").param("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#")))
       diamond.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
       diamond.subAggregation(max("score").script("docscore").lang("native"))
+
+      gold.subAggregation(max("tags").script("curatedtag").lang("native").param("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#")))
+      gold.subAggregation(max("mediacount").script("mediacountsort").lang("native"))
+      gold.subAggregation(max("score").script("docscore").lang("native"))
 
       val platinumFilter = if (area != "") {
         val areaFilter = boolFilter().cache(false)
         area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
           .map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
-        boolFilter().must(areaFilter).must(termFilter("CustomerType", "550"))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "550")).must(existsFilter("SKUAreasDocVal"))
       } else {
-        termFilter("CustomerType", "550")
+        boolFilter().must(termFilter("CustomerType", "550")).must(existsFilter("SKUAreasDocVal"))
       }
 
 
@@ -465,12 +483,18 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         val areaFilter = boolFilter().cache(false)
         area.split(""",""").map(analyze(esClient, index, "SKUAreas", _).mkString(" ")).filter(!_.isEmpty)
           .map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, true)).foreach(a => areaFilter should queryFilter(a).cache(false))
-        boolFilter().must(areaFilter).must(termFilter("CustomerType", "450"))
+        boolFilter().must(areaFilter).must(termFilter("CustomerType", "450")).must(existsFilter("SKUAreasDocVal"))
       } else {
-        termFilter("CustomerType", "450")
+        boolFilter().must(termFilter("CustomerType", "450")).must(existsFilter("SKUAreasDocVal"))
       }
+
+      val goldFilter = termFilter("CustomerType", "350")
+
       search.addAggregation(filter("platinum").filter(platinumFilter).subAggregation(platinum))
-      search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(platinum))
+      search.addAggregation(filter("diamond").filter(diamondFilter).subAggregation(diamond))
+      if(goldcollapse)
+        search.addAggregation(filter("gold").filter(goldFilter).subAggregation(gold))
+
 
     }
 
@@ -529,6 +553,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
           if (w.length>12) w = emptyStringArray
+          w = w.take(8)
           if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
             context.parent ! EmptyResponse("empty search criteria")
           }
@@ -622,7 +647,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             val matchedCat = catBucks
               .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKey, w)
               || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKey, w)))
-              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(k.getKey))
+              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(analyze(esClient, index, "Product.l3categoryexact", k.getKey).mkString(" ")))
             val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
 
             val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKey, areaWords))

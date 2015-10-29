@@ -37,7 +37,7 @@
                 },
                 "stopword": {
                     "type": "stop",
-                    "stopwords": ["the"]
+                    "stopwords": ["the", "and"]
                 },
                 "word_delimiter": {
                     "type": "word_delimiter"

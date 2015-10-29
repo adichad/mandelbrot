@@ -29,6 +29,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         val json = parse(indexParams.data.data)
 
         val idField = string("mappings."+indexParams.idx.esType+".id")
+        val piperseq = pipers("mappings."+indexParams.idx.esType+".pipers")
         val bulkRequest = esClient.prepareBulk
         for (doc: JValue <- json.children) {
           val idraw = doc \ idField
@@ -37,12 +38,13 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
             case "string" => idraw.asInstanceOf[JString].values
             case _ => idraw.asInstanceOf[JString].values
           }
-
           bulkRequest.add(
             esClient.prepareIndex(indexParams.idx.index, indexParams.idx.esType, id)
               .setSource(compact(render(doc)))
           )
         }
+        val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
+
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
@@ -53,25 +55,26 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               val resp = parse(respStr)
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                warn("[indexing] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
+                warn("[indexing] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + response.buildFailureMessage() + "] "+charset+" [" + respStr + "]")
                 completer ! IndexFailureResult(resp)
               }
               else {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + respStr + "]")
+                info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + respStr + "]")
+                piperseq.foreach(_ pipe json)
                 completer ! IndexSuccessResult(resp)
               }
             } catch {
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
-                error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + e.getMessage + "]", e)
+                error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
                 throw e
             }
           }
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - indexParams.startTime
-            error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + e.getMessage + "]", e)
+            error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
             throw e
           }
         })

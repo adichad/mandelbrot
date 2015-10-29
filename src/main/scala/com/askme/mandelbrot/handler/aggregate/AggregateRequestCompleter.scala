@@ -24,7 +24,7 @@ class AggregateRequestCompleter(val config: Config, serverContext: SearchContext
      warn("[" + req.clip.toString + "]->[" + req.httpReq.uri + "] [alibaba sala]")
      complete(BadRequest, "invalid request source: " + req.trueClient)
    }
-   else if(lim.timeoutms>30000) {
+   else if(lim.timeoutms>300000) {
      warn("[" + req.clip.toString + "]->[" + req.httpReq.uri + "] [invalid timeout requested]")
      complete(BadRequest, "invalid timeout: " + lim.timeoutms)
    }

@@ -9,7 +9,8 @@ import com.askme.mandelbrot.handler.analyse.AnalyseRouter
 import com.askme.mandelbrot.handler.helper.CORS
 import com.askme.mandelbrot.handler.index.IndexRouter
 import com.askme.mandelbrot.handler.aggregate.AggregateRouter
-import com.askme.mandelbrot.handler.search.{SearchDocsRouter, SearchRouter}
+import com.askme.mandelbrot.handler.search.{SearchDocsRouter, SearchRouter, DealSearchRouter}
+import com.askme.mandelbrot.handler.suggest.SuggestRouter
 import com.askme.mandelbrot.handler.watch.WatchRouter
 import com.askme.mandelbrot.loader.FileSystemWatcher
 import com.askme.mandelbrot.server.RootServer.SearchContext
@@ -43,7 +44,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
       compressResponseIfRequested() {
         decompressRequest() {
           get {
-            SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this)
+            DealSearchRouter(this) ~ SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this) ~ SuggestRouter(this)
           } ~
             post {
               WatchRouter(this) ~ indexRouter(this)

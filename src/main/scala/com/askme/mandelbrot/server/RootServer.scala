@@ -1,5 +1,7 @@
 package com.askme.mandelbrot.server
 
+import java.util
+
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
@@ -8,6 +10,13 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.MandelbrotHandler
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
+import kafka.consumer.{KafkaStream, Whitelist, TopicFilter, ConsumerConfig}
+import kafka.javaapi.consumer.SimpleConsumer
+import kafka.javaapi.producer.Producer
+import kafka.producer.ProducerConfig
+import kafka.utils.ZKStringSerializer
+import org.I0Itec.zkclient.ZkClient
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.client.Client
@@ -17,6 +26,10 @@ import org.elasticsearch.node.NodeBuilder
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.apache.kafka.clients.producer.KafkaProducer
+import kafka.serializer.StringDecoder
+import kafka.admin.AdminUtils
+
 import spray.can.Http
 import scala.collection.JavaConversions._
 import scala.collection.convert.decorateAsScala._
@@ -44,12 +57,36 @@ object RootServer extends Logging {
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
       .data(boolean("es.node.data")).settings(settings("es")).node
+/*
+    private val zkClient = new ZkClient(
+      string("kafka.zookeeper.connect"), int("kafka.zookeeper.session-timeout"),
+      int("kafka.zookeeper.connect-timeout"), ZKStringSerializer
+    )
+    confs("kafka.topics").foreach { c =>
+      if(!AdminUtils.topicExists(zkClient, c.getString("name"))) {
+        AdminUtils.createTopic(
+          zkClient, c.getString("name"),
+          c.getInt("partitions"), c.getInt("replication"),
+          props(c.getConfig("conf")))
+        info("topic created: "+c.getString("name"))
+      }
+    }
+*/
     val esClient = esNode.client
+  /*
+    val kafkaProducer = new Producer[String, String](new ProducerConfig(props("kafka.producer")))
+    val consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props("kafka.consumer.conf")))
+    val kafkaStreams: Map[String, util.List[KafkaStream[String, String]]] = list[String]("kafka.consumer.topics").toSet[String].map(t=>t -> consumerConnector.createMessageStreamsByFilter(Whitelist(t), 1, new StringDecoder(), new StringDecoder())).toMap
+  */
     RootServer.defContext = this
 
     private[RootServer] def close() {
       esClient.close()
+      //kafkaProducer.close
+      //consumerConnector.shutdown()
+      //zkClient.close()
       esNode.close()
+
     }
   }
 

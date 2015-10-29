@@ -2,6 +2,8 @@ package com.askme.mandelbrot
 
 import java.util.{Properties, List, Map}
 
+import akka.actor.{Props, ActorContext, ActorRef}
+import com.askme.mandelbrot.piper.Piper
 import com.typesafe.config.{Config, ConfigFactory}
 import grizzled.slf4j.Logging
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -36,6 +38,13 @@ trait Configurable extends Logging {
 
   protected[this] def obj[T <: Configurable](conf: Config) = Class.forName(conf getString "type").getConstructor(classOf[Config]).newInstance(conf).asInstanceOf[T]
   protected[this] def obj[T <: Configurable](part: String): T = obj[T](conf(part))
+  protected[this] def objs[T <: Configurable](part: String): Seq[T] = confs(part).map(obj(_).asInstanceOf[T])
+
+  protected[this] def piper(conf: Config): Piper =
+    Class.forName(conf getString "type").getConstructor(classOf[Config]).newInstance(conf).asInstanceOf[Piper]
+
+  protected[this] def piper(part: String): Piper = piper(conf(part))
+  protected[this] def pipers(part: String): Seq[Piper] = confs(part).map(piper)
 
   protected[this] def keys(part: String) = (config getAnyRef part).asInstanceOf[Map[String, Any]].keySet
   protected[this] def vals[T](part: String) = (config getAnyRef part).asInstanceOf[Map[String, T]].values
@@ -53,14 +62,15 @@ trait Configurable extends Logging {
   protected[this] def backFillSystemProperties(propertyNames: String*) =
     for (propertyName ← propertyNames) System.setProperty(propertyName, string(propertyName))
 
-  protected[this] def props(part: String) = {
+  protected[this] def props(conf: Config) = {
     val p = new Properties
-    val c = conf(part)
-    for( e <- c.entrySet())
-      p.setProperty(e.getKey, c.getString(e.getKey))
-    info(p)
+    for( e <- conf.entrySet())
+      p.setProperty(e.getKey, conf.getString(e.getKey))
     p
   }
+
+  protected[this] def props(part: String): Properties = props(conf(part))
+
 
   protected[this] def settings(part: String) = {
     val settings = ImmutableSettings.settingsBuilder()

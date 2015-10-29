@@ -18,9 +18,13 @@ class ExactNameMatch extends NativeScriptFactory {
 class ExactNameMatchScript(name: String) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    if(doc.get("LocationNameDocVal").asInstanceOf[Strings].getValues.exists(_==name) ||
-      doc.get("CompanyAliasesDocVal").asInstanceOf[Strings].getValues.exists(_==name)) 0
+    if(doc.get("LocationNameDocVal").asInstanceOf[Strings].getValues.contains(name) ||
+      doc.get("CompanyAliasesDocVal").asInstanceOf[Strings].getValues.contains(name)) 0
+    else if(doc.get("Product.l3categorydocval").asInstanceOf[Strings].getValues.contains(name) ||
+      doc.get("Product.categorykeywordsdocval").asInstanceOf[Strings].getValues.contains(name) ||
+      doc.get("Product.l1categorydocval").asInstanceOf[Strings].getValues.contains(name) ||
+      doc.get("Product.l2categorydocval").asInstanceOf[Strings].getValues.contains(name)) 1
     else
-      1
+      2
   }
 }

@@ -19,20 +19,29 @@ class GeoBucket extends NativeScriptFactory {
       params.get("lat").asInstanceOf[Double],
       params.get("lon").asInstanceOf[Double],
       params.get("areaSlugs").asInstanceOf[String].split("#").toSet,
+      params.getOrDefault("coordfield", "LatLong").asInstanceOf[String],
+      params.getOrDefault("areafield", "AreaDocVal").asInstanceOf[String],
+      params.getOrDefault("synfield", "AreaSynonymsDocVal").asInstanceOf[String],
+      params.getOrDefault("skufield", "SKUAreasDocVal").asInstanceOf[String],
       buckets)
   }
 }
 
-class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], buckets: Array[Double]) extends AbstractLongSearchScript {
+object GeoBucketScript {
+  val empty = new util.ArrayList[String]
+}
+class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: String, areafield: String, synfield: String, skufield: String, buckets: Array[Double]) extends AbstractLongSearchScript {
+  import GeoBucketScript._
   override def runAsLong: Long = {
-    val dist = doc.get("LatLong").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon)
-
-    val bucket = buckets.indexWhere(dist <= _)
-    if(bucket == 0)
+    val mdoc = doc.asInstanceOf[util.Map[String, util.AbstractList[String]]]
+    if(mdoc.getOrDefault(areafield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
-    else if(doc.get("AreaSlug").asInstanceOf[Strings].getValues.filter(areas.contains(_)).size>0)
+    else if(mdoc.getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
+      0
+    else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
     else
-      bucket
+      buckets.indexWhere(
+        (if(lat!=0||lon!=0) doc.get(coordfield).asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon) else 100d) <= _)
   }
 }
