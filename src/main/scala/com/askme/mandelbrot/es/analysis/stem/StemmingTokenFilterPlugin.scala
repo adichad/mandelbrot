@@ -8,7 +8,7 @@ import org.elasticsearch.plugins.Plugin
   */
 class StemmingTokenFilterPlugin extends Plugin {
 
-   override def name = "analysis-recombining"
+   override def name = "analysis-stemming"
    override def description = "'stemming' TokenFilter support"
 
    def onModule(module: AnalysisModule): Unit = {
