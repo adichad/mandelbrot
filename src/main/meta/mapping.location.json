@@ -25,7 +25,7 @@
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
             },
             "lat_lon": {
@@ -50,7 +50,7 @@
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
             },
             "created_on": {

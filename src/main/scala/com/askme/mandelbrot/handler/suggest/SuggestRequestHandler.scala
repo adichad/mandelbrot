@@ -1,7 +1,5 @@
 package com.askme.mandelbrot.handler.suggest
 
-import java.net.URLEncoder
-
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.message.ErrorResponse
@@ -11,22 +9,25 @@ import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
+import org.elasticsearch.script.Script
+import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
-import org.elasticsearch.search.aggregations.metrics.tophits.{TopHits, TopHitsBuilder}
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort._
+import org.elasticsearch.search.sort.SortBuilders._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import java.util
 
 import scala.collection.JavaConversions._
 
@@ -43,26 +44,27 @@ object SuggestRequestHandler extends Logging {
 
   private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areas: String = "") = {
     val parts = for (x <- sort.split(",")) yield x.trim
-    parts.map(
-      _ match {
-        case "_score" => SortBuilders.scriptSort("docscoreexponent", "number").lang("native").order(SortOrder.DESC)
-        case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
-        case "_distance" => SortBuilders.scriptSort("geobucketsuggest", "number").lang("native")
-          .param("lat", lat).param("lon", lon).param("areas", areas).order(SortOrder.ASC)
-        case "_ct" => SortBuilders.scriptSort("customertype", "number").lang("native").order(SortOrder.ASC)
-        case "_mc" => SortBuilders.scriptSort("mediacountsort", "number").lang("native").order(SortOrder.DESC)
-        case x =>
-          val pair = x.split( """\.""", 2)
-          if (pair.size == 2)
-            new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1)))
-          else
-            new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
-      }
-    )
+    parts.map {
+      case "_score" => scriptSort(new Script("docscoreexponent", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]), "number").order(SortOrder.DESC)
+      case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
+      case "_distance" =>
+        scriptSort(new Script("geobucketsuggest", ScriptType.FILE, "native",
+          new util.HashMap[String, AnyRef]{{
+            put("lat", double2Double(lat))
+            put("lon", double2Double(lon))
+            put("areas", areas)
+          }}), "number").order(SortOrder.ASC)
+      case x =>
+        val pair = x.split( """\.""", 2)
+        if (pair.size == 2)
+          new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1)))
+        else
+          new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
+    }
   }
 
 
-  private[SuggestRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[SuggestRequestHandler] def nestIfNeeded(fieldName: String, q: QueryBuilder): QueryBuilder = {
     /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -118,7 +120,7 @@ object SuggestRequestHandler extends Logging {
 
   private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
-    val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
+    val terms: Array[SpanQueryBuilder] = w.map(x=>
       if(x.length>3 && fuzzy)
         spanMultiTermQueryBuilder(
           fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>7) Fuzziness.TWO else Fuzziness.ONE ))
@@ -190,7 +192,7 @@ object SuggestRequestHandler extends Logging {
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index+"_index_incremental", text).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index+"_index_incremental", text).setField(field).get().getTokens.map(_.getTerm).toArray
 
 
   private val emptyStringArray = new Array[String](0)
@@ -204,33 +206,31 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
   private val esClient: Client = serverContext.esClient
   private var areas: String = ""
 
-  private def buildFilter(suggestParams: SuggestParams): FilterBuilder = {
+  private def buildFilter(suggestParams: SuggestParams): BoolQueryBuilder = {
     import suggestParams.target._
     import suggestParams.geo._
     import suggestParams.idx._
-    import suggestParams.limits._
-    import suggestParams.view._
 
 
     // filters
-    val finalFilter = andFilter(boolFilter.mustNot(termFilter("deleted", 1l).cache(true))).cache(false)
+    val finalFilter = boolQuery.mustNot(termQuery("deleted", 1l))
 
     if (id != "") {
-      finalFilter.add(idsFilter(esType).addIds(id.split( """,""").map(_.trim.toUpperCase): _*))
+      finalFilter.must(idsQuery(esType).addIds(id.split( """,""").map(_.trim.toUpperCase): _*))
     }
     if (tag!= "")
-      finalFilter.add(termsFilter("tag", tag.split(",").map(_.trim):_*))
+      finalFilter.must(termsQuery("tag", tag.split(",").map(_.trim):_*))
 
-    val locFilter = boolFilter.cache(false)
+    val locFilter = boolQuery
     if (area != "") {
       val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "targeting.area", _).mkString(" ")).filter(!_.isEmpty)
-      areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(true))
+      areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
       this.areas = areas.map(analyze(esClient, index, "targeting.area", _).mkString(" ")).mkString("#")
     }
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
-        geoDistanceRangeFilter("targeting.coordinates").cache(true)
+        geoDistanceRangeQuery("targeting.coordinates")
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
           .to((if (area == "") tokm else 10.0d) + "km")
@@ -239,9 +239,9 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
     if (city != "") {
-      val cityFilter = boolFilter.cache(false)
+      val cityFilter = boolQuery
       city.split( """,""").map(analyze(esClient, index, "targeting.city", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termFilter("targeting.city", c).cache(true))
+        cityFilter.should(termQuery("targeting.city", c))
       }
 
       if(cityFilter.hasClauses)
@@ -249,7 +249,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (locFilter.hasClauses) {
-      finalFilter.add(nestedFilter("targeting", locFilter))
+      finalFilter.should(nestedQuery("targeting", locFilter))
     }
 
     finalFilter
@@ -317,16 +317,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
 
 
-    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(true)
+    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
       .setTrackScores(false)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(false)
-      .setSearchType(SearchType.fromString(searchType))
+      .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .setFrom(0).setSize(0)
       .setFetchSource(false)
-      .setQuery(filteredQuery(query, buildFilter(suggestParams)))
+      .setQuery(boolQuery.must(query).filter(buildFilter(suggestParams)))
 
     //val options = new java.util.HashMap[String, AnyRef]
     //options.put("force_source", new java.lang.Boolean(true))
@@ -356,10 +356,15 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       )
 
     if(lat != 0.0d || lon !=0.0d) {
-      masters.subAggregation(min("geo").script("geobucketsuggest").lang("native").param("lat", lat).param("lon", lon).param("areas", areas))
+      masters.subAggregation(min("geo").script(new Script("geobucketsuggest", ScriptType.FILE, "native",
+        new util.HashMap[String, AnyRef]{{
+          put("lat", double2Double(lat))
+          put("lon", double2Double(lon))
+          put("areas", areas)
+        }})))
     }
 
-    masters.subAggregation(max("score").script("docscoreexponent").lang("native"))
+    masters.subAggregation(max("score").script(new Script("docscoreexponent", ScriptType.FILE, "native", new util.HashMap[String, AnyRef])))
     masters.subAggregation(sum("count").field("count"))
     search.addAggregation(masters)
   }

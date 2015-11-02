@@ -21,6 +21,8 @@ class GeoBucketSuggestions extends NativeScriptFactory {
       params.get("areas").asInstanceOf[String].split("#").toSet,
       buckets)
   }
+
+  override def needsScores = false
 }
 
 object GeoBucketSuggestionsScript {

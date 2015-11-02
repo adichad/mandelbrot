@@ -17,7 +17,7 @@ import kafka.producer.ProducerConfig
 import kafka.utils.ZKStringSerializer
 import org.I0Itec.zkclient.ZkClient
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.logging.ESLoggerFactory
@@ -40,17 +40,17 @@ object RootServer extends Logging {
   private var defContext: SearchContext = null
   def defaultContext = defContext
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   private val vCache = new java.util.concurrent.ConcurrentHashMap[(String, String, String, String, String), Set[String]].asScala
 
   def uniqueVals(index: String, esType: String, field: String, analysisField: String, sep: String, maxCount: Int): Set[String] = {
     vCache.getOrElseUpdate((index, esType, field, analysisField, sep),
-      defaultContext.esClient.prepareSearch(index).setTypes(esType).setSearchType(SearchType.COUNT)
+      defaultContext.esClient.prepareSearch(index).setTypes(esType)
         .setSize(0).setTerminateAfter(1000000).setTrackScores(false)
         .setQuery(matchAllQuery).addAggregation(terms(field).field(field).size(maxCount)).execute().get()
         .getAggregations.get(field).asInstanceOf[Terms].getBuckets
-        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKey).mkString(sep)).filter(!_.isEmpty).toSet)
+        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKeyAsString).mkString(sep)).filter(!_.isEmpty).toSet)
   }
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)

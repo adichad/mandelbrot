@@ -1,6 +1,6 @@
 package com.askme.mandelbrot.handler.search
 
-import java.net.URLEncoder
+import java.util
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -11,14 +11,15 @@ import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.action.search.{SearchType, SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{TimeValue, Fuzziness}
 import org.elasticsearch.index.query._
-import org.elasticsearch.index.query.FilterBuilders._
 import org.elasticsearch.index.query.QueryBuilders._
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.script.Script
+import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort._
@@ -33,16 +34,14 @@ object DealSearchRequestHandler extends Logging {
 
   private def getSort(sort: String) = {
     val parts = for (x <- sort.split(",")) yield x.trim
-    parts.map(
-      _ match {
-        case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
-        case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
-      }
-    )
+    parts.map {
+      case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
+      case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
+    }
   }
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   private implicit class DisMaxQueryPimp(val q: DisMaxQueryBuilder) {
     def addAll(queries: Iterable[QueryBuilder]) = {
@@ -51,7 +50,7 @@ object DealSearchRequestHandler extends Logging {
     }
   }
 
-  private[DealSearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[DealSearchRequestHandler] def nestIfNeeded(fieldName: String, q: QueryBuilder): QueryBuilder = {
     /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -62,7 +61,7 @@ object DealSearchRequestHandler extends Logging {
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
   private case class WrappedResponse(searchParams: DealSearchParams, result: SearchResponse, relaxLevel: Int)
-  private case class ReSearch(searchParams: DealSearchParams, filter: FilterBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
+  private case class ReSearch(searchParams: DealSearchParams, filter: BoolQueryBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
     if(word.length > 8 && fuzzy)
@@ -128,7 +127,7 @@ object DealSearchRequestHandler extends Logging {
 
   private[DealSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
-    val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
+    val terms: Array[SpanQueryBuilder] = w.map(x=>
       if(x.length > 8 && fuzzy)
         spanMultiTermQueryBuilder(
           fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
@@ -198,22 +197,21 @@ object DealSearchRequestHandler extends Logging {
     shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
   }
 
-  private val qDefs: Seq[((Array[String], Int)=>BaseQueryBuilder, Int)] = Seq(
+  private val qDefs: Seq[((Array[String], Int)=>QueryBuilder, Int)] = Seq(
 
-    //                                        fuzzy, slop,  span, minshingle, tokenrelax
-    (queryBuilder(searchFields2, fullFields2, false, false, false, 1, 0), 1), //1
+    (queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = false, span = false, 1, 0), 1), //1
     // full-shingle exact full matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, false, 1, 0), 1), //3
+    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = false, span = false, 1, 0), 1), //3
     // full-shingle fuzzy full matches
 
     //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
     // full-shingle exact span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, true, true, 2, 0), 1), //5
+    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = true, span = true, 2, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 1), 1) //7
+    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = false, span = true, 2, 1), 1) //7
     // relaxed-shingle exact span matches
 
     // (queryBuilder(searchFields2, fullFields2, true, false, true, 2, 2), 1) //7
@@ -229,55 +227,55 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   private var kwids: Array[String] = emptyStringArray
   private var w = emptyStringArray
 
-  private def buildFilter(searchParams: DealSearchParams): FilterBuilder = {
+  private def buildFilter(searchParams: DealSearchParams): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.geo._
     import searchParams.idx._
 
-    val finalFilter = andFilter().cache(false)
+    val finalFilter = boolQuery
 
     if (!kwids.isEmpty) {
-      finalFilter.add(idsFilter(esType).addIds(kwids: _*))
+      finalFilter.must(idsQuery(esType).addIds(kwids: _*))
     } else {
-      finalFilter.add(boolFilter.must(termFilter("Published", 1l).cache(false)))
+      finalFilter.must(termQuery("Published", 1l))
       if (applicableTo != "") {
-        finalFilter.add(termFilter("ApplicableTo", applicableTo).cache(false))
+        finalFilter.must(termQuery("ApplicableTo", applicableTo))
       }
       // Add area filters
-      val locFilter = boolFilter.cache(false)
+      val locFilter = boolQuery
       if (area != "") {
         val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-        areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-        areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-        areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-        areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, true)).foreach(a => locFilter should queryFilter(a).cache(false))
-        finalFilter.add(locFilter)
+        areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        finalFilter.should(locFilter)
       }
 
       if (category != "") {
-        val catFilter = boolFilter.cache(false)
+        val catFilter = boolQuery
         val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories.Name.NameExact", _).mkString(" ")).filter(!_.isEmpty)
-        categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, true)).foreach(a => catFilter should queryFilter(a).cache(false))
-        finalFilter.add(catFilter)
+        categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, fuzzy = true)).foreach(a => catFilter should a)
+        finalFilter.must(catFilter)
       }
 
-      finalFilter.add(andFilter(boolFilter.must(termFilter("Active", 1l).cache(false))).cache(false))
+      finalFilter.must(termQuery("Active", 1l))
       if (city != "") {
-        val cityFilter = boolFilter.cache(false)
+        val cityFilter = boolQuery
         city.split( """,""").map(analyze(esClient, index, "VisiblePlaces.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-          cityFilter.should(termFilter("VisiblePlaces.City", c).cache(false))
-          cityFilter.should(termFilter("VisiblePlaces.CitySynonyms", c).cache(false))
-          cityFilter.should(termFilter("DealDetail.VisibleToAllCities", true).cache(false))
+          cityFilter.should(termQuery("VisiblePlaces.City", c))
+          cityFilter.should(termQuery("VisiblePlaces.CitySynonyms", c))
+          cityFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
         }
 
         if (cityFilter.hasClauses)
-          finalFilter.add(cityFilter)
+          finalFilter.must(cityFilter)
       }
       if (featured == "true") {
-        finalFilter.add(andFilter(boolFilter.must(termFilter("IsFeatured", 1l).cache(false))).cache(false))
+        finalFilter.must(termQuery("IsFeatured", 1l))
       }
       if (dealsource != "") {
-        finalFilter.add(andFilter(boolFilter.must(termFilter("DealSource.Name", dealsource).cache(false))).cache(false))
+        finalFilter.must(termQuery("DealSource.Name", dealsource))
       }
     }
     finalFilter
@@ -296,19 +294,19 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     }
 
     val sorters = getSort(sort)
-    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+    val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
       .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
-      .setSearchType(SearchType.fromString(searchType))
+      .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
     if (agg) {
       search.addAggregation(
         terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script("docscore").lang("native")))
+          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]))))
     }
     if(select == "") {
       search.setFetchSource(source)
@@ -337,14 +335,14 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
           context.parent ! EmptyResponse("empty search criteria")
         }
         val query =
-          if (w.length > 0) qDefs(0)._1(w, w.length)
+          if (w.length > 0) qDefs.head._1(w, w.length)
           else matchAllQuery()
-        val leastCount = qDefs(0)._2
+        val leastCount = qDefs.head._2
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
         val finalFilter = buildFilter(searchParams)
         val search = buildSearch(searchParams)
         val me = context.self
-        search.setQuery(filteredQuery(query, finalFilter))
+        search.setQuery(boolQuery.must(query).filter(finalFilter))
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
             if (response.getHits.totalHits() >= leastCount || isMatchAll)
@@ -376,7 +374,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
           val leastCount = qDefs(relaxLevel)._2
           val me = context.self
 
-          search.setQuery(filteredQuery(query, filter)).execute(new ActionListener[SearchResponse] {
+          search.setQuery(boolQuery.must(query).filter(filter)).execute(new ActionListener[SearchResponse] {
             override def onResponse(response: SearchResponse): Unit = {
               if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
                 me ! WrappedResponse(searchParams, response, relaxLevel)

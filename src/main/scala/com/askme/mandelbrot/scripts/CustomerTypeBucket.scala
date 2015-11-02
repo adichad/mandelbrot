@@ -13,13 +13,10 @@ import scala.collection.JavaConversions._
 class CustomerTypeBucket extends NativeScriptFactory with Logging {
 
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
-    /*info("new script")
-    SearchContext.current().innerHits().getInnerHits.values.map(h => h.parsedQuery().namedFilters().keySet()).foreach { (filters: ImmutableSet[String]) =>
-      info("_____")
-      filters.foreach { info(_) }
-    }*/
     new CustomerTypeBucketScript
   }
+
+  override def needsScores = false
 }
 
 class CustomerTypeBucketScript extends AbstractLongSearchScript {

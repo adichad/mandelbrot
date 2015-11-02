@@ -18,7 +18,7 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
-
+import scala.language.postfixOps
 import scala.concurrent.duration._
 
 

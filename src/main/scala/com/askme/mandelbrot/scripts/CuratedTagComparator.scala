@@ -15,6 +15,8 @@ class CuratedTagComparator extends NativeScriptFactory {
     new CuratedTagComparatorScript(
       params.get("shingles").asInstanceOf[String].split("#").toSet)
   }
+
+  override def needsScores = false
 }
 
 object CuratedTagComparatorScript {

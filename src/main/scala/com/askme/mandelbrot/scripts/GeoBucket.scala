@@ -25,6 +25,8 @@ class GeoBucket extends NativeScriptFactory {
       params.getOrDefault("skufield", "SKUAreasDocVal").asInstanceOf[String],
       buckets)
   }
+
+  override def needsScores = false
 }
 
 object GeoBucketScript {

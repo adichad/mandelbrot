@@ -13,6 +13,8 @@ class ExactNameMatch extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     new ExactNameMatchScript(params.get("name").asInstanceOf[String])
   }
+
+  override def needsScores = false
 }
 
 class ExactNameMatchScript(name: String) extends AbstractLongSearchScript {

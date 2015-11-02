@@ -6,7 +6,7 @@ import com.askme.mandelbrot.handler.analyse.message.{AnalyseResponse, AnalysePar
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.client.Client
 import org.json4s.jackson.JsonMethods._
 import org.json4s.DefaultFormats
@@ -37,9 +37,9 @@ class AnalyseRequestHandler(val config: Config, serverContext: SearchContext) ex
       val result = render(map2jvalue(analyzers.map { analyzer =>
         analyzer ->
           input.map { text =>
-            new AnalyzeRequestBuilder(esClient.admin().indices, index, text).get.getTokens.map(_.getTerm).toArray.mkString(" ") -> text
+            new AnalyzeRequestBuilder(esClient.admin().indices, AnalyzeAction.INSTANCE, index, text).get.getTokens.map(_.getTerm).toArray.mkString(" ") -> text
           }.toMultiMap
-      }.toMultiMap.map(x=>(x._1, x._2(0)))))
+      }.toMultiMap.map(x=>(x._1, x._2.head))))
 
       val endTime = System.currentTimeMillis
       val timeTaken = endTime - startTime

@@ -2,7 +2,7 @@ package com.askme.mandelbrot.scripts
 
 import java.util
 
-import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
+import org.elasticsearch.script.{AbstractSearchScript, AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
 import scala.collection.JavaConversions._
 import scala.util.Random
 
@@ -14,6 +14,8 @@ class RandomBucketComparator extends NativeScriptFactory {
     new RandomBucketComparatorScript(
       params.get("buckets").asInstanceOf[Int])
   }
+
+  override def needsScores = false;
 }
 
 object RandomBucketComparatorScript {

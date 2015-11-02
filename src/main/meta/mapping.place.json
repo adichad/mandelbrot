@@ -145,7 +145,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["BusinessTypeExact", "BusinessTypeAggr"]
       },
@@ -153,7 +153,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
@@ -196,7 +196,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false},
@@ -249,7 +249,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["AreaSynonymsAggr", "AreaSynonymsExact"]
       },
@@ -257,7 +257,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
@@ -278,7 +278,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false}
       },
       "City": {
@@ -308,7 +308,7 @@
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["CitySynonymsAggr"]
       },
@@ -328,7 +328,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false}
       },
       "Zone": {
@@ -386,7 +386,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle"]
       },
@@ -394,7 +394,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
@@ -403,7 +403,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "shingle_analyzer",
         "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
@@ -418,7 +418,7 @@
         "type": "string",
         "store": true,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle", "CompanyAliasesAggr"]
       },
@@ -426,7 +426,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
@@ -435,7 +435,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "shingle_analyzer",
         "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
@@ -490,21 +490,21 @@
       "LocationMobile": {
         "type": "string",
         "store": true,
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "LocationLandLine": {
         "type": "string",
         "store": true,
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "LocationEmail": {
         "type": "string",
         "store": true,
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed",
         "analyzer": "keyword_analyzer"
@@ -512,14 +512,14 @@
       "LocationDIDNumber": {
         "type": "string",
         "store": true,
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "TollFreeNumber": {
         "type": "string",
         "store": true,
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
@@ -571,7 +571,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "copy_to": ["Product.nameexact"]
           },
           "nameexact": {
@@ -593,7 +593,7 @@
             "type": "string",
             "store": true,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
             "include_in_root": true,
             "copy_to": ["Product.keywordsexact"]
@@ -613,7 +613,7 @@
             "index": "analyzed",
             "norms": {"enabled": false},
             "include_in_root": true,
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "copy_to": ["Product.brandexact"]
           },
           "brandexact": {
@@ -774,7 +774,7 @@
             "type": "string",
             "store": true,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
             "include_in_root": true,
             "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr", "Product.categorykeywordsshingle"]
@@ -783,7 +783,7 @@
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
@@ -793,7 +793,7 @@
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
@@ -817,7 +817,7 @@
             "type": "string",
             "store": true,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
             "include_in_root": true,
             "copy_to": ["Product.parkedkeywordsexact", "Product.parkedkeywordsaggr", "Product.parkedkeywordsshingle"]
@@ -826,7 +826,7 @@
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
@@ -836,7 +836,7 @@
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
@@ -884,7 +884,7 @@
               "answer": {
                 "type": "string",
                 "store": false,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "index": "analyzed",
                 "copy_to": ["Product.stringattribute.aaggr", "Product.stringattribute.answershingle"]
@@ -893,7 +893,7 @@
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "norms": {"enabled": false}
@@ -902,7 +902,7 @@
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
                 "norms": {"enabled": false}

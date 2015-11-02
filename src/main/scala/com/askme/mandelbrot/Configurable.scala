@@ -6,7 +6,7 @@ import akka.actor.{Props, ActorContext, ActorRef}
 import com.askme.mandelbrot.piper.Piper
 import com.typesafe.config.{Config, ConfigFactory}
 import grizzled.slf4j.Logging
-import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.common.settings.{Settings}
 
 import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap}
 import scala.reflect.ClassTag
@@ -73,7 +73,7 @@ trait Configurable extends Logging {
 
 
   protected[this] def settings(part: String) = {
-    val settings = ImmutableSettings.settingsBuilder()
+    val settings = Settings.settingsBuilder()
     val c = conf(part)
     for( e <- c.entrySet() )
       settings.put(e.getKey, c.getString(e.getKey))

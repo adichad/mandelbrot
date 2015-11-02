@@ -6,7 +6,7 @@ import com.askme.mandelbrot.server.RootServer
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.client.Client
 import org.json4s.JsonAST.JValue
@@ -27,7 +27,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
   val esClient = RootServer.defaultContext.esClient
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   override def pipe(json: JValue): Unit = {
       val startTime = System.currentTimeMillis()
@@ -48,10 +48,10 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
 
           val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
-            (doc \ "Product").children.map(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)).flatten ++ categories ++
-            (doc \ "Product").children.map(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)))).flatten.filter(
+            (doc \ "Product").children.flatMap(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)) ++ categories ++
+            (doc \ "Product").children.flatMap(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)))).filter(
               att => att._1.trim.toLowerCase().startsWith("brand") || att._1.trim.toLowerCase().startsWith("menu")
-            ).map(a => a._2.filter(!_.isEmpty)).flatten
+            ).flatMap(a => a._2.filter(!_.isEmpty))
 
           bulkRequest.add(
             esClient.prepareIndex(string("params.index"), string("params.type"), id)
