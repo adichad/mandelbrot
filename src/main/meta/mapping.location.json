@@ -35,11 +35,11 @@
                 "geohash_precision": "1m",
                 "geohash_prefix": true,
                 "store": true,
-                "normalize": true,
                 "fielddata": {
                     "format": "compressed",
                     "precision": "1m"
-                }
+                },
+                "doc_values": true
              },
             "bounds": {
                 "type": "geo_shape",
