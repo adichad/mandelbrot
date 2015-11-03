@@ -43,30 +43,34 @@ object PlaceSearchRequestHandler extends Logging {
   val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
 
+  private val randomParams = new util.HashMap[String, AnyRef]
+  randomParams.put("buckets", int2Integer(5))
+
   private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areaSlugs: String = "", w: Array[String]) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
 
       case "_random" =>
-        NativeScriptEngineService.NAME
-        scriptSort(new Script("randomizer", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef] {{put("buckets",int2Integer(5))}}), "number").order(SortOrder.ASC)
+        scriptSort(new Script("randomizer", ScriptType.INLINE, "native", randomParams), "number").order(SortOrder.ASC)
       case "_name" =>
-        scriptSort(new Script("exactnamematch", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef] {{put("name", w.mkString(" "))}}), "number").order(SortOrder.ASC)
+        val nameParams = new util.HashMap[String, AnyRef]
+        nameParams.put("name", w.mkString(" "))
+        scriptSort(new Script("exactnamematch", ScriptType.INLINE, "native", nameParams), "number").order(SortOrder.ASC)
       case "_score" => scoreSort.order(SortOrder.DESC)
       case "_distance" =>
-        scriptSort(new Script("geobucket", ScriptType.INLINE, "native",
-          new util.HashMap[String, AnyRef] {{
-            put("lat", double2Double(lat))
-            put("lon", double2Double(lon))
-            put("areaSlugs", areaSlugs)
-            put("areafield", "AreaDocVal")
-            put("synfield", "AreaSynonymsDocVal")
-            put("skufield", "SKUAreasDocVal")}}), "number").order(SortOrder.ASC)
+        val geoParams = new util.HashMap[String, AnyRef]
+        geoParams.put("lat", double2Double(lat))
+        geoParams.put("lon", double2Double(lon))
+        geoParams.put("areaSlugs", areaSlugs)
+        geoParams.put("areafield", "AreaDocVal")
+        geoParams.put("synfield", "AreaSynonymsDocVal")
+        geoParams.put("skufield", "SKUAreasDocVal")
+        scriptSort(new Script("geobucket", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC)
       case "_tags" =>
-        scriptSort(new Script("curatedtag", ScriptType.INLINE, "native",
-          new util.HashMap[String, AnyRef] {{
-            put("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
-          }}), "number").order(SortOrder.DESC)
+        val tagParams = new util.HashMap[String, AnyRef]
+        tagParams.put("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
+
+        scriptSort(new Script("curatedtag", ScriptType.INLINE, "native", tagParams), "number").order(SortOrder.DESC)
       case "_ct" => scriptSort(new Script("curatedtag", ScriptType.INLINE, "native",
         new util.HashMap[String, AnyRef]), "number").order(SortOrder.ASC)
       case "_mc" => scriptSort(new Script("mediacountsort", ScriptType.INLINE, "native",
