@@ -1,6 +1,6 @@
 {
     "settings" : {
-        "number_of_shards" : 1,
+        "number_of_shards" : 18,
         "number_of_replicas" : 0,
         "index.merge.policy.floor_segment": "50mb",
         "index.merge.policy.max_merge_at_once": "2",
@@ -91,19 +91,19 @@
                     ]
                 },
                 "plural_stem": {
-                    "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+                    "type": "stemming",
                     "stemmer": "plural",
                     "min-len": 3,
                     "exclude": ["ins", "tvs", "ties"]
                 },
                 "participle_stem": {
-                    "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+                    "type": "stemming",
                     "stemmer": "participle",
                     "min-len": 6,
                     "exclude": ["inning", "something", "notting"]
                 },
                 "recombine": {
-                    "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
+                    "type": "recombining"
                 },
                 "shingle": {
                     "type": "shingle",
