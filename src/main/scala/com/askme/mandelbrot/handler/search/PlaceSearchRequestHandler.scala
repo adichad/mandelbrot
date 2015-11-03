@@ -69,7 +69,7 @@ object PlaceSearchRequestHandler extends Logging {
       case "_tags" =>
         val tagParams = new util.HashMap[String, AnyRef]
         tagParams.put("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
-
+        info(tagParams)
         scriptSort(new Script("curatedtag", ScriptType.INLINE, "native", tagParams), "number").order(SortOrder.DESC)
       case "_ct" => scriptSort(new Script("curatedtag", ScriptType.INLINE, "native",
         new util.HashMap[String, AnyRef]), "number").order(SortOrder.ASC)
