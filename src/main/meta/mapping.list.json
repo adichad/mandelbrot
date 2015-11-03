@@ -75,9 +75,28 @@
         "index": "not_analyzed",
         "doc_values": true
       },
+      "content_title": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed"
+      },
+      "content_titleexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "content_titleshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer"
+      },
       "content": {
         "type": "nested",
-        "include_in_root": true,
         "properties": {
           "id": {
             "type": "integer",
@@ -86,12 +105,14 @@
           },
           "title": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "include_in_root": true,
             "copy_to": [
               "content.titleexact",
-              "content.titleshingle"
+              "content.titleshingle",
+              "content_title",
+              "content_titleexact",
+              "content_titleshingle"
             ]
           },
           "titleexact": {
@@ -111,20 +132,17 @@
           },
           "imageurl": {
             "type": "string",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "index": "no"
           },
           "link": {
             "type": "string",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "index": "no"
           },
           "badge": {
             "type": "string",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "index": "no"
           },
           "keywords": {
@@ -133,7 +151,6 @@
             "index": "analyzed",
             "position_increment_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true,
             "copy_to": [
               "content.keywordsexact",
               "content.keywordsaggr",
@@ -147,8 +164,7 @@
             "position_increment_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "keywordsshingle": {
             "type": "string",
@@ -157,15 +173,13 @@
             "position_increment_gap": 100,
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "keywordsaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "doc_values": true,
-            "include_in_root": true
+            "doc_values": true
           }
         }
       }

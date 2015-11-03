@@ -46,7 +46,6 @@
       },
       "targeting": {
         "type": "nested",
-        "include_in_root": true,
         "properties": {
           "city": {
             "type": "string",
@@ -60,8 +59,7 @@
             "store": true,
             "index": "analyzed",
             "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "include_in_root": true
+            "search_analyzer": "keyword_analyzer"
           },
           "areadocval": {
             "type": "string",
@@ -76,14 +74,12 @@
             "geohash_precision": "1m",
             "geohash_prefix": true,
             "store": true,
-            "doc_values": true,
-            "include_in_root": true
+            "doc_values": true
           },
           "tag": {
             "type": "string",
             "store": true,
             "index": "not_analyzed",
-            "include_in_root": true,
             "doc_values": true
           },
           "kw": {

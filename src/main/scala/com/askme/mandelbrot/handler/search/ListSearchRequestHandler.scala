@@ -80,11 +80,11 @@ object ListSearchRequestHandler extends Logging {
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
   }
 
-  private val searchFields = Map("label" -> 0f, "keywords" -> 0f, "content.title" -> 0f)
+  private val searchFields = Map("label" -> 0f, "keywords" -> 0f, "content_title" -> 0f)
 
-  private val fullFields = Map("labelexact" -> 0f, "keywordsexact"->0f,"content.titleexact"->0f)
+  private val fullFields = Map("labelexact" -> 0f, "keywordsexact"->0f,"content_titleexact"->0f)
 
-  private val shingleFields = Map("labelshingle" -> 0f, "keywordsshingle"->0f,"content.titleshingle"->0f)
+  private val shingleFields = Map("labelshingle" -> 0f, "keywordsshingle"->0f,"content_titleshingle"->0f)
 
   private val emptyStringArray = new Array[String](0)
 
