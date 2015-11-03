@@ -48,12 +48,13 @@ object PlaceSearchRequestHandler extends Logging {
     parts.map {
 
       case "_random" =>
-        scriptSort(new Script("randomizer", ScriptType.FILE, "native", new util.HashMap[String, AnyRef] {{put("buckets",int2Integer(5))}}), "number").order(SortOrder.ASC)
+        NativeScriptEngineService.NAME
+        scriptSort(new Script("randomizer", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef] {{put("buckets",int2Integer(5))}}), "number").order(SortOrder.ASC)
       case "_name" =>
-        scriptSort(new Script("exactnamematch", ScriptType.FILE, "native", new util.HashMap[String, AnyRef] {{put("name", w.mkString(" "))}}), "number").order(SortOrder.ASC)
+        scriptSort(new Script("exactnamematch", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef] {{put("name", w.mkString(" "))}}), "number").order(SortOrder.ASC)
       case "_score" => scoreSort.order(SortOrder.DESC)
       case "_distance" =>
-        scriptSort(new Script("geobucket", ScriptType.FILE, "native",
+        scriptSort(new Script("geobucket", ScriptType.INLINE, "native",
           new util.HashMap[String, AnyRef] {{
             put("lat", double2Double(lat))
             put("lon", double2Double(lon))
@@ -62,13 +63,13 @@ object PlaceSearchRequestHandler extends Logging {
             put("synfield", "AreaSynonymsDocVal")
             put("skufield", "SKUAreasDocVal")}}), "number").order(SortOrder.ASC)
       case "_tags" =>
-        scriptSort(new Script("curatedtag", ScriptType.FILE, "native",
+        scriptSort(new Script("curatedtag", ScriptType.INLINE, "native",
           new util.HashMap[String, AnyRef] {{
             put("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
           }}), "number").order(SortOrder.DESC)
-      case "_ct" => scriptSort(new Script("curatedtag", ScriptType.FILE, "native",
+      case "_ct" => scriptSort(new Script("curatedtag", ScriptType.INLINE, "native",
         new util.HashMap[String, AnyRef]), "number").order(SortOrder.ASC)
-      case "_mc" => scriptSort(new Script("mediacountsort", ScriptType.FILE, "native",
+      case "_mc" => scriptSort(new Script("mediacountsort", ScriptType.INLINE, "native",
         new util.HashMap[String, AnyRef]), "number").order(SortOrder.DESC)
       case x =>
         val pair = x.split( """\.""", 2)
@@ -449,7 +450,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if(goldcollapse) {
         val randomParams = new util.HashMap[String, AnyRef]
         randomParams.put("buckets", int2Integer(5))
-        val randomizer = min("random").script(new Script("randomizer", ScriptType.FILE, "native", randomParams))
+        val randomizer = min("random").script(new Script("randomizer", ScriptType.INLINE, "native", randomParams))
         platinum.subAggregation(randomizer)
         diamond.subAggregation(randomizer)
         gold.subAggregation(randomizer)
@@ -458,7 +459,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val nameParams = new util.HashMap[String, AnyRef]
       nameParams.put("name", w.mkString(" "))
-      val nameSorter = min("exactname").script(new Script("exactnamematch", ScriptType.FILE, "native", nameParams))
+      val nameSorter = min("exactname").script(new Script("exactnamematch", ScriptType.INLINE, "native", nameParams))
       platinum.subAggregation(nameSorter)
       diamond.subAggregation(nameSorter)
       gold.subAggregation(nameSorter)
@@ -467,7 +468,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         geoParams.put("lat", double2Double(lat))
         geoParams.put("lon", double2Double(lon))
         geoParams.put("areaSlugs", areaSlugs)
-        val geoSorter = min("geo").script(new Script("geobucket", ScriptType.FILE, "native", geoParams))
+        val geoSorter = min("geo").script(new Script("geobucket", ScriptType.INLINE, "native", geoParams))
         platinum.subAggregation(geoSorter)
         diamond.subAggregation(geoSorter)
         gold.subAggregation(geoSorter)
@@ -475,10 +476,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
       val tagsParams = new util.HashMap[String, AnyRef]
       tagsParams.put("shingles", (1 to 3).flatMap(w.sliding(_).map(_.mkString(" "))).mkString("#"))
-      val tagSorter = max("tags").script(new Script("curatedtag", ScriptType.FILE, "native", tagsParams))
+      val tagSorter = max("tags").script(new Script("curatedtag", ScriptType.INLINE, "native", tagsParams))
 
-      val mediaSorter = max("mediacount").script(new Script("mediacountsort", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]))
-      val scoreSorter = max("score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]))
+      val mediaSorter = max("mediacount").script(new Script("mediacountsort", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
       platinum.subAggregation(tagSorter)
       platinum.subAggregation(mediaSorter)
       platinum.subAggregation(scoreSorter)
@@ -528,7 +529,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("product_l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef])))
+          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])))
       )
       /*
       if (lat != 0.0d || lon != 0.0d)
@@ -552,7 +553,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       search.addAggregation(nested("products").path("Product")
         .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(100))
-          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef])))
+          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])))
         )
       )
       search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
