@@ -44,13 +44,13 @@
       "MasterID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": true,
+        "ignore_malformed": false,
         "doc_values": true
       },
       "EDMSLocationID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": true,
+        "ignore_malformed": false,
         "doc_values": true
       },
       "DeleteFlag": {
@@ -66,12 +66,12 @@
       "PPCOnline": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "index": "no"
       },
       "PPCVoice": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "index": "no"
       },
       "CustomerType": {
         "type": "string",
@@ -82,7 +82,7 @@
       "NowCustomerType": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "doc_values": true
       },
       "LocationName": {
         "type": "string",
@@ -373,7 +373,6 @@
       "CompanyID": {
         "type": "integer",
         "store": true,
-        "ignore_malformed": true,
         "doc_values": true
       },
       "CompanyName": {
@@ -545,19 +544,16 @@
       },
       "Media": {
         "type": "nested",
-        "ignore_malformed": true,
         "properties": {
           "MediaType": {
             "type": "string",
             "store": false,
-            "index": "no",
-            "ignore_malformed": true
+            "index": "no"
           },
           "MediaName": {
             "type": "string",
             "store": false,
-            "index": "no",
-            "ignore_malformed": true
+            "index": "no"
           }
         }
       },
@@ -841,7 +837,7 @@
           "id": {
             "type": "integer",
             "store": false,
-            "ignore_malformed": false
+            "index": "no"
           },
           "name": {
             "type": "string",
@@ -1039,7 +1035,6 @@
           "l3categoryid": {
             "type": "integer",
             "store": false,
-            "ignore_malformed": true,
             "index": "no"
           },
           "categorypath": {
