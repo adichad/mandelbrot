@@ -180,12 +180,12 @@ object PlaceSearchRequestHandler extends Logging {
           shingleSpan("LocationName", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else if(field._1=="CompanyAliasesExact")
           shingleSpan("CompanyAliases", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="Product.l3categoryexact")
-          shingleSpan("Product.l3category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="Product.l2categoryexact")
-          shingleSpan("Product.l2category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="product_l3categoryexact")
+          shingleSpan("product_l3category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="product_l2categoryexact")
+          shingleSpan("product_l2category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else if(field._1=="Product.l1categoryexact")
-          shingleSpan("Product.l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+          shingleSpan("product_l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else
           shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
       )
@@ -234,33 +234,33 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
-    "Product.l3category" -> 10000000f,
-    "Product.l2category" -> 1000f,
-    "Product.l1category" -> 100f,
+    "Product_l3category" -> 10000000f,
+    "Product_l2category" -> 1000f,
+    "Product_l1category" -> 100f,
     "LocationType"->1000f,
     "BusinessType"->1000f,
-    "Product.name" -> 1000f,
-    "Product.brand" -> 10000f,
+    "product_name" -> 1000f,
+    "product_brand" -> 10000f,
     "CuratedTags"-> 10000f,
-    "Product.categorykeywords" -> 10000000f,
-    "Product.parkedkeywords" -> 10000000f,
-    "Product.stringattribute.answer" -> 100f,
+    "product_categorykeywords" -> 10000000f,
+    "product_parkedkeywords" -> 10000000f,
+    "product_stringattribute_answer" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"Address"->1f)
 
   private val fullFields2 = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
-    "Product.l3categoryexact"->10000000000f,
-    "Product.l2categoryexact"->10000000f,
-    "Product.l1categoryexact"->10000000f,
+    "product_l3categoryexact"->10000000000f,
+    "product_l2categoryexact"->10000000f,
+    "product_l1categoryexact"->10000000f,
     "LocationTypeExact"->1000f,
     "BusinessTypeExact"->1000f,
-    "Product.nameexact" -> 1000f,
-    "Product.brandexact" -> 10000f,
+    "product_nameexact" -> 1000f,
+    "product_brandexact" -> 10000f,
     "CuratedTagsExact"-> 10000f,
-    "Product.categorykeywordsexact"->10000000000f,
-    "Product.parkedkeywordsexact"->10000000000f,
-    "Product.stringattribute.answerexact"->100000f,
+    "product_categorykeywordsexact"->10000000000f,
+    "product_parkedkeywordsexact"->10000000000f,
+    "product_stringattribute_answerexact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCode"->1f,"AddressExact"->1f)
 
@@ -382,10 +382,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "Product.l3categoryexact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        val cat = analyze(esClient, index, "Product.l3categoryexact", c).mkString(" ")
-        b.should(termQuery("Product.l3categoryexact", cat))
-        b.should(termQuery("Product.categorykeywordsexact", cat))
+      category.split("""#""").map(analyze(esClient, index, "product_l3categoryexact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+        val cat = analyze(esClient, index, "product_l3categoryexact", c).mkString(" ")
+        b.should(termQuery("product_l3categoryexact", cat))
+        b.should(termQuery("product_categorykeywordsexact", cat))
       }
       if(b.hasClauses)
         finalFilter.should(nestedQuery("Product", b))
@@ -527,7 +527,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       //search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
-        terms("categories").field("Product.l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+        terms("categories").field("product_l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef])))
       )
       /*
