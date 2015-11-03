@@ -368,7 +368,9 @@
         "geohash_precision": "1m",
         "geohash_prefix": true,
         "store": true,
-        "doc_values": true
+        "doc_values": true,
+        "coerce": true,
+        "ignore_malformed": true
       },
       "CompanyID": {
         "type": "integer",
