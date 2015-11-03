@@ -45,15 +45,15 @@ object SuggestRequestHandler extends Logging {
   private def getSort(sort: String, lat: Double = 0d, lon: Double = 0d, areas: String = "") = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
-      case "_score" => scriptSort(new Script("docscoreexponent", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]), "number").order(SortOrder.DESC)
+      case "_score" => scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]), "number").order(SortOrder.DESC)
       case "_count" => new FieldSortBuilder("count").order(SortOrder.DESC)
       case "_distance" =>
-        scriptSort(new Script("geobucketsuggest", ScriptType.FILE, "native",
-          new util.HashMap[String, AnyRef]{{
-            put("lat", double2Double(lat))
-            put("lon", double2Double(lon))
-            put("areas", areas)
-          }}), "number").order(SortOrder.ASC)
+        val geoParams = new util.HashMap[String, AnyRef]
+        geoParams.put("lat", double2Double(lat))
+        geoParams.put("lon", double2Double(lon))
+        geoParams.put("areas", areas)
+
+        scriptSort(new Script("geobucketsuggest", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC)
       case x =>
         val pair = x.split( """\.""", 2)
         if (pair.size == 2)
@@ -356,15 +356,15 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       )
 
     if(lat != 0.0d || lon !=0.0d) {
-      masters.subAggregation(min("geo").script(new Script("geobucketsuggest", ScriptType.FILE, "native",
-        new util.HashMap[String, AnyRef]{{
-          put("lat", double2Double(lat))
-          put("lon", double2Double(lon))
-          put("areas", areas)
-        }})))
+      val geoParams = new util.HashMap[String, AnyRef]
+      geoParams.put("lat", double2Double(lat))
+      geoParams.put("lon", double2Double(lon))
+      geoParams.put("areas", areas)
+
+      masters.subAggregation(min("geo").script(new Script("geobucketsuggest", ScriptType.INLINE, "native", geoParams)))
     }
 
-    masters.subAggregation(max("score").script(new Script("docscoreexponent", ScriptType.FILE, "native", new util.HashMap[String, AnyRef])))
+    masters.subAggregation(max("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])))
     masters.subAggregation(sum("count").field("count"))
     search.addAggregation(masters)
   }

@@ -306,7 +306,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     if (agg) {
       search.addAggregation(
         terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.FILE, "native", new util.HashMap[String, AnyRef]))))
+          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))))
     }
     if(select == "") {
       search.setFetchSource(source)
