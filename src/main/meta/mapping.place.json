@@ -19,7 +19,7 @@
     "properties": {
       "PlaceID": {
         "type": "string",
-        "store": false,
+        "store": true,
         "index": "not_analyzed",
         "doc_values": true
       },
