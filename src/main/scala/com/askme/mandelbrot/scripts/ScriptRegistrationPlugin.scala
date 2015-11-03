@@ -21,7 +21,7 @@ class ScriptRegistrationPlugin extends Plugin {
     module.registerScript("mediacountsort", classOf[MediaCountSort])
     module.registerScript("exactnamematch", classOf[ExactNameMatch])
     module.registerScript("suggestiontransform", classOf[SuggestionTransform])
-    module.registerScript("curatedtag", classOf[GeoBucketSuggestions])
+    module.registerScript("curatedtag", classOf[CuratedTagComparator])
     module.registerScript("randomizer", classOf[RandomBucketComparator])
 
   }
