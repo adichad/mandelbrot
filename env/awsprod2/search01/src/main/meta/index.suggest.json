@@ -99,19 +99,19 @@
           ]
         },
         "plural_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "plural",
           "min-len": 3,
           "exclude": ["ins", "tvs", "fries"]
         },
         "participle_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "participle",
           "min-len": 5,
           "exclude": ["inning", "something", "notting"]
         },
         "recombine": {
-          "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
+          "type": "recombining"
         },
         "shingle": {
           "type": "shingle",

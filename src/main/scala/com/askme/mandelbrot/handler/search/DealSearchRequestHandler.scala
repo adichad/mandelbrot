@@ -290,7 +290,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
     var sort = "_score"
     if (screentype == "home") {
-      sort = "_home"
+      sort = "_home,_score"
     }
 
     val sorters = getSort(sort)

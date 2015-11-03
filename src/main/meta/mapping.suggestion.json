@@ -74,7 +74,9 @@
             "geohash_precision": "1m",
             "geohash_prefix": true,
             "store": true,
-            "doc_values": true
+            "doc_values": true,
+            "coerce": true,
+            "ignore_malformed": true
           },
           "tag": {
             "type": "string",
@@ -84,7 +86,6 @@
           },
           "kw": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "highlight": {
                 "type": "string",
@@ -214,7 +215,6 @@
           },
           "label": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "highlight": {
                 "type": "string",
