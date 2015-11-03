@@ -2,6 +2,7 @@ package com.askme.mandelbrot.scripts
 
 import java.util
 
+import grizzled.slf4j.Logging
 import org.elasticsearch.index.fielddata.ScriptDocValues
 import org.elasticsearch.index.fielddata.ScriptDocValues.Strings
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
@@ -10,8 +11,9 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 18/08/15.
  */
-class CuratedTagComparator extends NativeScriptFactory {
+class CuratedTagComparator extends NativeScriptFactory with Logging {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
+    info(params)
     new CuratedTagComparatorScript(
       params.get("shingles").asInstanceOf[String].split("#").toSet)
   }
