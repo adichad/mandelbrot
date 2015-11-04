@@ -978,6 +978,7 @@
           "PlaceID": {
             "type": "string",
             "store": false,
+            "index": "not_analyzed",
             "doc_values": true
           },
           "Email": {

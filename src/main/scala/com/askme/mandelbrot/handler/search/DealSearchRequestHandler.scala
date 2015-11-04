@@ -142,9 +142,14 @@ object DealSearchRequestHandler extends Logging {
       //var i = 100000
       val slop = if(sloppy) len/3 else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
-        shingle.foreach(nearQuery.clause)
-        fieldQuery1.should(nearQuery)
+        if(shingle.length>1) {
+          val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+          shingle.foreach(nearQuery.clause)
+          fieldQuery1.should(nearQuery)
+        }
+        else {
+          fieldQuery1.should(shingle.head)
+        }
         //i /= 10
       }
     }
