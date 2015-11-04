@@ -91,7 +91,7 @@
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "index_analyzer": "highlighting_analyzer_index",
+                "analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
                 "position_increment_gap": 100,
                 "norms": {"enabled": false}
@@ -220,7 +220,7 @@
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "index_analyzer": "highlighting_analyzer_index",
+                "analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
                 "position_increment_gap": 100,
                 "norms": {"enabled": false}
