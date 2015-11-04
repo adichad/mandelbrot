@@ -681,50 +681,8 @@
         "type": "object",
         "enabled": false
       },
-      "Offers_Name": {
-        "type": "multi_field",
-        "fields": {
-          "Offers_Name": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Offers_NameExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          }
-        }
-      },
-      "Offers_DescriptionShort": {
-        "type": "multi_field",
-        "fields": {
-          "Offers_DescriptionShort": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Offers_DescriptionShortExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          }
-        }
-      },
       "Offers": {
-        "type": "nested",
+        "type": "object",
         "properties": {
           "ID": {
             "type": "integer",
@@ -738,7 +696,6 @@
           },
           "Name": {
             "type": "multi_field",
-            "copy_to": "Offers_Name",
             "fields": {
               "Name": {
                 "type": "string",
@@ -760,7 +717,6 @@
           },
           "DescriptionShort": {
             "type": "multi_field",
-            "copy_to": "Offers_DescriptionShort",
             "fields": {
               "DescriptionShort": {
                 "type": "string",
@@ -905,120 +861,8 @@
         "type": "object",
         "enabled": false
       },
-      "Locations_Area": {
-        "type": "multi_field",
-        "fields": {
-          "Locations_Area": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_AreaExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_AreaAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "norms": {"enabled": false}
-          }
-        }
-      },
-      "Locations_AreaSynonyms": {
-        "type": "multi_field",
-        "fields": {
-          "Locations_AreaSynonyms": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_AreaSynonymsExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_AreaSynonymsAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "norms": {"enabled": false},
-            "doc_values": true
-          }
-        }
-      },
-      "Locations_City": {
-        "type": "multi_field",
-        "fields": {
-          "Locations_City": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_CityExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_CityAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "norms": {"enabled": false},
-            "doc_values": true
-          }
-        }
-      },
-      "Locations_CitySynonyms": {
-        "type": "multi_field",
-        "fields": {
-          "Locations_CitySynonyms": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_CitySynonymsExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false}
-          },
-          "Locations_CitySynonymsAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "position_increment_gap": 100,
-            "norms": {"enabled": false},
-            "doc_values": true
-          }
-        }
-      },
       "Locations": {
-        "type": "nested",
+        "type": "object",
         "properties": {
           "ID": {
             "type": "integer",
@@ -1235,7 +1079,6 @@
           },
           "Area": {
             "type": "multi_field",
-            "copy_to": "Locations_Area",
             "fields": {
               "Area": {
                 "type": "string",
@@ -1263,7 +1106,6 @@
           },
           "AreaSynonyms": {
             "type": "multi_field",
-            "copy_to": "Locations_AreaSynonyms",
             "fields": {
               "AreaSynonyms": {
                 "type": "string",
@@ -1292,7 +1134,6 @@
           },
           "City": {
             "type": "multi_field",
-            "copy_to": "Locations_City",
             "fields": {
               "City": {
                 "type": "string",
@@ -1321,7 +1162,6 @@
           },
           "CitySynonyms": {
             "type": "multi_field",
-            "copy_to": "Locations_CitySynonyms",
             "fields": {
               "CitySynonyms": {
                 "type": "string",
@@ -1466,63 +1306,8 @@
           }
         }
       },
-      "Categories_Name": {
-        "type": "multi_field",
-        "fields": {
-          "Categories_Name": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "norms": {"enabled": false},
-            "position_increment_gap": 100
-          },
-          "Categories_NameExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "norms": {"enabled": false},
-            "position_increment_gap": 100
-          },
-          "Categories_NameAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "norms": {"enabled": false},
-            "doc_values": true
-          }
-        }
-      },
-      "Categories_Synonym": {
-        "type": "multi_field",
-        "fields": {
-          "Categories_Synonym": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed"
-          },
-          "Categories_SynonymExact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "norms": {"enabled": false},
-            "position_increment_gap": 100
-          },
-          "Categories_SynonymAggr": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "norms": {"enabled": false},
-            "position_increment_gap": 100,
-            "doc_values": true
-          }
-        }
-      },
       "Categories": {
-        "type": "nested",
+        "type": "object",
         "properties" : {
           "ID": {
             "type": "integer",
@@ -1651,7 +1436,6 @@
           },
           "Name": {
             "type": "multi_field",
-            "copy_to": "Categories_Name",
             "fields": {
               "Name": {
                 "type": "string",
@@ -1680,7 +1464,6 @@
           },
           "Synonym": {
             "type": "multi_field",
-            "copy_to": "Categories_Synonym",
             "fields": {
               "Synonym": {
                 "type": "string",

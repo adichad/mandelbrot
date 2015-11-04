@@ -94,32 +94,32 @@ object DealSearchRequestHandler extends Logging {
   private val searchFields2 = Map(
     "Title" -> 1000000000f,
     "Headline" -> 1000000000f,
-    "Categories_Name" -> 10000000f,
-    "Categories_Synonym" -> 1000f,
+    "Categories.Name" -> 10000000f,
+    "Categories.Synonym" -> 1000f,
     "DealTags"->1000f,
-    "Offers_Name" -> 1000f,
+    "Offers.Name" -> 1000f,
     "DescriptionShort" -> 100f,
-    "Offers_DescriptionShort" -> 100f,
-    "Locations_Area"->10f, "Locations_AreaSynonyms"->10f,
-    "Locations_City"->1f, "Locations_CitySynonyms"->1f)
+    "Offers.DescriptionShort" -> 100f,
+    "Locations.Area"->10f, "Locations.AreaSynonyms"->10f,
+    "Locations.City"->1f, "Locations.CitySynonyms"->1f)
 
   private val fullFields2 = Map(
     "Title.TitleExact"->100000000000f,
     "Headline.HeadlineExact"->100000000000f,
-    "Categories_Name.Categories_NameExact"->10000000000f,
-    "Categories_Synonym.Categories_SynonymExact"->10000000f,
+    "Categories.Name.NameExact"->10000000000f,
+    "Categories.Synonym.SynonymExact"->10000000f,
     "DealTags.DealTagsExact"->10000000f,
-    "Offers_Name.Offers_NameExact"->1000f,
+    "Offers.Name.NameExact"->1000f,
     "DescriptionShort.DescriptionShortExact"->1000f,
-    "Offers_DescriptionShort.Offers_DescriptionShortExact" -> 1000f,
-    "Locations_Area.Locations_AreaExact"->10f, "Locations_AreaSynonyms.Locations_AreaSynonymsExact"->10f,
-    "Locations_City.Locations_CityExact"->1f, "Locations_CitySynonyms.Locations_CitySynonymsExact"->1f)
+    "Offers.DescriptionShort.DescriptionShortExact" -> 1000f,
+    "Locations.Area.AreaExact"->10f, "Locations.AreaSynonyms.AreaSynonymsExact"->10f,
+    "Locations.City.CityExact"->1f, "Locations.CitySynonyms.CitySynonymsExact"->1f)
 
   private val exactToFieldMap = Map("Title.TitleExact" -> "Title",
     "Headline.HeadlineExact"-> "Headline",
-    "Offers_Name.NameExact"-> "Offers_Name",
+    "Offers.Name.NameExact"-> "Offers.Name",
     "DescriptionShort.DescriptionShortExact" -> "DescriptionShort",
-    "Offers_DescriptionShort.DescriptionShortExact" -> "Offers_DescriptionShort")
+    "Offers.DescriptionShort.DescriptionShortExact" -> "Offers.DescriptionShort")
 
   private implicit class SearchPimp(val search: SearchRequestBuilder) {
     def addSorts(sorts: Iterable[SortBuilder]) = {
@@ -247,18 +247,18 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       // Add area filters
       val locFilter = boolQuery
       if (area != "") {
-        val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations_Area.Locations_AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-        areas.map(fuzzyOrTermQuery("Locations_Area.Locations_AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations_AreaSynonyms.Locations_AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations_City.Locations_CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations_CitySynonyms.Locations_CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+        areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
         finalFilter.should(locFilter)
       }
 
       if (category != "") {
         val catFilter = boolQuery
-        val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories_Name.Categories_NameExact", _).mkString(" ")).filter(!_.isEmpty)
-        categories.map(fuzzyOrTermQuery("Categories_Name.Categories_NameExact", _, 1f, 1, fuzzy = true)).foreach(a => catFilter should a)
+        val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories.Name.NameExact", _).mkString(" ")).filter(!_.isEmpty)
+        categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, fuzzy = true)).foreach(a => catFilter should a)
         finalFilter.must(catFilter)
       }
 
@@ -308,7 +308,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setFrom(offset).setSize(size)
     if (agg) {
       search.addAggregation(
-        terms("categories").field("Categories_Name.Categories_NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
+        terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))))
     }
     if(select == "") {
