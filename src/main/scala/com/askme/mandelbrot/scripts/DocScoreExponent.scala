@@ -13,7 +13,7 @@ class DocScoreExponent extends NativeScriptFactory {
     new DocScoreExponentScript
   }
 
-  override def needsScores = false
+  override def needsScores = true
 }
 
 class DocScoreExponentScript extends AbstractLongSearchScript {
