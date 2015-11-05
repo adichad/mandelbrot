@@ -354,7 +354,6 @@
         "type": "string",
         "store": false,
         "index": "not_analyzed",
-        "ignore_malformed": false,
         "doc_values": true
       },
       "count": {

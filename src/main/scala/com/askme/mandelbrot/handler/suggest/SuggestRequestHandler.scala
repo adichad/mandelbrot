@@ -132,53 +132,18 @@ object SuggestRequestHandler extends Logging {
       //var i = 100000
       val slop = if(sloppy) len/3 else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost) // * math.max(1,i)
-        shingle.foreach(nearQuery.clause)
-        fieldQuery1.should(nearQuery)
+        if(shingle.length>1) {
+          val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+          shingle.foreach(nearQuery.clause)
+          fieldQuery1.should(nearQuery)
+        }
+        else {
+          fieldQuery1.should(shingle.head)
+        }
         //i /= 10
       }
     }
     fieldQuery1
-  }
-
-  private def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = true) = {
-    val fieldQuery = boolQuery.minimumShouldMatch("33%")
-    (minShingle to math.min(maxShingle, w.length)).foreach { len =>
-      val lboost = boost * superBoost(len)
-      w.sliding(len).foreach { shingle =>
-        val phrase = shingle.mkString(" ")
-        fieldQuery.should(fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
-      }
-    }
-    nestIfNeeded(field, fieldQuery)
-  }
-
-  private def currQuery(tokenFields: Map[String, Float],
-                        recomFields: Map[String, Float],
-                        w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
-    if(span)
-      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
-    else
-      disMaxQuery.addAll(recomFields.map(field => shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), fuzzy)))
-  }
-
-  private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
-                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
-                               span: Boolean = false, tokenRelax: Int = 0): BoolQueryBuilder = {
-
-    if(w.length>0)
-      boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
-          //info(x._1.toList.toString+","+x._2.toList.toString)
-          if (x._2.length > 0)
-            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
-              .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
-          else
-            currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
-        }
-      )
-    else
-      boolQuery
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
@@ -193,11 +158,6 @@ object SuggestRequestHandler extends Logging {
 
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index+"_index_incremental", text).setField(field).get().getTokens.map(_.getTerm).toArray
-
-
-  private val emptyStringArray = new Array[String](0)
-
-  private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
 
 }
 
@@ -249,7 +209,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (locFilter.hasClauses) {
-      finalFilter.should(nestedQuery("targeting", locFilter))
+      finalFilter.should(locFilter)
     }
 
     finalFilter
