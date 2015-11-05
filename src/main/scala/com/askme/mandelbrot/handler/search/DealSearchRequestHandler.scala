@@ -23,6 +23,7 @@ import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort._
+import org.elasticsearch.search.sort.SortBuilders._
 import org.json4s.jackson.JsonMethods._
 import scala.collection.JavaConversions._
 
@@ -37,6 +38,7 @@ object DealSearchRequestHandler extends Logging {
     parts.map {
       case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
       case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
+      case "_channel" => scriptSort(new Script("dealchannelsort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
     }
   }
 
@@ -300,6 +302,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     if (screentype == "home") {
       sort = "_home,_score"
     }
+    if (channelsort)
+      sort = "_home,_channel,_score"
 
     val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
