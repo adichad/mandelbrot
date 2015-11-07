@@ -53,9 +53,14 @@ object ListSearchRequestHandler extends Logging {
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       val slop = if(sloppy)math.max(0, len - 2) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy)
-        shingle.foreach(nearQuery.clause)
-        fieldQuery1.should(nearQuery)
+        if(shingle.length>1) {
+          val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+          shingle.foreach(nearQuery.clause)
+          fieldQuery1.should(nearQuery)
+        }
+        else {
+          fieldQuery1.should(shingle.head)
+        }
       }
     }
     nestIfNeeded(field, fieldQuery1)
