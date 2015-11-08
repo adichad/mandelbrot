@@ -179,7 +179,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       finalFilter.must(idsQuery(esType).addIds(id.split( """,""").map(_.trim.toUpperCase): _*))
     }
     if (tag!= "")
-      finalFilter.must(termsQuery("tag", tag.split(",").map(_.trim):_*))
+      finalFilter.must(termsQuery("targeting.tag", tag.split(",").map(_.trim):_*))
 
     val locFilter = boolQuery
     if (area != "") {
