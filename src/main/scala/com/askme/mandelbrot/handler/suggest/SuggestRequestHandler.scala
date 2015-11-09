@@ -329,7 +329,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val orders: List[Terms.Order] = (
         (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("score", false)) ::
-          Some(Terms.Order.aggregation("count", false)) ::
+          (if(tag!="search") Some(Terms.Order.aggregation("count", false)) else None) ::
           Nil
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
