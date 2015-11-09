@@ -63,18 +63,6 @@ object SuggestRequestHandler extends Logging {
     }
   }
 
-
-  private[SuggestRequestHandler] def nestIfNeeded(fieldName: String, q: QueryBuilder): QueryBuilder = {
-    /*val parts = fieldName.split("""\.""")
-    if (parts.length > 1)
-      nestedQuery(parts(0), q).scoreMode("max")
-    else
-    */
-    q
-  }
-
-
-
   private implicit class DisMaxQueryPimp(val q: DisMaxQueryBuilder) {
     def addAll(queries: Iterable[QueryBuilder]) = {
       queries.foreach(q.add)
@@ -118,12 +106,14 @@ object SuggestRequestHandler extends Logging {
     }
   }
 
-  private[SuggestRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
+  private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
+
+  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length>3 && fuzzy)
+      if(x.length > 8 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length>7) Fuzziness.TWO else Fuzziness.ONE ))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -140,17 +130,42 @@ object SuggestRequestHandler extends Logging {
         else {
           fieldQuery1.should(shingle.head)
         }
+
         //i /= 10
       }
     }
     fieldQuery1
   }
 
+  private def currQuery(tokenFields: Map[String, Float],
+                        w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, tokenRelax: Int = 0) = {
+
+    disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+  }
+
+  private def shinglePartition(tokenFields: Map[String, Float], w: Array[String],
+                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                               tokenRelax: Int = 0): BoolQueryBuilder = {
+
+    if(w.length>0)
+      boolQuery.minimumNumberShouldMatch(1).shouldAll(
+        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+          if (x._2.length > 0)
+            shinglePartition(tokenFields, x._2, maxShingle, minShingle, fuzzy, sloppy, tokenRelax)
+              .must(currQuery(tokenFields, x._1, fuzzy, sloppy, tokenRelax))
+          else
+            currQuery(tokenFields, x._1, fuzzy, sloppy, tokenRelax)
+        }
+      )
+    else
+      boolQuery
+  }
+
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-    if(word.length > 8 && fuzzy)
+    if(word.length > 3 && fuzzy)
       fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-        .fuzziness(if(word.length > 12) Fuzziness.TWO else Fuzziness.ONE)
-        .boost(if(word.length > 12) exactBoost/3f else exactBoost/2f)
+        .fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
+        .boost(if(word.length > 6) exactBoost/3f else exactBoost/2f)
     else
       termQuery(field, word).boost(exactBoost)
 
@@ -227,55 +242,73 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
-    val wordskw = analyze(esClient, index, "targeting.kw.keyword", kw)
-    val wordskwng = analyze(esClient, index, "targeting.kw.keyword_ngram", kw)
-    val wordsshnspng = analyze(esClient, index, "targeting.kw.shingle_nospace_ngram", kw)
-
-
+    val w = analyze(esClient, index, "targeting.kw.token", kw)
     val query =
-      if(wordskw.length>0 && kw.trim.length>1) {
-        val query = disMaxQuery()
-          .add(shingleSpan("targeting.kw.keyword", if(tag=="search") 1e18f else 1e15f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("1")*/)
-          .add(shingleSpan("targeting.kw.keyword", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("1f"))
-          .add(shingleSpan("targeting.kw.keyword_edge_ngram", if(tag=="search") 1e17f else 1e14f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("2")*/)
-          .add(shingleSpan("targeting.kw.keyword_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("2f"))
-          .add(shingleSpan("targeting.kw.shingle", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("3")*/)
-          .add(shingleSpan("targeting.kw.shingle", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("3f"))
-          .add(shingleSpan("targeting.kw.token", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("4")*/)
-          .add(shingleSpan("targeting.kw.token", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false).queryName("4f"))
-          .add(shingleSpan("targeting.kw.shingle_nospace", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("5")*/)
-          .add(shingleSpan("targeting.kw.shingle_nospace", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("5f"))
-          .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("6")*/)
-          .add(shingleSpan("targeting.kw.shingle_edge_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, true).queryName("6f"))
-          .add(shingleSpan("targeting.kw.token_edge_ngram", 1e5f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("7")*/)
-          .add(shingleSpan("targeting.kw.shingle_nospace_edge_ngram", 1e4f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("8")*/)
-          .add(shingleSpan("targeting.kw.keyword_ngram", 1e3f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("9")*/)
-          .add(shingleSpan("targeting.label.keyword", 1e18f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_1")*/)
-          .add(shingleSpan("targeting.label.keyword_edge_ngram", 1e17f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_2")*/)
-          .add(shingleSpan("targeting.label.shingle", 1e12f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_3")*/)
-          .add(shingleSpan("targeting.label.token", 1e11f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_4")*/)
-          .add(shingleSpan("targeting.label.shingle_nospace", 1e10f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_5")*/)
-          .add(shingleSpan("targeting.label.shingle_edge_ngram", 1e9f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_6")*/)
-          .add(shingleSpan("targeting.label.token_edge_ngram", 1e8f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_7")*/)
-          .add(shingleSpan("targeting.label.shingle_nospace_edge_ngram", 1e7f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_8")*/)
-          .add(shingleSpan("targeting.label.keyword_ngram", 1e6f, wordskw, 1, wordskw.length, wordskw.length, false, false)/*.queryName("label_9")*/)
+      if(kw.endsWith(" ")) {
+        if (w.nonEmpty) {
+          disMaxQuery.add(
+            shinglePartition(
+              Map("targeting.kw.token" -> 1e9f, "targeting.label.token" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.token" -> 1f, "targeting.label.token" -> 1e3f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 1
+            )
+          )
+        }
+        else
+          matchAllQuery
+      } else {
+        if (w.nonEmpty) {
+          val front = w.take(w.length - 1)
+          val last_analyzed = w.last
+          val last_raw = kw.split(pat).last.toLowerCase.trim
 
-        if(wordskwng.length>0)
-          query
-            .add(shingleSpan("targeting.kw.keyword_ngram", 1e2f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false)/*.queryName("10")*/)
-            .add(shingleSpan("targeting.label.keyword_ngram", 1e5f, wordskwng, 1, wordskwng.length, wordskwng.length, true, false)/*.queryName("label_10")*/)
-        if(wordsshnspng.length>0)
-          query
-            .add(shingleSpan("targeting.kw.shingle_nospace_ngram", 1e1f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false)/*.queryName("11")*/)
-            .add(shingleSpan("targeting.label.shingle_nospace_ngram", 1e4f, wordsshnspng, 1, wordsshnspng.length, wordsshnspng.length, true, false)/*.queryName("label_11")*/)
+          val q = disMaxQuery.add(
+            shinglePartition(
+              Map("targeting.kw.token" -> 1e9f, "targeting.label.token" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.token" -> 3f, "targeting.label.token" -> 1e5f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 1
+            )
+          )
 
-        query
+          val q2 = boolQuery
+          if (front.nonEmpty) {
+            q2.must(
+              disMaxQuery.add(
+                shinglePartition(
+                  Map("targeting.kw.token" -> 1e9f, "targeting.label.token" -> 1e11f),
+                  front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("targeting.kw.token" -> 3f, "targeting.label.token" -> 1e5f),
+                  front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 1
+                )
+              )
+            )
+          }
+
+          val q3 = disMaxQuery
+            .add(fuzzyOrTermQuery("targeting.kw.token_edge_ngram", last_raw, 1e15f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e14f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_ngram", last_raw, 1e13f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.token_ngram", last_raw, 1e12f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, 1e18f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_ngram", last_raw, 1e17f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_ngram", last_raw, 1e16f, 1, fuzzy = true))
+
+          q.add(if (q2.hasClauses) q2.must(q3) else q3)
+        } else
+          matchAllQuery
       }
-      else
-        matchAllQuery
-
-
-
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
