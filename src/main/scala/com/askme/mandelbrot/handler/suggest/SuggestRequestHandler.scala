@@ -300,10 +300,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
             .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e14f, 1, fuzzy = true))
             .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_ngram", last_raw, 1e13f, 1, fuzzy = true))
             .add(fuzzyOrTermQuery("targeting.kw.token_ngram", last_raw, 1e12f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, 1e18f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_ngram", last_raw, 1e17f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.token_ngram", last_raw, 1e16f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, if(tag=="search") 1e15f else 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, if(tag=="search") 1e14f else 1e18f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_ngram", last_raw, if(tag=="search") 1e13f else 1e17f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_ngram", last_raw, if(tag=="search") 1e12f else 1e16f, 1, fuzzy = true))
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
         } else
