@@ -363,7 +363,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         geoDistanceRangeQuery("LatLong")
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
-          .to((if (area == "") tokm else 10.0d) + "km")
+          .to((if (area == "") tokm else 8.0d) + "km")
           .optimizeBbox("memory")
           .geoDistance(GeoDistance.PLANE))
 
@@ -415,7 +415,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
       .setTimeout(TimeValue.timeValueMillis(Math.min(timeoutms, long("timeoutms"))))
-      .setTerminateAfter(Math.min(maxdocspershard, int("max-docs-per-shard")))
+      .setTerminateAfter(Math.min(if (lat != 0.0d || lon != 0.0d) 3000 else maxdocspershard, int("max-docs-per-shard")))
       .setExplain(explain)
       .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
