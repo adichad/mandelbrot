@@ -42,8 +42,13 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: 
       0
     else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
-    else
-      buckets.indexWhere(
-        (if(lat!=0||lon!=0) doc.get(coordfield).asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon) else 100d) <= _)
+    else {
+      val distance =
+        if (lat != 0 || lon != 0)
+          doc.get(coordfield).asInstanceOf[ScriptDocValues.GeoPoints].distanceInKmWithDefault(lat, lon, 100d)
+        else
+          100d
+      buckets.indexWhere(distance <= _)
+    }
   }
 }

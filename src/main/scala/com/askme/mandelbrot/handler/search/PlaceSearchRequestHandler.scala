@@ -295,21 +295,14 @@ object PlaceSearchRequestHandler extends Logging {
     (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = false, span = false, 1, 0), 1), //3
     // full-shingle fuzzy full matches
 
-    //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 0), 1), //1
-    // full-shingle exact span matches
-
     (queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = true, span = true, 1, 0), 1), //5
     // full-shingle exact sloppy-span matches
 
-    (queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = false, span = false, 1, 1), 1), //6
-    // relaxed-shingle exact full matches
+    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = false, span = false, 1, 1), 1), //6
+    // relaxed-shingle fuzzy full matches
 
-    (queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = false, span = true, 2, 1), 1)//7
-    // relaxed-shingle exact span matches
-
-    //(queryBuilder(searchFields2, fullFields2, false, false, true, 2, 2), 1) //7
-    // relaxed-shingle exact span matches
-
+    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = true, span = true, 2, 1), 1)//7
+    // relaxed-shingle fuzzy sloppy-span matches
 
   )
 
@@ -371,8 +364,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
           .to((if (area == "") tokm else 10.0d) + "km")
-          .optimizeBbox("indexed")
-          .geoDistance(GeoDistance.SLOPPY_ARC))
+          .optimizeBbox("memory")
+          .geoDistance(GeoDistance.PLANE))
 
 
     if (locFilter.hasClauses) {
