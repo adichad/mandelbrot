@@ -22,7 +22,7 @@ class CustomerTypeBucket extends NativeScriptFactory with Logging {
 class CustomerTypeBucketScript extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    if (doc.get("CustomerType").asInstanceOf[Strings].getValues.filter(ct=>ct.equals("350")||ct.equals("450")||ct.equals("550")).size>0)
+    if (doc.get("CustomerType").asInstanceOf[Strings].getValues.exists(ct=> ct=="350"||ct=="450"||ct=="550"))
       0
     else
       1

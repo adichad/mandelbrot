@@ -21,7 +21,8 @@ class MediaCountSort extends NativeScriptFactory {
 
 class MediaCountSortScript(buckets: Array[Long]) extends AbstractLongSearchScript {
   override def runAsLong: Long = {
-    buckets.indexWhere(doc.get("MediaCount").asInstanceOf[ScriptDocValues.Longs].getValue <= _)
+    val count = doc.get("MediaCount").asInstanceOf[ScriptDocValues.Longs].getValue
+    buckets.indexWhere(count <= _)
   }
 }
 
