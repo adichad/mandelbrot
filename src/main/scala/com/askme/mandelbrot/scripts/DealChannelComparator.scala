@@ -2,12 +2,11 @@ package com.askme.mandelbrot.scripts
 
 import java.util
 
-import grizzled.slf4j.Logging
 import org.elasticsearch.index.fielddata.ScriptDocValues.Strings
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
 import scala.collection.JavaConversions._
 
-class DealChannelComparator extends NativeScriptFactory with Logging {
+class DealChannelComparator extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript =
     new DealChannelComparatorScript
 

@@ -24,6 +24,7 @@ class ScriptRegistrationPlugin extends Plugin {
     module.registerScript("curatedtag", classOf[CuratedTagComparator])
     module.registerScript("randomizer", classOf[RandomBucketComparator])
     module.registerScript("dealchannelsort", classOf[DealChannelComparator])
+    module.registerScript("dealsort", classOf[DealComparator])
 
   }
 

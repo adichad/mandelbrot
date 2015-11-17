@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 18/08/15.
  */
-class CuratedTagComparator extends NativeScriptFactory with Logging {
+class CuratedTagComparator extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     new CuratedTagComparatorScript(
       params.get("shingles").asInstanceOf[String].split("#").toSet)

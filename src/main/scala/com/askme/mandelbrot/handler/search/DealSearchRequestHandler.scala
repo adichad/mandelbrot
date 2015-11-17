@@ -39,6 +39,7 @@ object DealSearchRequestHandler extends Logging {
       case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
       case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
       case "_channel" => scriptSort(new Script("dealchannelsort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
+      case "_base" => scriptSort(new Script("dealsort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
     }
   }
 
@@ -50,15 +51,6 @@ object DealSearchRequestHandler extends Logging {
       queries.foreach(q.add)
       q
     }
-  }
-
-  private[DealSearchRequestHandler] def nestIfNeeded(fieldName: String, q: QueryBuilder): QueryBuilder = {
-    /*val parts = fieldName.split("""\.""")
-    if (parts.length > 1)
-      nestedQuery(parts(0), q).scoreMode("max")
-    else
-    */
-    q
   }
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
@@ -155,7 +147,7 @@ object DealSearchRequestHandler extends Logging {
         //i /= 10
       }
     }
-    nestIfNeeded(field, fieldQuery1)
+    fieldQuery1
   }
 
   private def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = true) = {
@@ -167,7 +159,7 @@ object DealSearchRequestHandler extends Logging {
         fieldQuery.should(fuzzyOrTermQuery(field, phrase, lboost, fuzzyprefix, fuzzy))
       }
     }
-    nestIfNeeded(field, fieldQuery)
+    fieldQuery
   }
 
   private def currQuery(tokenFields: Map[String, Float],
@@ -296,14 +288,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.limits._
     import searchParams.page._
     import searchParams.view._
-    import searchParams.filters._
 
-    var sort = "_score"
-    if (screentype == "home") {
-      sort = "_home,_score"
-    }
-    if (channelsort)
-      sort = "_home,_channel,_score"
+    val sort = "_home,_base,_channel,_score"
 
     val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)

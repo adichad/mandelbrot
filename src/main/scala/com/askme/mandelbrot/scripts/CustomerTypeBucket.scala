@@ -10,7 +10,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 12/05/15.
  */
-class CustomerTypeBucket extends NativeScriptFactory with Logging {
+class CustomerTypeBucket extends NativeScriptFactory {
 
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     new CustomerTypeBucketScript
