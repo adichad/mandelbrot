@@ -8,7 +8,7 @@
     },
     "transform" : [
       {
-        "script" : "suggestiontransform",
+        "inline" : "suggestiontransform",
         "params" : {
           "index": "askme_suggest_index_incremental",
           "type": "suggestion"

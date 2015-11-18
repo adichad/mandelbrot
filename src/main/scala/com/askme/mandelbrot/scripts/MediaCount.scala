@@ -20,10 +20,10 @@ class MediaCount extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     val index = params.get("index").asInstanceOf[String]
     val esType = params.get("type").asInstanceOf[String]
-    val catkws = RootServer.uniqueVals(index, esType, "Product.categorykeywordsaggr", "Product.categorykeywordsexact", " ", 100000) ++
-      RootServer.uniqueVals(index, esType, "Product.l3categoryaggr", "Product.l3categoryexact", " ", 100000) ++
-      RootServer.uniqueVals(index, esType, "Product.l2categoryaggr", "Product.l2categoryexact", " ", 100000) ++
-      RootServer.uniqueVals(index, esType, "Product.l1categoryaggr", "Product.l1categoryexact", " ", 100000)
+    val catkws = RootServer.uniqueVals(index, esType, "product_categorykeywordsaggr", "Product.categorykeywordsexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "product_l3categoryaggr", "Product.l3categoryexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "product_l2categoryaggr", "Product.l2categoryexact", " ", 100000) ++
+      RootServer.uniqueVals(index, esType, "product_l1categoryaggr", "Product.l1categoryexact", " ", 100000)
     new MediaCountScript(RootServer.defaultContext.esClient, index, esType, catkws)
   }
 

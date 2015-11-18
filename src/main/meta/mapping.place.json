@@ -8,7 +8,7 @@
     },
     "transform" : [
       {
-        "script" : "mediacount",
+        "inline" : "mediacount",
         "params" : {
           "index": "askme",
           "type": "place"
@@ -554,7 +554,7 @@
         "ignore_malformed": true
       },
       "Media": {
-        "type": "nested",
+        "type": "object",
         "properties": {
           "MediaType": {
             "type": "string",

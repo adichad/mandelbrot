@@ -244,9 +244,9 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
-    "Product_l3category" -> 10000000f,
-    "Product_l2category" -> 1000f,
-    "Product_l1category" -> 100f,
+    "product_l3category" -> 10000000f,
+    "product_l2category" -> 1000f,
+    "product_l1category" -> 100f,
     "LocationType"->1000f,
     "BusinessType"->1000f,
     "product_name" -> 1000f,
