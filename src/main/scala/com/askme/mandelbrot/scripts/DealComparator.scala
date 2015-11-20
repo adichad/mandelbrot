@@ -20,11 +20,11 @@ class DealComparatorScript extends AbstractLongSearchScript {
   override def runAsLong: Long = {
     val sourceList = doc.get("DealSource.Name").asInstanceOf[Strings].getValues
     if(sourceList.contains("HotDeal"))
-      2
-    else if(sourceList.contains("AskMe Deals"))
       1
-    else if(sourceList.contains("APL + Deal"))
+    else if(sourceList.contains("AskMe Deals"))
       0
+    else if(sourceList.contains("APL + Deal"))
+      2
     else
       3
   }

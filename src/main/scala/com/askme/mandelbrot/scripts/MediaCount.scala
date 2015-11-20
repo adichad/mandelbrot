@@ -70,14 +70,15 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
             source.put("CuratedTagsAggr", tags)
           }
 
-
-
           // media count
           val mediaCount: Int = source.get("Media").asInstanceOf[util.ArrayList[AnyRef]].size +
             (if (XContentMapValues.nodeStringValue(source.get("CompanyLogoURL"), "") == "") 0 else 1) +
             source.get("Product").asInstanceOf[util.ArrayList[AnyRef]]
               .map(p => XContentMapValues.nodeStringValue(p.asInstanceOf[util.Map[String, AnyRef]].get("imageurls"), "")).count(_ != "")
           source.put("MediaCount", new java.lang.Integer(mediaCount))
+
+          val answers = new util.ArrayList[AnyRef]()
+          source.put("product_stringattribute_answerexact", answers)
 
           // augment noisy attribute values with pkws
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
@@ -104,6 +105,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
               val att = a.asInstanceOf[util.Map[String, AnyRef]]
               att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
                 .flatMap(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws))))
+              answers.addAll(att.get("answerexact").asInstanceOf[util.ArrayList[AnyRef]])
             }
             prod.put("parkedkeywordsdocval", new util.ArrayList[String](prod.getOrDefault("parkedkeywords", emptyArray).asInstanceOf[util.ArrayList[AnyRef]].map(parked=>analyze(esClient, index, "Product.parkedkeywordsexact", XContentMapValues.nodeStringValue(parked, "")).mkString(" ")).filter(!_.isEmpty)))
           }
