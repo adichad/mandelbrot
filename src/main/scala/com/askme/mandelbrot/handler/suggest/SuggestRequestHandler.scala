@@ -163,10 +163,10 @@ object SuggestRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-    if(word.length > 3 && fuzzy)
+    if(word.length > 6 && fuzzy)
       fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-        .fuzziness(if(word.length > 6) Fuzziness.TWO else Fuzziness.ONE)
-        .boost(if(word.length > 6) exactBoost/3f else exactBoost/2f)
+        .fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
+        .boost(if(word.length > 10) exactBoost/3f else exactBoost/2f)
     else
       termQuery(field, word).boost(exactBoost)
 
@@ -296,14 +296,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           }
 
           val q3 = disMaxQuery
-            .add(fuzzyOrTermQuery("targeting.kw.token_edge_ngram", last_raw, 1e15f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e14f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_ngram", last_raw, 1e13f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.kw.token_ngram", last_raw, 1e12f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, if(tag=="search") 1e15f else 1e19f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, if(tag=="search") 1e14f else 1e18f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_ngram", last_raw, if(tag=="search") 1e13f else 1e17f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("targeting.label.token_ngram", last_raw, if(tag=="search") 1e12f else 1e16f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_ngram", last_raw, 1e5f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.kw.token_ngram", last_raw, 1e3f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.keyword_edge_ngram", last_raw, if(tag=="search") 1e19f else 1e21f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, if(tag=="search") 1e17f else 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, if(tag=="search") 1e15f else 1e17f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_ngram", last_raw, if(tag=="search") 1e5f else 1e7f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("targeting.label.token_ngram", last_raw, if(tag=="search") 1e3f else 1e5f, 1, fuzzy = true))
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
         } else
