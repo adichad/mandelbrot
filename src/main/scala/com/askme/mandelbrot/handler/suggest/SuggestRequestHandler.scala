@@ -19,8 +19,9 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.script.Script
 import org.elasticsearch.script.ScriptService.ScriptType
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.search.aggregations.{Aggregations, AbstractAggregationBuilder}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort._
@@ -224,7 +225,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (locFilter.hasClauses) {
-      finalFilter.should(locFilter)
+      finalFilter.should(locFilter.should(notQuery(existsQuery("targeting.coordinates"))))
     }
 
     finalFilter
@@ -239,7 +240,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     import suggestParams.view._
     import suggestParams.target._
 
-    val sort = if(lat != 0.0d || lon !=0.0d) "_distance,_score,_count" else "_score,_count"
+    val sort = if(lat != 0.0d || lon !=0.0d) "_score,_distance,_count" else "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
     val w = analyze(esClient, index, "targeting.kw.token", kw)
@@ -263,7 +264,6 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       } else {
         if (w.nonEmpty) {
           val front = w.take(w.length - 1)
-          val last_analyzed = w.last
           val last_raw = kw.split(pat).last.toLowerCase.trim
 
           val q = disMaxQuery.add(
@@ -273,7 +273,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
             )
           ).add(
             shinglePartition(
-              Map("targeting.kw.token" -> 3f, "targeting.label.token" -> 1e5f),
+              Map("targeting.kw.token" -> 1e3f, "targeting.label.token" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 1
             )
           )
@@ -288,7 +288,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
                 )
               ).add(
                 shinglePartition(
-                  Map("targeting.kw.token" -> 3f, "targeting.label.token" -> 1e5f),
+                  Map("targeting.kw.token" -> 1e3f, "targeting.label.token" -> 1e5f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 1
                 )
               )
@@ -321,15 +321,10 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setFetchSource(false)
       .setQuery(boolQuery.must(query).filter(buildFilter(suggestParams)))
 
-    //val options = new java.util.HashMap[String, AnyRef]
-    //options.put("force_source", new java.lang.Boolean(true))
-
-    //val hquery = matchQuery("targeting.kw.highlight", kw)
-
     val orders: List[Terms.Order] = (
-        (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          Some(Terms.Order.aggregation("score", false)) ::
-          (if(tag!="search") Some(Terms.Order.aggregation("count", false)) else None) ::
+        Some(Terms.Order.aggregation("score", false)) ::
+          (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+          Some(Terms.Order.aggregation("count", false)) ::
           Nil
       ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
@@ -377,11 +372,13 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            val parsed = if(explain) parse(response.toString) else JArray((parse(response.toString)\"aggregations"\"suggestions"\"buckets").children.drop(offset).flatMap(h=>(h\"topHit"\"hits"\"hits").children.map(f=>f\"_source" ++ f\"highlight")))
+            val res = parse(response.toString)
+            val parsed = if(explain) res else JArray((res\"aggregations"\"suggestions"\"buckets").children.drop(offset).flatMap(h=>(h\"topHit"\"hits"\"hits").children.map(f=>f\"_source" ++ f\"highlight")))
 
+            val size = (res\"aggregations"\"suggestions"\"buckets").children.drop(offset).size
             val endTime = System.currentTimeMillis
             val timeTaken = endTime - startTime
-            info("[" + response.getTookInMillis + "/" + timeTaken + (if (response.isTimedOut) " timeout" else "") + "] [" + response.getHits.hits.length + "/" + response.getHits.getTotalHits + (if (response.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+            info("[" + response.getTookInMillis + "/" + timeTaken + (if (response.isTimedOut) " timeout" else "") + "] [" + size + "/" + response.getHits.getTotalHits + (if (response.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
             context.parent ! SuggestResult(timeTaken, parsed)
           }
 

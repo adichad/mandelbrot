@@ -37,7 +37,7 @@ class GeoBucketSuggestionsScript(lat: Double, lon: Double, areas: Set[String], b
     else {
       val distance =
         if (lat != 0 || lon != 0)
-          doc.get("targeting.coordinates").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKmWithDefault(lat, lon, 100d)
+          doc.get("targeting.coordinates").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKmWithDefault(lat, lon, 0d)
         else
           100d
       buckets.indexWhere(distance <= _)
