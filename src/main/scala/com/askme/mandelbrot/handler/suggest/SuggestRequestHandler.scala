@@ -205,7 +205,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (lat != 0.0d || lon != 0.0d)
-      locFilter.should(
+      locFilter.should(notQuery(existsQuery("targeting.coordinates"))).should(
         geoDistanceRangeQuery("targeting.coordinates")
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
@@ -221,11 +221,11 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       }
 
       if(cityFilter.hasClauses)
-        locFilter.must(cityFilter)
+        finalFilter.must(cityFilter)
     }
 
     if (locFilter.hasClauses) {
-      finalFilter.should(locFilter.should(notQuery(existsQuery("targeting.coordinates"))))
+      finalFilter.should(locFilter)
     }
 
     finalFilter
