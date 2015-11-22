@@ -318,7 +318,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
         kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
-        if (w.length > 12) w = emptyStringArray
+        if (w.length > 20) w = emptyStringArray
         w = w.take(8)
         if (w.isEmpty && kwids.isEmpty && category == "" && area == "" && screentype == "" &&
             city == "" && applicableTo == "" && featured == "" && dealsource == "") {

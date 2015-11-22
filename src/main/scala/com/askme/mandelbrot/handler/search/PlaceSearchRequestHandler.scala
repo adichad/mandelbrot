@@ -577,7 +577,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
-          if (w.length>12) w = emptyStringArray
+          if (w.length>20) w = emptyStringArray
           w = w.take(8)
           if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
             context.parent ! EmptyResponse("empty search criteria")
