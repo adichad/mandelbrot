@@ -429,7 +429,7 @@
         "index": "analyzed",
         "position_increment_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle", "CompanyAliasesAggr"]
+        "copy_to": ["CuratedTagsExact", "CuratedTagsShingle", "CuratedTagsAggr"]
       },
       "CuratedTagsExact": {
         "type": "string",
