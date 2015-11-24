@@ -385,10 +385,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "product_l3categoryexact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        val cat = analyze(esClient, index, "product_l3categoryexact", c).mkString(" ")
+      category.split("""#""").map(analyze(esClient, index, "product_l3categoryexact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
         b.should(termQuery("product_l3categoryexact", cat))
-        b.should(termQuery("product_categorykeywordsexact", cat))
       }
       if(b.hasClauses)
         finalFilter.must(b)
