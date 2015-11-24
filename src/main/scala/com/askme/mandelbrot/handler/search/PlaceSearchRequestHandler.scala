@@ -428,8 +428,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if(collapse) {
       val orders: List[Terms.Order] = (
-        (if(randomize)Some(Terms.Order.aggregation("random", true)) else None) ::
-          Some(Terms.Order.aggregation("exactname", true)) ::
+        Some(Terms.Order.aggregation("exactname", true)) ::
+          (if(randomize)Some(Terms.Order.aggregation("random", true)) else None) ::
           (if (lat != 0.0d || lon != 0.0d || areaSlugs.nonEmpty) Some(Terms.Order.aggregation("geo", true)) else None) ::
           Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
