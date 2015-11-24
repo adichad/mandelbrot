@@ -44,7 +44,7 @@ case object DealSearchRouter extends Router {
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
                   filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource), page = PageParams(size, offset),
-                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, slugFlag = slugFlag, collapse = false, goldcollapse = false, version),
+                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, slugFlag = slugFlag, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))

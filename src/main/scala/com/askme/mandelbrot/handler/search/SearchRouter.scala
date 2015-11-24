@@ -23,16 +23,16 @@ case object SearchRouter extends Router {
               'category ? "", 'id ? "", 'userid.as[Int] ? 0, 'locid.as[String]? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[Double] ? 20.0d,
-              'source.as[Boolean] ? false, 'explain.as[Boolean] ? false, 'select ? "_id",
+              'explain.as[Boolean] ? false, 'select ? "_id",
               'agg.as[Boolean] ? true,
-              'collapse.as[Boolean] ? false, 'goldcollapse.as[Boolean] ? false,
+              'collapse.as[Boolean] ? false, 'goldcollapse.as[Boolean] ? false, 'randomize.as[Boolean] ? true,
               'version.as[Int] ? 2,
               'client_ip.as[String] ? "") { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
-               source, explain, select,
-               agg, collapse, goldcollapse, version,
+               explain, select,
+               agg, collapse, goldcollapse, randomize, version,
                trueClient) =>
               val fuzzyprefix = 2
               val fuzzysim = 1f
@@ -43,6 +43,7 @@ case object SearchRouter extends Router {
               val searchType = "query_then_fetch"
               val timeoutms = 600l
               val aggbuckets = 10
+              val source = true
 
               respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
@@ -51,7 +52,7 @@ case object SearchRouter extends Router {
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
                     FilterParams(category, id, userid, locid), PageParams(size, offset),
-                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, goldcollapse, version),
+                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, goldcollapse, randomize, version),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
                   )))

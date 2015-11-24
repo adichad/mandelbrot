@@ -380,7 +380,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       }
 
       if(cityFilter.hasClauses)
-        finalFilter.should(cityFilter)
+        finalFilter.must(cityFilter)
     }
 
     if (category != "") {
@@ -391,7 +391,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         b.should(termQuery("product_categorykeywordsexact", cat))
       }
       if(b.hasClauses)
-        finalFilter.should(nestedQuery("Product", b))
+        finalFilter.must(b)
     }
 
     finalFilter
@@ -430,9 +430,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if(collapse) {
       val orders: List[Terms.Order] = (
-        Some(Terms.Order.aggregation("exactname", true)) ::
+        (if(randomize)Some(Terms.Order.aggregation("random", true)) else None) ::
+          Some(Terms.Order.aggregation("exactname", true)) ::
           (if (lat != 0.0d || lon != 0.0d || areaSlugs.nonEmpty) Some(Terms.Order.aggregation("geo", true)) else None) ::
-          (if(goldcollapse)Some(Terms.Order.aggregation("random", true)) else None) ::
           Some(Terms.Order.aggregation("tags", false)) ::
           Some(Terms.Order.aggregation("mediacount", false)) ::
           Some(Terms.Order.aggregation("score", false)) ::
@@ -449,7 +449,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         .subAggregation(topHits("hits").setFetchSource(select.split(""","""), unselect.split(""",""")).setSize(1).setExplain(explain).setTrackScores(true).addSorts(sorters))
 
 
-      if(goldcollapse) {
+      if(randomize) {
         val randomParams = new util.HashMap[String, AnyRef]
         randomParams.put("buckets", int2Integer(5))
         val randomizer = min("random").script(new Script("randomizer", ScriptType.INLINE, "native", randomParams))
