@@ -23,6 +23,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
 import org.elasticsearch.node.NodeBuilder
+import org.elasticsearch.node.MandelbrotNodeBuilder._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -56,7 +57,7 @@ object RootServer extends Logging {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
-      .data(boolean("es.node.data")).settings(settings("es")).node
+      .data(boolean("es.node.data")).settings(settings("es")).nodeCustom
 /*
     private val zkClient = new ZkClient(
       string("kafka.zookeeper.connect"), int("kafka.zookeeper.session-timeout"),
