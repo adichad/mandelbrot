@@ -202,16 +202,20 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "targeting.area", _).mkString(" ")).filter(!_.isEmpty)
       areas.map(fuzzyOrTermQuery("targeting.area", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
       this.areas = areas.map(analyze(esClient, index, "targeting.area", _).mkString(" ")).mkString("#")
+      if(locFilter.hasClauses)
+        locFilter.should(boolQuery.mustNot(existsQuery("targeting.area")))
     }
 
-    if (lat != 0.0d || lon != 0.0d)
-      locFilter.should(notQuery(existsQuery("targeting.coordinates"))).should(
+    if (lat != 0.0d || lon != 0.0d) {
+      locFilter.should(
         geoDistanceRangeQuery("targeting.coordinates")
           .point(lat, lon)
           .from((if (area == "") fromkm else 0.0d) + "km")
           .to((if (area == "") tokm else 8.0d) + "km")
           .optimizeBbox("memory")
-          .geoDistance(GeoDistance.PLANE))
+          .geoDistance(GeoDistance.PLANE)
+      ).should(boolQuery.mustNot(existsQuery("targeting.coordinates")))
+    }
 
 
     if (city != "") {
@@ -225,7 +229,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (locFilter.hasClauses) {
-      finalFilter.should(locFilter)
+      finalFilter.must(locFilter)
     }
 
     finalFilter

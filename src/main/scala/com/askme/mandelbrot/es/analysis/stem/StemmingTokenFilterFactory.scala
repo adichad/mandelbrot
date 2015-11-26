@@ -7,13 +7,12 @@ import org.elasticsearch.common.inject.assistedinject.Assisted
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.index.Index
 import org.elasticsearch.index.analysis.AbstractTokenFilterFactory
-import org.elasticsearch.index.settings.IndexSettings
 import scala.collection.JavaConversions._
 
 /**
  * Created by adichad on 30/04/15.
  */
-class StemmingTokenFilterFactory @Inject()(index: Index, @IndexSettings indexSettings: Settings,
+class StemmingTokenFilterFactory @Inject()(index: Index, indexSettings: Settings,
                                                   @Assisted name: String, @Assisted settings: Settings)
   extends AbstractTokenFilterFactory(index, indexSettings, name, settings) {
 

@@ -196,6 +196,8 @@ object PlaceSearchRequestHandler extends Logging {
           shingleSpan("product_l2category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else if(field._1=="product_l1categoryexact")
           shingleSpan("product_l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        else if(field._1=="product_brandexact")
+          shingleSpan("product_brand", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else
           shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
       )
