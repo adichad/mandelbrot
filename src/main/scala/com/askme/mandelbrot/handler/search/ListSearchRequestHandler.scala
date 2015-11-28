@@ -7,11 +7,13 @@ import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
+import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.index.query.{SpanQueryBuilder, BaseQueryBuilder}
+import org.elasticsearch.index.query.SpanQueryBuilder
+import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.search.sort.SortOrder
 import org.json4s.jackson.JsonMethods._
@@ -27,7 +29,7 @@ object ListSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
 
-  private[ListSearchRequestHandler] def nestIfNeeded(fieldName: String, q: BaseQueryBuilder): BaseQueryBuilder = {
+  private[ListSearchRequestHandler] def nestIfNeeded(fieldName: String, q: QueryBuilder): QueryBuilder = {
     /*val parts = fieldName.split("""\.""")
     if (parts.length > 1)
       nestedQuery(parts(0), q).scoreMode("max")
@@ -40,7 +42,7 @@ object ListSearchRequestHandler extends Logging {
   private[ListSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, fuzzysim: Float, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("67%")
 
-    val terms: Array[BaseQueryBuilder with SpanQueryBuilder] = w.map(x=>
+    val terms: Array[SpanQueryBuilder] = w.map(x=>
       if(x.length > 3)
         spanMultiTermQueryBuilder(
           fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 6) Fuzziness.TWO else Fuzziness.ONE))
@@ -51,9 +53,14 @@ object ListSearchRequestHandler extends Logging {
     (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
       val slop = if(sloppy)math.max(0, len - 2) else 0
       terms.sliding(len).foreach { shingle =>
-        val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy)
-        shingle.foreach(nearQuery.clause)
-        fieldQuery1.should(nearQuery)
+        if(shingle.length>1) {
+          val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+          shingle.foreach(nearQuery.clause)
+          fieldQuery1.should(nearQuery)
+        }
+        else {
+          fieldQuery1.should(shingle.head)
+        }
       }
     }
     nestIfNeeded(field, fieldQuery1)
@@ -74,15 +81,15 @@ object ListSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery)
   }
 
-  private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
-    new AnalyzeRequestBuilder(esClient.admin.indices, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+  private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] = {
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
+  }
 
+  private val searchFields = Map("label" -> 0f, "keywords" -> 0f, "content_title" -> 0f)
 
-  private val searchFields = Map("label" -> 0f, "keywords" -> 0f, "content.title" -> 0f)
+  private val fullFields = Map("labelexact" -> 0f, "keywordsexact"->0f,"content_titleexact"->0f)
 
-  private val fullFields = Map("labelexact" -> 0f, "keywordsexact"->0f,"content.titleexact"->0f)
-
-  private val shingleFields = Map("labelshingle" -> 0f, "keywordsshingle"->0f,"content.titleshingle"->0f)
+  private val shingleFields = Map("labelshingle" -> 0f, "keywordsshingle"->0f,"content_titleshingle"->0f)
 
   private val emptyStringArray = new Array[String](0)
 
@@ -102,7 +109,7 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.view._
 
 
-    var query: BaseQueryBuilder = matchAllQuery()
+    var query: QueryBuilder = matchAllQuery()
 
     if (kw != null && kw.trim != "") {
       w = analyze(esClient, index, "label", kw)
@@ -132,9 +139,9 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       }
     }
 
-    esClient.prepareSearch(index.split(","): _*).setQueryCache(false)
+    esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
-      .setSearchType(SearchType.fromString(searchType))
+      .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .setQuery(query)
       .setTrackScores(false)
       .setFrom(offset).setSize(size)
@@ -143,7 +150,6 @@ class ListSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setExplain(explain)
       .setFetchSource(select.split(""","""), unselect.split(""",""")).addSort("id", SortOrder.ASC)
   }
-
 
   case class WrappedResponse(searchParams: SearchParams, result: SearchResponse)
 

@@ -11,6 +11,8 @@ class DocScore extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     new DocScoreScript
   }
+
+  override def needsScores = true
 }
 
 class DocScoreScript extends AbstractFloatSearchScript {

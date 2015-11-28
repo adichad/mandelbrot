@@ -8,7 +8,7 @@
     },
     "transform" : [
       {
-        "script" : "suggestiontransform",
+        "inline" : "suggestiontransform",
         "params" : {
           "index": "askme_suggest_index_incremental",
           "type": "suggestion"
@@ -24,7 +24,7 @@
         "doc_values": true
       },
       "payload": {
-        "type": "nested",
+        "type": "object",
         "properties": {
           "display": {
             "type": "object",
@@ -45,8 +45,7 @@
         }
       },
       "targeting": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties": {
           "city": {
             "type": "string",
@@ -60,8 +59,7 @@
             "store": true,
             "index": "analyzed",
             "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "include_in_root": true
+            "search_analyzer": "keyword_analyzer"
           },
           "areadocval": {
             "type": "string",
@@ -76,35 +74,33 @@
             "geohash_precision": "1m",
             "geohash_prefix": true,
             "store": true,
-            "normalize": true,
             "doc_values": true,
-            "include_in_root": true
+            "coerce": true,
+            "ignore_malformed": true
           },
           "tag": {
             "type": "string",
             "store": true,
             "index": "not_analyzed",
-            "include_in_root": true,
             "doc_values": true
           },
           "kw": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "highlight": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "index_analyzer": "highlighting_analyzer_index",
+                "analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "kw": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword": {
@@ -113,7 +109,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword_edge_ngram": {
@@ -122,7 +118,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword_ngram": {
@@ -131,7 +127,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle": {
@@ -140,7 +136,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_edge_ngram": {
@@ -149,7 +145,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_ngram": {
@@ -158,7 +154,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace": {
@@ -167,7 +163,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace_edge_ngram": {
@@ -176,7 +172,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace_ngram": {
@@ -185,7 +181,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token": {
@@ -194,7 +190,7 @@
                 "index": "analyzed",
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token_edge_ngram": {
@@ -203,7 +199,7 @@
                 "index": "analyzed",
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token_ngram": {
@@ -212,29 +208,28 @@
                 "index": "analyzed",
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               }
             }
           },
           "label": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "highlight": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "index_analyzer": "highlighting_analyzer_index",
+                "analyzer": "highlighting_analyzer_index",
                 "search_analyzer": "highlighting_analyzer_search",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "label": {
                 "type": "string",
                 "store": true,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword": {
@@ -243,7 +238,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword_edge_ngram": {
@@ -252,7 +247,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_edge_ngram_analyzer",
                 "search_analyzer": "keyword_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "keyword_ngram": {
@@ -261,7 +256,7 @@
                 "index": "analyzed",
                 "analyzer": "keyword_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle": {
@@ -270,7 +265,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_edge_ngram": {
@@ -279,7 +274,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_edge_ngram_analyzer",
                 "search_analyzer": "shingle_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_ngram": {
@@ -288,7 +283,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_ngram_analyzer",
                 "search_analyzer": "shingle_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace": {
@@ -297,7 +292,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace_edge_ngram": {
@@ -306,7 +301,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_edge_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "shingle_nospace_ngram": {
@@ -315,7 +310,7 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_ngram_analyzer",
                 "search_analyzer": "shingle_nospace_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token": {
@@ -324,7 +319,7 @@
                 "index": "analyzed",
                 "analyzer": "token_analyzer",
                 "search_analyzer": "token_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token_edge_ngram": {
@@ -333,7 +328,7 @@
                 "index": "analyzed",
                 "analyzer": "token_edge_ngram_analyzer",
                 "search_analyzer": "token_edge_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               },
               "token_ngram": {
@@ -342,7 +337,7 @@
                 "index": "analyzed",
                 "analyzer": "token_ngram_analyzer",
                 "search_analyzer": "keyword_ngram_analyzer",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false}
               }
             }
@@ -359,7 +354,6 @@
         "type": "string",
         "store": false,
         "index": "not_analyzed",
-        "ignore_malformed": false,
         "doc_values": true
       },
       "count": {

@@ -1,17 +1,11 @@
 package com.askme.mandelbrot.handler.search
 
-import java.nio.charset.Charset
-
 import akka.actor.Props
-import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler._
 import com.askme.mandelbrot.handler.message.IndexParams
-import com.askme.mandelbrot.handler.search.DealSearchRequestCompleter
 import com.askme.mandelbrot.handler.search.message._
-import com.typesafe.config.Config
-import org.json4s.jackson.JsonMethods._
 import spray.http.MediaTypes._
-import spray.http.{HttpRequest, RemoteAddress, StatusCodes}
+import spray.http.{HttpRequest, RemoteAddress}
 
 /**
  * Created by nishant on 30/07/15.
@@ -25,9 +19,9 @@ case object DealSearchRouter extends Router {
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
             'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0,
-            'select ? "", 'screentype ? "", 'category ? "", 'featured ? "", 'dealsource ? "")
+            'select ? "", 'screentype ? "", 'category ? "", 'featured ? "", 'dealsource ? "", "explain".as[Boolean]?false)
           { (kw, city, area, id, applicableTo, wantaggrs, size, offset, select,
-             screentype, category, featured, dealsource) =>
+             screentype, category, featured, dealsource, explain) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
@@ -50,7 +44,7 @@ case object DealSearchRouter extends Router {
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
                   filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource), page = PageParams(size, offset),
-                  view = ViewParams(source, aggr, aggbuckets, false, select, unselect, searchType, slugFlag, false, false, version),
+                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, slugFlag = slugFlag, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))

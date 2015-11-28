@@ -8,7 +8,7 @@
     },
     "transform" : [
       {
-        "script" : "mediacount",
+        "inline" : "mediacount",
         "params" : {
           "index": "askme",
           "type": "place"
@@ -25,68 +25,68 @@
       },
       "MergedToID": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "UserID": {
         "type": "integer",
-        "store": true,
+        "store": false,
         "ignore_malformed": false,
         "doc_values": true
       },
       "LocationID": {
         "type": "integer",
-        "store": true,
+        "store": false,
         "ignore_malformed": false,
         "doc_values": true
       },
       "MasterID": {
         "type": "integer",
-        "store": true,
-        "ignore_malformed": true,
+        "store": false,
+        "ignore_malformed": false,
         "doc_values": true
       },
       "EDMSLocationID": {
         "type": "integer",
-        "store": true,
-        "ignore_malformed": true,
+        "store": false,
+        "ignore_malformed": false,
         "doc_values": true
       },
       "DeleteFlag": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "DetailSlug": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "PPCOnline": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "index": "no"
       },
       "PPCVoice": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "index": "no"
       },
       "CustomerType": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "NowCustomerType": {
         "type": "integer",
         "store": false,
-        "ignore_malformed": true
+        "doc_values": true
       },
       "LocationName": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["LocationNameExact", "LocationNameAggr", "LocationNameShingle"]
       },
@@ -119,12 +119,12 @@
       },
       "LocationDescription": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "LocationType": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["LocationTypeExact", "LocationTypeAggr"]
       },
@@ -143,17 +143,17 @@
       },
       "BusinessType": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["BusinessTypeExact", "BusinessTypeAggr"]
       },
       "BusinessTypeExact": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
@@ -166,37 +166,37 @@
       },
       "Address": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["AddressExact"]
       },
       "AddressExact": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
       },
       "BuildingName": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "LocationAddress": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "Sublocality": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "SKUAreas": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false},
@@ -204,38 +204,38 @@
       },
       "SKUAreasAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "SKUAreasDocVal": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "Area": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["AreaAggr", "AreaExact"]
       },
       "AreaExact": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer"
       },
       "AreaSlug": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "AreaAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
@@ -247,24 +247,24 @@
       },
       "AreaSynonyms": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["AreaSynonymsAggr", "AreaSynonymsExact"]
       },
       "AreaSynonymsExact": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
       },
       "AreaSynonymsAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
@@ -276,14 +276,14 @@
       },
       "Landmark": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false}
       },
       "City": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
@@ -292,54 +292,63 @@
       },
       "CitySlug": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "CityAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "CitySynonyms": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["CitySynonymsAggr"]
       },
       "CitySynonymsAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
         "doc_values": true
       },
       "PinCode": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
-        "doc_values": true
+        "doc_values": true,
+        "copy_to": "PinCodeExact"
+      },
+      "PinCodeExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
       },
       "ZonesServed": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false}
       },
       "Zone": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "norms": {"enabled": false}
       },
       "State": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["StateAggr"]
       },
@@ -351,7 +360,7 @@
       },
       "Country": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
         "copy_to": ["CountryAggr"]
       },
@@ -367,26 +376,26 @@
         "geohash": true,
         "geohash_precision": "1m",
         "geohash_prefix": true,
-        "store": true,
-        "normalize": true,
-        "doc_values": true
+        "store": false,
+        "doc_values": true,
+        "coerce": true,
+        "ignore_malformed": true
       },
       "CompanyID": {
         "type": "integer",
-        "store": true,
-        "ignore_malformed": true,
+        "store": false,
         "doc_values": true
       },
       "CompanyName": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "CompanyAliases": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle"]
       },
@@ -394,7 +403,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
@@ -403,7 +412,7 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "shingle_analyzer",
         "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
@@ -416,17 +425,17 @@
       },
       "CuratedTags": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle", "CompanyAliasesAggr"]
+        "copy_to": ["CuratedTagsExact", "CuratedTagsShingle", "CuratedTagsAggr"]
       },
       "CuratedTagsExact": {
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "keyword_analyzer",
         "search_analyzer": "keyword_analyzer",
         "norms": {"enabled": false}
@@ -435,14 +444,14 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "position_offset_gap": 100,
+        "position_increment_gap": 100,
         "analyzer": "shingle_analyzer",
         "search_analyzer": "shingle_analyzer",
         "norms": {"enabled": false}
       },
       "CuratedTagsAggr": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed"
       },
       "CuratedTagsDocVal": {
@@ -453,197 +462,468 @@
       },
       "CompanyDescription": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "analyzed"
       },
       "CompanyKeywords": {
         "type": "string",
-        "store ": true,
-        "index": "analyzed"
+        "store": false,
+        "index": "analyzed",
+        "copy_to": ["CompanyKeywordsExact"]
+      },
+      "CompanyKeywordsExact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
       },
       "AdvertiserURL": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "CompanyLogoURL": {
         "type": "string",
-        "store": true,
-        "include_in_root": true,
+        "store": false,
         "index": "no"
       },
       "ContactName": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "ContactMobile": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "ContactEmail": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "LocationMobile": {
         "type": "string",
-        "store": true,
-        "position_offset_gap": 100,
+        "store": false,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "LocationLandLine": {
         "type": "string",
-        "store": true,
-        "position_offset_gap": 100,
+        "store": false,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "LocationEmail": {
         "type": "string",
-        "store": true,
-        "position_offset_gap": 100,
+        "store": false,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed",
         "analyzer": "keyword_analyzer"
       },
       "LocationDIDNumber": {
         "type": "string",
-        "store": true,
-        "position_offset_gap": 100,
+        "store": false,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "TollFreeNumber": {
         "type": "string",
-        "store": true,
-        "position_offset_gap": 100,
+        "store": false,
+        "position_increment_gap": 100,
         "norms": {"enabled": false},
         "index": "analyzed"
       },
       "LastUpdated": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ss.SSS",
-        "store": true,
+        "store": false,
         "ignore_malformed": false
       },
       "MediaCount": {
         "type": "integer",
         "doc_values": true,
-        "store": true,
+        "store": false,
         "ignore_malformed": true
       },
       "Media": {
-        "type": "nested",
-        "include_in_root": true,
-        "ignore_malformed": true,
+        "type": "object",
         "properties": {
           "MediaType": {
             "type": "string",
-            "store": true,
-            "index": "no",
-            "include_in_root": true,
-            "ignore_malformed": true
+            "store": false,
+            "index": "no"
           },
           "MediaName": {
             "type": "string",
-            "store": true,
-            "index": "no",
-            "include_in_root": true,
-            "ignore_malformed": true
+            "store": false,
+            "index": "no"
           }
         }
       },
+      "product_name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_nameexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
+      },
+      "product_keywords": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "product_keywordsexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
+      },
+      "product_brand": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_brandexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer"
+      },
+      "product_l1category": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l1categoryaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_l1categoryexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l1categoryshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l1categorydocval": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_l2category": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l2categoryaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_l2categoryexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l2categoryshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l2categorydocval": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_l3category": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l3categoryaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_l3categoryexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "position_increment_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "product_l3categoryshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false},
+        "position_increment_gap": 100
+      },
+      "product_l3categorydocval": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_categorykeywords": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "product_categorykeywordsexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "product_categorykeywordsshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false}
+      },
+      "product_categorykeywordsaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_categorykeywordsdocval": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_parkedkeywords": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": {"enabled": false}
+      },
+      "product_parkedkeywordsexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "product_parkedkeywordsshingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false}
+      },
+      "product_parkedkeywordsaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_parkedkeywordsdocval": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_stringattribute_qaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_stringattribute_question": {
+        "type": "string",
+        "store": false,
+        "norms": {"enabled": false},
+        "index": "analyzed",
+        "position_increment_gap": 100
+      },
+      "product_stringattribute_aaggr": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "product_stringattribute_answer": {
+        "type": "string",
+        "store": false,
+        "position_increment_gap": 100,
+        "norms": {"enabled": false},
+        "index": "analyzed"
+      },
+      "product_stringattribute_answerexact": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "keyword_analyzer",
+        "search_analyzer": "keyword_analyzer",
+        "norms": {"enabled": false}
+      },
+      "product_stringattribute_answershingle": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "analyzer": "shingle_analyzer",
+        "search_analyzer": "shingle_analyzer",
+        "norms": {"enabled": false}
+      },
       "Product": {
         "type": "nested",
-        "include_in_root": true,
         "properties": {
           "id": {
             "type": "integer",
             "store": false,
-            "ignore_malformed": false
+            "index": "no"
           },
           "name": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "position_offset_gap": 100,
-            "copy_to": ["Product.nameexact"]
+            "position_increment_gap": 100,
+            "copy_to": ["Product.nameexact", "product_name", "product_nameexact"]
           },
           "nameexact": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer"
           },
           "description": {
             "type": "string",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "index": "analyzed"
           },
           "keywords": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.keywordsexact"]
+            "copy_to": ["Product.keywordsexact", "product_keywords", "product_keywordsexact"]
           },
           "keywordsexact": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer"
           },
           "brand": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "position_offset_gap": 100,
-            "copy_to": ["Product.brandexact"]
+            "position_increment_gap": 100,
+            "copy_to": ["Product.brandexact", "product_brand", "product_brandexact"]
           },
           "brandexact": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer"
           },
           "imageurls": {
             "type": "string",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "index": "no"
           },
           "l1category": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.l1categoryaggr", "Product.l1categoryexact", "Product.l1categoryshingle"]
+            "position_increment_gap": 100,
+            "copy_to": [
+              "Product.l1categoryaggr", "Product.l1categoryexact", "Product.l1categoryshingle",
+              "product_l1categoryaggr", "product_l1categoryexact", "product_l1categoryshingle",
+              "product_l1category"
+            ]
           },
           "l1categoryaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "include_in_root": true,
             "doc_values": true
           },
           "l1categoryexact": {
@@ -653,7 +933,7 @@
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l1categoryshingle": {
             "type": "string",
@@ -662,28 +942,31 @@
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l1categorydocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
-            "include_in_root": true
+            "copy_to": ["product_l1categorydocval"]
           },
           "l2category": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.l2categoryaggr", "Product.l2categoryexact", "Product.l2categoryshingle"]
+            "position_increment_gap": 100,
+            "copy_to": [
+              "Product.l2categoryaggr", "Product.l2categoryexact", "Product.l2categoryshingle",
+              "product_l2categoryaggr", "product_l2categoryexact", "product_l2categoryshingle",
+              "product_l2category"
+            ]
           },
           "l2categoryaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "include_in_root": true,
             "doc_values": true
           },
           "l2categoryexact": {
@@ -693,7 +976,7 @@
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l2categoryshingle": {
             "type": "string",
@@ -702,28 +985,32 @@
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l2categorydocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
-            "include_in_root": true
+            "copy_to": ["product_l2categorydocval"]
           },
           "l3category": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.l3categoryaggr", "Product.l3categoryexact", "Product.l3categoryshingle"]
+            "position_increment_gap": 100,
+            "copy_to": [
+              "Product.l3categoryaggr", "Product.l3categoryexact", "Product.l3categoryshingle",
+              "product_l3categoryaggr", "product_l3categoryexact", "product_l3categoryshingle",
+              "product_l3category"
+            ]
           },
           "l3categoryaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "include_in_root": true,
+            "position_increment_gap": 100,
             "doc_values": true
           },
           "l3categoryexact": {
@@ -733,7 +1020,7 @@
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l3categoryshingle": {
             "type": "string",
@@ -742,128 +1029,121 @@
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
             "norms": {"enabled": false},
-            "include_in_root": true
+            "position_increment_gap": 100
           },
           "l3categorydocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
-            "include_in_root": true
+            "copy_to": ["product_l3categorydocval"]
           },
           "l3categoryslug": {
             "type": "string",
-            "store": true,
-            "index": "not_analyzed",
-            "include_in_root": true,
-            "doc_values": true
+            "store": false,
+            "index": "no"
           },
           "l3categoryid": {
             "type": "integer",
-            "store": true,
-            "ignore_malformed": true,
-            "index": "no",
-            "include_in_root": true
+            "store": false,
+            "index": "no"
           },
           "categorypath": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "categorykeywords": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.categorykeywordsexact", "Product.categorykeywordsaggr", "Product.categorykeywordsshingle"]
+            "copy_to": [
+              "Product.categorykeywordsexact", "Product.categorykeywordsaggr", "Product.categorykeywordsshingle",
+              "product_categorykeywordsexact", "product_categorykeywordsaggr", "product_categorykeywordsshingle",
+              "product_categorykeywords"
+            ]
           },
           "categorykeywordsexact": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "categorykeywordsshingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "categorykeywordsaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "doc_values": true,
-            "include_in_root": true
+            "doc_values": true
           },
           "categorykeywordsdocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
-            "include_in_root": true
+            "copy_to": ["product_categorykeywordsdocval"]
           },
           "parkedkeywords": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false},
-            "include_in_root": true,
-            "copy_to": ["Product.parkedkeywordsexact", "Product.parkedkeywordsaggr", "Product.parkedkeywordsshingle"]
+            "copy_to": [
+              "Product.parkedkeywordsexact", "Product.parkedkeywordsaggr", "Product.parkedkeywordsshingle",
+              "product_parkedkeywordsexact", "product_parkedkeywordsaggr", "product_parkedkeywordsshingle",
+              "product_parkedkeywords"]
           },
           "parkedkeywordsexact": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "parkedkeywordsshingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "analyzer": "shingle_analyzer",
             "search_analyzer": "shingle_analyzer",
-            "norms": {"enabled": false},
-            "include_in_root": true
+            "norms": {"enabled": false}
           },
           "parkedkeywordsaggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
-            "doc_values": true,
-            "include_in_root": true
+            "doc_values": true
           },
           "parkedkeywordsdocval": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true,
-            "include_in_root": true
+            "copy_to": ["product_parkedkeywordsdocval"]
           },
           "stringattribute": {
             "type": "nested",
-            "include_in_root": true,
             "properties": {
               "qaggr": {
                 "type": "string",
-                "store": true,
-                "include_in_root": true,
+                "store": false,
                 "index": "not_analyzed",
                 "doc_values": true
               },
@@ -872,28 +1152,31 @@
                 "store": false,
                 "norms": {"enabled": false},
                 "index": "analyzed",
-                "copy_to": "Product.stringattribute.qaggr"
+                "copy_to": ["Product.stringattribute.qaggr", "product_stringattribute_question", "product_stringattribute_qaggr"]
               },
               "aaggr": {
                 "type": "string",
-                "store": true,
-                "include_in_root": true,
+                "store": false,
                 "index": "not_analyzed",
                 "doc_values": true
               },
               "answer": {
                 "type": "string",
                 "store": false,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "index": "analyzed",
-                "copy_to": ["Product.stringattribute.aaggr", "Product.stringattribute.answershingle"]
+                "copy_to": [
+                  "Product.stringattribute.aaggr", "Product.stringattribute.answershingle",
+                  "product_stringattribute_aaggr", "product_stringattribute_answershingle",
+                  "product_stringattribute_answer"
+                ]
               },
               "answerexact": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "norms": {"enabled": false}
@@ -902,7 +1185,7 @@
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "analyzer": "shingle_analyzer",
                 "search_analyzer": "shingle_analyzer",
                 "norms": {"enabled": false}
@@ -911,12 +1194,10 @@
           },
           "intattribute": {
             "type": "nested",
-            "include_in_root": true,
             "properties": {
               "qaggr": {
                 "type": "string",
-                "store": true,
-                "include_in_root": true,
+                "store": false,
                 "index": "not_analyzed",
                 "doc_values": true
               },
@@ -928,8 +1209,7 @@
               },
               "answer": {
                 "type": "integer",
-                "store": true,
-                "include_in_root": true,
+                "store": false,
                 "ignore_malformed": true,
                 "doc_values": true
               }

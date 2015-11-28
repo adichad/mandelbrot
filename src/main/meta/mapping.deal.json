@@ -15,31 +15,43 @@
       },
       "UserID": {
         "type": "integer",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "MerchantName": {
-        "type": "string",
-        "store": true,
-        "index": "analyzed"
+        "type": "multi_field",
+        "fields": {
+          "MerchantName": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed"
+          },
+          "MerchantNameExact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          }
+        }
       },
       "ContactNO": {
         "type": "string",
-        "store": true,
-        "index": "not_analyzed"
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
       },
       "USSDMessage": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "Title": {
         "type": "multi_field",
-        "path": "full",
         "fields": {
           "Title": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed"
           },
           "TitleExact": {
@@ -53,11 +65,10 @@
       },
       "Headline": {
         "type": "multi_field",
-        "path": "full",
         "fields": {
           "Headline": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed"
           },
           "HeadlineExact": {
@@ -71,11 +82,10 @@
       },
       "DescriptionShort": {
         "type": "multi_field",
-        "path": "full",
         "fields": {
           "DescriptionShort": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed"
           },
           "DescriptionShortExact": {
@@ -90,52 +100,49 @@
       "StartDate": {
         "type": "date",
         "format": "date_hour_minute_second",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "EndDate": {
         "type": "date",
         "format": "date_hour_minute_second",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "ShowOnHomePage": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "IsFeatured": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "FeaturedStart": {
         "type": "date",
         "format": "date_hour_minute_second",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "FeaturedEnd": {
         "type": "date",
         "format": "date_hour_minute_second",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "ApplicableTo": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "not_analyzed",
-        "position_offset_gap": 100,
-        "norms": {"enabled": false},
         "doc_values": true
       },
       "PromotedPlaces": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties": {
           "gid": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "LatLong": {
@@ -144,15 +151,13 @@
           },
           "City": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "City": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityExact": {
                 "type": "string",
@@ -160,31 +165,27 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "include_in_root": true,
                 "doc_values": true
               }
             }
           },
           "CitySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CitySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsExact": {
                 "type": "string",
@@ -192,16 +193,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -209,15 +208,13 @@
           },
           "State": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "State": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateExact": {
                 "type": "string",
@@ -225,15 +222,13 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -241,15 +236,13 @@
           },
           "StateSynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "StateSynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsExact": {
                 "type": "string",
@@ -257,16 +250,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -274,15 +265,13 @@
           },
           "Country": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Country": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryExact": {
                 "type": "string",
@@ -290,16 +279,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -307,15 +294,13 @@
           },
           "CountrySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CountrySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsExact": {
                 "type": "string",
@@ -323,16 +308,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -341,12 +324,11 @@
         }
       },
       "VisiblePlaces": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties": {
           "gid": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "LatLong": {
@@ -355,15 +337,13 @@
           },
           "City": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "City": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityExact": {
                 "type": "string",
@@ -371,31 +351,27 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "include_in_root": true,
                 "doc_values": true
               }
             }
           },
           "CitySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CitySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsExact": {
                 "type": "string",
@@ -403,16 +379,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -420,15 +394,13 @@
           },
           "State": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "State": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateExact": {
                 "type": "string",
@@ -436,15 +408,13 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -452,15 +422,13 @@
           },
           "StateSynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "StateSynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsExact": {
                 "type": "string",
@@ -468,16 +436,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -485,15 +451,13 @@
           },
           "Country": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Country": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryExact": {
                 "type": "string",
@@ -501,16 +465,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -518,15 +480,13 @@
           },
           "CountrySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CountrySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsExact": {
                 "type": "string",
@@ -534,16 +494,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -552,66 +510,101 @@
         }
       },
       "MetaKeywords": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed"
+        "type": "multi_field",
+        "fields": {
+          "MetaKeywords": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed"
+          },
+          "MetaKeywordsExact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          }
+        }
       },
       "MetaDescription": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed"
+        "type": "multi_field",
+        "fields": {
+          "MetaDescription": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed"
+          },
+          "MetaDescriptionExact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          }
+        }
       },
       "MetaTitle": {
-        "type": "string",
-        "store": true,
-        "index": "not_analyzed"
+        "type": "multi_field",
+        "fields": {
+          "MetaTitle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed"
+          },
+          "MetaTitleExact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          }
+        }
       },
       "HasUserAgreement": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "UserAgreementText": {
         "type": "string",
-        "store": true,
+        "store": false,
         "index": "no"
       },
       "DisplayOrder": {
         "type": "integer",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "Published": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "Active": {
         "type": "boolean",
-        "store": true,
+        "store": false,
         "doc_values": true
       },
       "CreatedOn": {
         "type": "date",
         "format": "date_hour_minute_second_millis",
-        "store": true,
+        "store": false,
         "ignore_malformed": true
       },
       "UpdatedOn": {
         "type": "date",
         "format": "date_hour_minute_second_millis",
-        "store": true,
+        "store": false,
         "ignore_malformed": true
       },
       "DealTags": {
         "type": "multi_field",
-        "path": "full",
         "fields": {
           "DealTags": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "position_offset_gap": 100,
+            "position_increment_gap": 100,
             "norms": {"enabled": false}
           },
           "DealTagsExact": {
@@ -630,224 +623,190 @@
           }
         }
       },
-      "Details":{
+      "DealDetail":{
         "type": "object",
-        "path": "full",
         "properties": {
           "ID": {
             "type": "integer",
-            "store": true
+            "store": false
           },
           "Description": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "Highlights": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "WhatYouGet": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "FinePrint": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "Features": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "RedeemUrl": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "VisibleToAllCities": {
             "type": "boolean",
-            "store": true,
+            "store": false,
             "doc_values": true
           }
         }
       },
-      "Media": {
-        "type": "nested",
-        "include_in_root": true,
-        "properties": {
-          "ID": {
-            "type": "integer",
-            "store": true
-          },
-          "MediaGUID": {
-            "type": "string",
-            "store": true,
-            "index": "no"
-          },
-          "Mime": {
-            "type": "string",
-            "store": true,
-            "index": "not_analyzed",
-            "include_in_root": true
-          },
-          "Source": {
-            "type": "string",
-            "store": true,
-            "index": "not_analyzed",
-            "include_in_root": true
-          },
-          "URL": {
-            "type": "string",
-            "store": true,
-            "index": "no"
-          },
-          "DisplayOrder": {
-            "type": "integer",
-            "store": true,
-            "doc_values": true
-          },
-          "MediaTypeID": {
-            "type": "integer",
-            "store": true,
-            "index": "no"
-          },
-          "MediaTypeName": {
-            "type": "string",
-            "store": true,
-            "index": "not_analyzed"
-          },
-          "MediaTypeDesc": {
-            "type": "string",
-            "store": true,
-            "index": "no"
-          }
-        }
+      "Medias": {
+        "type": "object",
+        "enabled": false
       },
       "Offers": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties": {
           "ID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "DealID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Name": {
             "type": "multi_field",
-            "path": "full",
-            "Name": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed",
-              "include_in_root": true,
-              "ignore_malformed": false
-            },
-            "NameExact": {
-              "type": "string",
-              "store": false,
-              "index": "no",
-              "include_in_root": true,
-              "ignore_malformed": false
+            "fields": {
+              "Name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "NameExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              }
             }
           },
           "DescriptionShort": {
             "type": "multi_field",
-            "path": "full",
-            "DescriptionShort": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed",
-              "include_in_root": true
-            },
-            "DescriptionShortExact": {
-              "type": "string",
-              "store": false,
-              "index": "no",
-              "include_in_root": true
+            "fields": {
+              "DescriptionShort": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "DescriptionShortExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              }
             }
           },
           "Description": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "analyzed",
-            "include_in_root": true
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
           },
           "OriginalPrice": {
             "type": "float",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "null_value": 0.0,
             "doc_values": true
           },
           "OfferPrice": {
             "type": "float",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "null_value": 0.0,
             "doc_values": true
           },
-          "SavedPrice": {
+          "CouponPrice": {
             "type": "float",
-            "store": true,
-            "include_in_root": true,
-            "null_value": 0.0,
-            "doc_values": true
+            "store": false,
+            "index": "no"
+          },
+          "TelcoPrice": {
+            "type": "float",
+            "store": false,
+            "index": "no"
           },
           "SavedPrice": {
             "type": "float",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "null_value": 0.0,
             "doc_values": true
           },
           "SavedPercentage": {
             "type": "float",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "null_value": 0.0,
             "doc_values": true
           },
           "UsePercentage": {
             "type": "boolean",
-            "store": true,
-            "include_in_root": true,
-            "null_value": 0.0,
+            "store": false,
+            "null_value": false,
             "doc_values": true
           },
           "CommisionPercentage": {
             "type": "boolean",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "CommisionAmount": {
             "type": "float",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "EndDate": {
             "type": "date",
             "format": "date_hour_minute_second",
-            "store": true,
-            "include_in_root": true,
+            "store": false,
             "doc_values": true
           },
           "LimitationTimes": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "doc_values": true
           },
           "DisplayOrder": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "doc_values": true
           },
           "OfferLimitation": {
@@ -858,45 +817,43 @@
       },
       "DealType": {
         "type": "object",
-        "path": "full",
         "properties": {
           "ID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Name": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "not_analyzed",
             "doc_values": true
           },
           "Description": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "no"
           }
         }
       },
       "DealSource": {
         "type": "object",
-        "path": "full",
         "properties": {
           "ID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Name": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "not_analyzed",
             "doc_values": true
           },
           "Description": {
             "type": "string",
-            "store": true,
-            "index": "analyzed"
+            "store": false,
+            "index": "no"
           }
         }
       },
@@ -905,195 +862,231 @@
         "enabled": false
       },
       "Locations": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties": {
           "ID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "eDMSLocationID": {
             "type": "integer",
-            "store": true,
-            "index": "no"
+            "store": false,
+            "doc_values": true
           },
           "Name": {
             "type": "multi_field",
-            "path": "full",
-            "Name": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed",
-              "include_in_root": true,
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
-            },
-            "NameExact": {
-              "type": "string",
-              "store": false,
-              "index": "analyzed",
-              "analyzer": "keyword_analyzer",
-              "search_analyzer": "keyword_analyzer",
-              "include_in_root": true,
-              "norms": {"enabled": false}
-            },
-            "NameAggr": {
-              "type": "string",
-              "store": false,
-              "index": "not_analyzed",
-              "include_in_root": true,
-              "doc_values": true
+            "fields": {
+              "Name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              },
+              "NameExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {
+                  "enabled": false
+                }
+              },
+              "NameAggr": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              }
             }
           },
           "Address1": {
             "type": "multi_field",
-            "path": "full",
-            "Address1": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed",
-              "include_in_root": true,
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
-            },
-            "Address1Exact": {
-              "type": "string",
-              "store": false,
-              "index": "analyzed",
-              "analyzer": "keyword_analyzer",
-              "search_analyzer": "keyword_analyzer",
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
+            "fields": {
+              "Address1": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              },
+              "Address1Exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              }
             }
           },
           "Address2": {
             "type": "multi_field",
-            "path": "full",
-            "Address2": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed",
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
-            },
-            "Address2Exact": {
-              "type": "string",
-              "store": false,
-              "index": "analyzed",
-              "analyzer": "keyword_analyzer",
-              "search_analyzer": "keyword_analyzer",
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
+            "fields": {
+              "Address2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              },
+              "Address2Exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              }
             }
           },
           "Landmark": {
             "type": "multi_field",
-            "path": "full",
-            "Landmark": {
-              "type": "string",
-              "store": true,
-              "index": "analyzed"
-            },
-            "LandmarkExact": {
-              "type": "string",
-              "store": false,
-              "index": "analyzed",
-              "analyzer": "keyword_analyzer",
-              "search_analyzer": "keyword_analyzer",
-              "position_offset_gap": 100,
-              "norms": {"enabled": false}
+            "fields": {
+              "Landmark": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed"
+              },
+              "LandmarkExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              }
             }
           },
           "PlaceID": {
-            "type": "boolean",
-            "store": true,
-            "index": "no"
-          },
-          "DefaultLocation": {
-            "type": "boolean",
-            "store": true
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
           },
           "Email": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "DIDNumber": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Mobile": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Mobile2": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Mobile3": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Phone1": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Phone2": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Phone3": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Phone4": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Fax": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "TollFreeNumber": {
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
-          "Source": {
-            "type": "string",
-            "store": true,
-            "index": "no"
+          "MerchantName": {
+            "type": "multi_field",
+            "fields": {
+              "MerchantName": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed"
+              },
+              "MerchantNameExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {
+                  "enabled": false
+                }
+              }
+            }
+          },
+          "gid": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
           },
           "LatLong": {
-            "type": "object",
-            "enabled": false
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "doc_values": true,
+            "coerce": true,
+            "ignore_malformed": true
           },
           "PinCode": {
             "type": "string",
-            "store": true,
-            "index": "no"
+            "store": false,
+            "index": "analyzed"
           },
           "Area": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Area": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "AreaExact": {
                 "type": "string",
@@ -1101,30 +1094,26 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "AreaAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "norms": {"enabled": false}
               }
             }
           },
           "AreaSynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "AreaSynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "AreaSynonymsExact": {
                 "type": "string",
@@ -1132,31 +1121,27 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "AreaSynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "include_in_root": true,
                 "doc_values": true
               }
             }
           },
           "City": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "City": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityExact": {
                 "type": "string",
@@ -1164,31 +1149,27 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CityAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "include_in_root": true,
                 "doc_values": true
               }
             }
           },
           "CitySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CitySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsExact": {
                 "type": "string",
@@ -1196,16 +1177,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CitySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -1213,15 +1192,13 @@
           },
           "State": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "State": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateExact": {
                 "type": "string",
@@ -1229,15 +1206,13 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -1245,15 +1220,13 @@
           },
           "StateSynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "StateSynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsExact": {
                 "type": "string",
@@ -1261,16 +1234,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "StateSynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -1278,15 +1249,13 @@
           },
           "Country": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Country": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryExact": {
                 "type": "string",
@@ -1294,16 +1263,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountryAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -1311,15 +1278,13 @@
           },
           "CountrySynonyms": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "CountrySynonyms": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsExact": {
                 "type": "string",
@@ -1327,16 +1292,14 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_offset_gap": 100,
-                "norms": {"enabled": false},
-                "include_in_root": true
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
               },
               "CountrySynonymsAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
-                "include_in_root": true,
-                "position_offset_gap": 100,
+                "position_increment_gap": 100,
                 "norms": {"enabled": false},
                 "doc_values": true
               }
@@ -1345,65 +1308,142 @@
         }
       },
       "Categories": {
-        "type": "nested",
-        "include_in_root": true,
+        "type": "object",
         "properties" : {
           "ID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "ParentID": {
             "type": "integer",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "DescriptionShort": {
-            "type": "string",
-            "store": true,
-            "index": "no"
+            "type": "multi_field",
+            "fields": {
+              "DescriptionShort": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              },
+              "DescriptionShortExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              }
+            }
           },
           "Description": {
-            "type": "string",
-            "store": true,
-            "index": "no"
+            "type": "multi_field",
+            "fields": {
+              "Description": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              },
+              "DescriptionExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              }
+            }
           },
           "FriendlyURL" :{
             "type": "string",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "MetaKeywords" :{
-            "type": "string",
-            "store": true,
-            "index": "no"
+            "type": "multi_field",
+            "fields": {
+              "MetaKeywords": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              },
+              "MetaKeywordsExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              }
+            }
           },
           "MetaDescription" :{
-            "type": "string",
-            "store": true,
-            "index": "no"
+            "type": "multi_field",
+            "fields": {
+              "MetaDescription": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              },
+              "MetaDescriptionExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              }
+            }
           },
           "MetaTitle" :{
-            "type": "string",
-            "store": true,
-            "index": "no"
+            "type": "multi_field",
+            "fields": {
+              "MetaTitle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              },
+              "MetaTitleExact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "norms": {"enabled": false},
+                "position_increment_gap": 100
+              }
+            }
           },
           "LeafNode" :{
             "type": "boolean",
-            "store": true,
+            "store": false,
             "index": "no"
           },
           "Name": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Name": {
                 "type": "string",
-                "store": true,
+                "store": false,
                 "index": "analyzed",
                 "norms": {"enabled": false},
-                "position_offset_gap": 100,
-                "include_in_root": true
+                "position_increment_gap": 100
               },
               "NameExact": {
                 "type": "string",
@@ -1412,28 +1452,24 @@
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "norms": {"enabled": false},
-                "position_offset_gap": 100,
-                "include_in_root": true
+                "position_increment_gap": 100
               },
               "NameAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "include_in_root": true,
                 "doc_values": true
               }
             }
           },
           "Synonym": {
             "type": "multi_field",
-            "path": "full",
             "fields": {
               "Synonym": {
                 "type": "string",
-                "store": true,
-                "index": "analyzed",
-                "include_in_root": true
+                "store": false,
+                "index": "analyzed"
               },
               "SynonymExact": {
                 "type": "string",
@@ -1442,16 +1478,14 @@
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "norms": {"enabled": false},
-                "position_offset_gap": 100,
-                "include_in_root": true
+                "position_increment_gap": 100
               },
               "SynonymAggr": {
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
                 "norms": {"enabled": false},
-                "position_offset_gap": 100,
-                "include_in_root": true,
+                "position_increment_gap": 100,
                 "doc_values": true
               }
             }

@@ -1,13 +1,13 @@
 {
   "settings" : {
     "number_of_shards" : 18,
-    "number_of_replicas" : 1,
-    "index.cache.query.enable": true,
-    "index.merge.policy.floor_segment": "20mb",
+    "number_of_replicas" : 2,
+    "index.merge.policy.floor_segment": "50mb",
     "index.merge.policy.max_merge_at_once": "2",
     "index.merge.policy.max_merged_segment": "20gb",
     "index.merge.policy.segments_per_tier": "2",
-    "refresh_interval": "60s",
+    "refresh_interval": "600s",
+    "index.search.slowlog.threshold.query.warn": "2s",
 
     "analysis": {
       "char_filter": {
@@ -69,6 +69,13 @@
             "kidz => kid",
             "lady hostel, woman hostel, women hostel => girl hostel",
             "men hostel, man hostel, gent hostel => boy hostel",
+            "wholeseller, wholesaler => wholesale",
+            "producer => production",
+            "distributor, distributer => distribution",
+            "importer=>import",
+            "exporter=>export",
+            "retailer,retailor=>retail",
+            "ties=>tie",
             "ten => 10",
             "nine => 9",
             "eight => 8",
@@ -79,23 +86,24 @@
             "three => 3",
             "two => 2",
             "one => 1",
-            "zero => 0"
+            "zero => 0",
+            "hotal => hotel"
           ]
         },
         "plural_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "plural",
           "min-len": 3,
-          "exclude": ["ins", "tvs"]
+          "exclude": ["ins", "tvs", "ties"]
         },
         "participle_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "participle",
           "min-len": 6,
           "exclude": ["inning", "something", "notting"]
         },
         "recombine": {
-          "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
+          "type": "recombining"
         },
         "shingle": {
           "type": "shingle",

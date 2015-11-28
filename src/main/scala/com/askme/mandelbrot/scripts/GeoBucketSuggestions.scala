@@ -21,6 +21,8 @@ class GeoBucketSuggestions extends NativeScriptFactory {
       params.get("areas").asInstanceOf[String].split("#").toSet,
       buckets)
   }
+
+  override def needsScores = false
 }
 
 object GeoBucketSuggestionsScript {
@@ -32,8 +34,13 @@ class GeoBucketSuggestionsScript(lat: Double, lon: Double, areas: Set[String], b
     val mdoc = doc.asInstanceOf[util.Map[String, util.AbstractList[String]]]
     if(mdoc.getOrDefault("targeting.areadocval", empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
-    else
-      buckets.indexWhere(
-        (if(lat!=0||lon!=0) doc.get("targeting.coordinates").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKm(lat, lon) else 100d) <= _)
+    else {
+      val distance =
+        if (lat != 0 || lon != 0)
+          doc.get("targeting.coordinates").asInstanceOf[ScriptDocValues.GeoPoints].distanceInKmWithDefault(lat, lon, 0d)
+        else
+          100d
+      buckets.indexWhere(distance <= _)
+    }
   }
 }

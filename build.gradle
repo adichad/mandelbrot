@@ -75,6 +75,18 @@ configurations {
     // integTestCompile.extendsFrom testRuntime
 }
 
+tasks.withType(ScalaCompile) {
+    // Use incremental compilation
+    scalaCompileOptions.useAnt = false
+    // Enable Scala warnings output
+    scalaCompileOptions.additionalParameters = ["-feature"]
+}
+
+compileScala {
+    // Enable Java warnings output
+    options.compilerArgs << "-Xlint:unchecked"
+}
+
 task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
   description = 'Start up ' + project.name
 

@@ -11,6 +11,8 @@ class LCSLength extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
     new LCSLengthScript
   }
+
+  override def needsScores = true
 }
 
 class LCSLengthScript extends AbstractFloatSearchScript {

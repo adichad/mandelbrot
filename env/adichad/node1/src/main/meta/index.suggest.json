@@ -2,8 +2,13 @@
   "settings" : {
     "number_of_shards" : 1,
     "number_of_replicas" : 0,
-    "index.cache.query.enable": true,
-    "refresh_interval": "60s",
+    "index.merge.policy.floor_segment": "50mb",
+    "index.merge.policy.max_merge_at_once": "2",
+    "index.merge.policy.max_merged_segment": "20gb",
+    "index.merge.policy.segments_per_tier": "2",
+    "refresh_interval": "1200s",
+    "index.search.slowlog.threshold.query.warn": "2s",
+
     "analysis": {
       "char_filter": {
         "mapping_char_filter": {
@@ -19,6 +24,14 @@
         },
         "html_strip_char_filter": {
           "type":"html_strip"
+        }
+      },
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": "1",
+          "max_gram": "15",
+          "token_chars": [ "letter", "digit" ]
         }
       },
       "filter" : {
@@ -64,33 +77,41 @@
             "kidz => kid",
             "lady hostel, woman hostel, women hostel => girl hostel",
             "men hostel, man hostel, gent hostel => boy hostel",
-            "10 => ten",
-            "9 => nine",
-            "8 => eight",
-            "7 => seven",
-            "6 => six",
-            "5 => five",
-            "4 => four",
-            "3 => three",
-            "2 => two",
-            "1 => one",
-            "0 => zero"
+            "wholeseller, wholesaler => wholesale",
+            "producer => production",
+            "distributor, distributer => distribution",
+            "importer=>import",
+            "exporter=>export",
+            "retailer,retailor=>retail",
+            "ties=>tie",
+            "ten => 10",
+            "nine => 9",
+            "eight => 8",
+            "seven => 7",
+            "six => 6",
+            "five => 5",
+            "four => 4",
+            "three => 3",
+            "two => 2",
+            "one => 1",
+            "zero => 0",
+            "hotal => hotel"
           ]
         },
         "plural_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "plural",
           "min-len": 3,
           "exclude": ["ins", "tvs", "fries"]
         },
         "participle_stem": {
-          "type": "com.askme.mandelbrot.es.analysis.stem.StemmingTokenFilterFactory",
+          "type": "stemming",
           "stemmer": "participle",
           "min-len": 5,
-          "exclude": ["inning"]
+          "exclude": ["inning", "something", "notting"]
         },
         "recombine": {
-          "type": "com.askme.mandelbrot.es.analysis.misc.RecombiningTokenFilterFactory"
+          "type": "recombining"
         },
         "shingle": {
           "type": "shingle",
@@ -120,6 +141,16 @@
         }
       },
       "analyzer": {
+        "highlighting_analyzer_index": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [ "lowercase" ]
+        },
+        "highlighting_analyzer_search": {
+          "type": "custom",
+          "tokenizer": "keyword",
+          "filter": [ "lowercase" ]
+        },
         "keyword_analyzer": {
           "type": "custom",
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
