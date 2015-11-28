@@ -1,0 +1,230 @@
+{
+  "settings" : {
+    "number_of_shards" : 18,
+    "number_of_replicas" : 2,
+    "index.merge.policy.floor_segment": "50mb",
+    "index.merge.policy.max_merge_at_once": "2",
+    "index.merge.policy.max_merged_segment": "20gb",
+    "index.merge.policy.segments_per_tier": "2",
+    "refresh_interval": "1200s",
+    "index.search.slowlog.threshold.query.warn": "2s",
+
+    "analysis": {
+      "char_filter": {
+        "mapping_char_filter": {
+          "type": "mapping",
+          "mappings": [
+            "&=> and "
+          ]
+        },
+        "alphanumeric_char_filter": {
+          "type":"pattern_replace",
+          "pattern":"(?U)[^\\p{alnum}]+",
+          "replacement":" "
+        },
+        "html_strip_char_filter": {
+          "type":"html_strip"
+        }
+      },
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "nGram",
+          "min_gram": "1",
+          "max_gram": "15",
+          "token_chars": [ "letter", "digit" ]
+        }
+      },
+      "filter" : {
+        "light_stemmer": {
+          "type": "stemmer",
+          "name": "light_english"
+        },
+        "possessive_stemmer": {
+          "type": "stemmer",
+          "name": "possessive_english"
+        },
+        "stopword": {
+          "type": "stop",
+          "stopwords": ["the", "and", "in", "of"]
+        },
+        "word_delimiter": {
+          "type": "word_delimiter"
+        },
+        "pre-synonym" : {
+          "type" : "synonym",
+          "synonyms" : [
+            "li'l => little"
+          ]
+        },
+        "synonym" : {
+          "type" : "synonym",
+          "synonyms" : [
+            "i-pod, i pod => ipod",
+            "i-phone, i phone => iphone",
+            "iwatch, i-watch => apple watch",
+            "appartment, aptt => apartment",
+            "macdonald => mcdonald",
+            "restorent, restorant, restraunt, restaurent, restuarnt, restro => restaurant",
+            "motorcycle, motorbike => bike",
+            "tire => tyre",
+            "sonytv => sony tv",
+            "choco, choclat, choclate => chocolate",
+            "pvt ltd, pltd => private limited",
+            "ltd => limited",
+            "path lab, patho lab, path laboratory, patho laboratory, pathology lab => pathology laboratory",
+            "women => woman",
+            "men => man",
+            "kidz => kid",
+            "lady hostel, woman hostel, women hostel => girl hostel",
+            "men hostel, man hostel, gent hostel => boy hostel",
+            "wholeseller, wholesaler => wholesale",
+            "producer => production",
+            "distributor, distributer => distribution",
+            "importer=>import",
+            "exporter=>export",
+            "retailer,retailor=>retail",
+            "ties=>tie",
+            "ten => 10",
+            "nine => 9",
+            "eight => 8",
+            "seven => 7",
+            "six => 6",
+            "five => 5",
+            "four => 4",
+            "three => 3",
+            "two => 2",
+            "one => 1",
+            "zero => 0",
+            "hotal => hotel"
+          ]
+        },
+        "plural_stem": {
+          "type": "stemming",
+          "stemmer": "plural",
+          "min-len": 3,
+          "exclude": ["ins", "tvs", "fries"]
+        },
+        "participle_stem": {
+          "type": "stemming",
+          "stemmer": "participle",
+          "min-len": 5,
+          "exclude": ["inning", "something", "notting"]
+        },
+        "recombine": {
+          "type": "recombining"
+        },
+        "shingle": {
+          "type": "shingle",
+          "max_shingle_size": 2,
+          "min_shingle_size": 2,
+          "output_unigrams": false,
+          "token_separator": " ",
+          "output_unigrams_if_no_shingles": true
+        },
+        "nospace_shingle": {
+          "type": "shingle",
+          "max_shingle_size": 2,
+          "min_shingle_size": 2,
+          "output_unigrams": false,
+          "token_separator": "",
+          "output_unigrams_if_no_shingles": true
+        },
+        "ngram": {
+          "type": "nGram",
+          "min_gram": 2,
+          "max_gram": 4
+        },
+        "edge_ngram": {
+          "type": "edgeNGram",
+          "min_gram": 2,
+          "max_gram": 20
+        }
+      },
+      "analyzer": {
+        "highlighting_analyzer_index": {
+          "type": "custom",
+          "tokenizer": "ngram_tokenizer",
+          "filter": [ "lowercase" ]
+        },
+        "highlighting_analyzer_search": {
+          "type": "custom",
+          "tokenizer": "keyword",
+          "filter": [ "lowercase" ]
+        },
+        "keyword_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine"]
+        },
+        "keyword_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine", "edge_ngram"]
+        },
+        "keyword_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "recombine", "ngram"]
+        },
+        "shingle_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle"]
+        },
+        "shingle_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "edge_ngram"]
+        },
+        "shingle_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "ngram"]
+        },
+        "shingle_nospace_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle"]
+        },
+        "shingle_nospace_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle", "edge_ngram"]
+        },
+        "shingle_nospace_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "nospace_shingle", "ngram"]
+        },
+        "token_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym"]
+        },
+        "token_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "edge_ngram"]
+        },
+        "token_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "ngram"]
+        }
+      }
+    }
+  }
+}
+

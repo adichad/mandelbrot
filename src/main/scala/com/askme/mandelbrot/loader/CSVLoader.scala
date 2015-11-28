@@ -17,7 +17,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.io.{Codec, Source}
-import scala.util.matching.Regex
+import com.askme.mandelbrot.util.Utils._
 
 
 /**
@@ -28,22 +28,6 @@ import scala.util.matching.Regex
 case class Index(file: File)
 
 object CSVLoader {
-  val specials: Seq[(String, String)] = ("\\", "\\\\") +: (("\"", "\\\"") +: (0x0000.toChar.toString, "") +:
-    (for (c <- (0x0001 to 0x001F)) yield (c.toChar.toString, "\\u" + ("%4s" format Integer.toHexString(c)).replace(" ", "0"))))
-
-  implicit class `string utils`(val s: String) extends AnyVal {
-    def nonEmptyOrElse(other: => String) = if (s.isEmpty) other else s
-
-    def tokenize(regex: Regex): List[List[String]] = regex.findAllIn(s).matchData.map(_.subgroups).toList
-
-    def escapeJson: String = {
-      var res = s
-      specials.foreach {
-        c => res = res.replace(c._1, c._2)
-      }
-      res
-    }
-  }
 
   implicit class `replace in StringBuilder`(val sb: StringBuilder) extends AnyVal {
 
@@ -283,7 +267,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
     mapping.keySet.foreach { field =>
       sb.append("\"").append(field).append("\": ")
       mapConf.getAnyRef(field) match {
-        case x: java.util.Map[String, AnyRef] => {
+        case x: java.util.Map[_, _] => {
           val fconf = mapConf.getConfig(field)
           if (fconf.hasPath("type")) {
             val placeholder = "${" + fconf.getInt("pos") + "}"
@@ -297,7 +281,7 @@ class CSVLoader(val config: Config, index: String, esType: String,
             )
           } else flatten(fconf, sb, map, elemDelim)
         }
-        case x: java.util.List[AnyRef] => {
+        case x: java.util.List[_] => {
           sb.append("[ ")
           mapConf.getConfigList(field).foreach { c =>
             flatten(c, sb, map, elemDelim)

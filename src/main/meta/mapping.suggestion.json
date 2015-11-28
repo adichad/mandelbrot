@@ -1,0 +1,367 @@
+{
+  "suggestion": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "transform" : [
+      {
+        "inline" : "suggestiontransform",
+        "params" : {
+          "index": "askme_suggest_index_incremental",
+          "type": "suggestion"
+        },
+        "lang": "native"
+      }
+    ],
+    "properties": {
+      "id": {
+        "type": "string",
+        "store": true,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "payload": {
+        "type": "object",
+        "properties": {
+          "display": {
+            "type": "object",
+            "enabled": false
+          },
+          "queries": {
+            "type": "object",
+            "enabled": false
+          },
+          "items": {
+            "type": "object",
+            "enabled": false
+          },
+          "payloads": {
+            "type": "object",
+            "enabled": false
+          }
+        }
+      },
+      "targeting": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          },
+          "area": {
+            "type": "string",
+            "store": true,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer"
+          },
+          "areadocval": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "coordinates": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "doc_values": true,
+            "coerce": true,
+            "ignore_malformed": true
+          },
+          "tag": {
+            "type": "string",
+            "store": true,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "kw": {
+            "type": "multi_field",
+            "fields": {
+              "highlight": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "highlighting_analyzer_index",
+                "search_analyzer": "highlighting_analyzer_search",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "kw": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_edge_ngram_analyzer",
+                "search_analyzer": "keyword_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_ngram_analyzer",
+                "search_analyzer": "keyword_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_analyzer",
+                "search_analyzer": "token_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "keyword_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              }
+            }
+          },
+          "label": {
+            "type": "multi_field",
+            "fields": {
+              "highlight": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "highlighting_analyzer_index",
+                "search_analyzer": "highlighting_analyzer_search",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "label": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_edge_ngram_analyzer",
+                "search_analyzer": "keyword_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "keyword_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "keyword_ngram_analyzer",
+                "search_analyzer": "keyword_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "shingle_nospace_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_analyzer",
+                "search_analyzer": "token_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              },
+              "token_ngram": {
+                "type": "string",
+                "store": true,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "keyword_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": {"enabled": false}
+              }
+            }
+          }
+        }
+      },
+      "deleted": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
+      "groupby": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "count": {
+        "type": "integer",
+        "store": true,
+        "ignore_malformed": false,
+        "doc_values": true
+      }
+    }
+  }
+}

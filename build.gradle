@@ -25,7 +25,7 @@ buildscript {
   }
 
   dependencies {
-    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.+')
+    classpath(group: 'com.netflix.nebula', name: 'gradle-extra-configurations-plugin', version: '1.12.3')
     classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '3.0.1')
   }
 }
@@ -73,6 +73,18 @@ configurations {
     testCompile.exclude group: 'org.slf4j',       module: 'slf4j-jdk14'
 
     // integTestCompile.extendsFrom testRuntime
+}
+
+tasks.withType(ScalaCompile) {
+    // Use incremental compilation
+    scalaCompileOptions.useAnt = false
+    // Enable Scala warnings output
+    scalaCompileOptions.additionalParameters = ["-feature"]
+}
+
+compileScala {
+    // Enable Java warnings output
+    options.compilerArgs << "-Xlint:unchecked"
 }
 
 task go(dependsOn: ['compileJava', 'compileScala', 'build'], type: JavaExec) {
@@ -150,13 +162,13 @@ sourceSets {
 project(':') {
   dependencies {
     provided    project(':'+project(':').name+'-dep')
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
-    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-annotations',               version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-api',                  version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-common',               version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-common',        version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-server-web-proxy',     version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-client',                    version: hadoop_version
+//    provided    group: 'org.apache.hadoop',          name: 'hadoop-yarn-client',               version: hadoop_version
   }
 }
 

@@ -1,5 +1,7 @@
 package com.askme.mandelbrot.server
 
+import java.util
+
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
@@ -8,94 +10,84 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.MandelbrotHandler
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
+import kafka.consumer.{KafkaStream, Whitelist, TopicFilter, ConsumerConfig}
+import kafka.javaapi.consumer.SimpleConsumer
+import kafka.javaapi.producer.Producer
+import kafka.producer.ProducerConfig
+import kafka.utils.ZKStringSerializer
+import org.I0Itec.zkclient.ZkClient
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
+import org.elasticsearch.action.search.SearchType
+import org.elasticsearch.client.Client
 import org.elasticsearch.common.logging.ESLoggerFactory
 import org.elasticsearch.common.logging.slf4j.Slf4jESLoggerFactory
-import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.node.NodeBuilder
+import org.elasticsearch.node.MandelbrotNodeBuilder._
+import org.elasticsearch.index.query.QueryBuilders._
+import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.apache.kafka.clients.producer.KafkaProducer
+import kafka.serializer.StringDecoder
+import kafka.admin.AdminUtils
+
 import spray.can.Http
+import scala.collection.JavaConversions._
+import scala.collection.convert.decorateAsScala._
 
 import scala.concurrent.duration.DurationInt
 
 object RootServer extends Logging {
+  private var defContext: SearchContext = null
+  def defaultContext = defContext
+  private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
+    new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
+  private val vCache = new java.util.concurrent.ConcurrentHashMap[(String, String, String, String, String), Set[String]].asScala
+
+  def uniqueVals(index: String, esType: String, field: String, analysisField: String, sep: String, maxCount: Int): Set[String] = {
+    vCache.getOrElseUpdate((index, esType, field, analysisField, sep),
+      defaultContext.esClient.prepareSearch(index).setTypes(esType)
+        .setSize(0).setTerminateAfter(1000000).setTrackScores(false)
+        .setQuery(matchAllQuery).addAggregation(terms(field).field(field).size(maxCount)).execute().get()
+        .getAggregations.get(field).asInstanceOf[Terms].getBuckets
+        .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKeyAsString).mkString(sep)).filter(!_.isEmpty).toSet)
+  }
   class SearchContext private[RootServer](val config: Config) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
 
-    /*
-    val conf = (new com.hazelcast.config.Config)
-      .setProperty("hazelcast.logging.type", string("hazel.logging.type"))
-
-
-    private val netConf = conf.getNetworkConfig
-    private val joinConf = netConf.getJoin
-    joinConf.getMulticastConfig.setEnabled(boolean("hazel.multicast.enabled"))
-    joinConf.getTcpIpConfig.setEnabled(boolean("hazel.tcpip.enabled"))
-    joinConf.getTcpIpConfig.setMembers(list[String]("hazel.tcpip.members"))
-    joinConf.getTcpIpConfig.setRequiredMember(string("hazel.tcpip.required.member"))
-    netConf.setPort(int("hazel.port.number"))
-    netConf.setPortAutoIncrement(boolean("hazel.port.autoincrement"))
-    netConf.getInterfaces.setInterfaces(list[String]("hazel.interfaces"))
-    netConf.getInterfaces.setEnabled(boolean("hazel.interface.enabled"))
-    */
-    //val hazel = Hazelcast.newHazelcastInstance(conf)
-
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
-      .data(boolean("es.node.data")).settings(
-      ImmutableSettings.settingsBuilder()
-        .put("node.name", string("es.node.name"))
-        .put("node.master", string("es.node.master"))
-        .put("discovery.zen.ping.multicast.enabled", string("es.discovery.zen.ping.multicast.enabled"))
-        .put("discovery.zen.ping.unicast.hosts", string("es.discovery.zen.ping.unicast.hosts"))
-        .put("discovery.zen.minimum_master_nodes", string("es.discovery.zen.minimum_master_nodes"))
-        .put("network.host", string("es.network.host"))
-        .put("path.data", string("es.path.data"))
-        .put("path.logs", string("es.path.logs"))
-        .put("path.conf", string("es.path.conf"))
-        .put("indices.cache.query.size", string("es.indices.cache.query.size"))
-        .put("indices.cache.filter.size", string("es.indices.cache.filter.size"))
-        .put("indices.memory.index_buffer_size",string("es.indices.memory.index_buffer_size"))
-        .put("indices.memory.min_index_buffer_size",string("es.indices.memory.min_index_buffer_size"))
-        .put("indices.memory.max_index_buffer_size",string("es.indices.memory.max_index_buffer_size"))
-        .put("indices.fielddata.cache.size", string("es.indices.fielddata.cache.size"))
-        .put("indices.store.throttle.max_bytes_per_sec",string("es.indices.store.throttle.max_bytes_per_sec"))
-        .put("indices.store.throttle.type", string("es.indices.store.throttle.type"))
-        .put("gateway.recover_after_nodes", string("es.gateway.recover_after_nodes"))
-        .put("gateway.expected_nodes", string("es.gateway.expected_nodes"))
-        .put("gateway.recover_after_time", string("es.gateway.recover_after_time"))
-        .put("threadpool.search.type", string("es.threadpool.search.type"))
-        .put("threadpool.search.size", string("es.threadpool.search.size"))
-        .put("threadpool.search.queue_size", string("es.threadpool.search.queue_size"))
-        .put("logger.index.search.slowlog.threshold.query.warn", string("es.logger.index.search.slowlog.threshold.query.warn"))
-        .put("script.native.geobucket.type", "com.askme.mandelbrot.scripts.GeoBucket")
-        .put("script.native.docscore.type", "com.askme.mandelbrot.scripts.DocScore")
-    ).node
-    val esClient = esNode.client
-
-    //val batchExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.batch")))
-    //val userExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(int("threads.user")))
+      .data(boolean("es.node.data")).settings(settings("es")).nodeCustom
 /*
-    // http://spark.apache.org/docs/latest/configuration.html
-    private val sparkConf = (new SparkConf)
-      .setMaster(string("spark.master"))
-      .setAppName(string("spark.app.name"))
-      .set("spark.executor.memory", string("spark.executor.memory"))
-      .set("spark.shuffle.spill", string("spark.shuffle.spill"))
-      .set("spark.logConf", string("spark.logConf"))
-      .set("spark.local.dir", string("spark.local.dir"))
-      //.set("spark.serializer", classOf[KryoSerializer].getName)
-
-    val sparkContext = new SparkContext(sparkConf)
-    val sqlContext = new SQLContext(sparkContext)
-    val streamingContext = new StreamingContext(sparkContext, Seconds(int("spark.streaming.batch.duration")))
+    private val zkClient = new ZkClient(
+      string("kafka.zookeeper.connect"), int("kafka.zookeeper.session-timeout"),
+      int("kafka.zookeeper.connect-timeout"), ZKStringSerializer
+    )
+    confs("kafka.topics").foreach { c =>
+      if(!AdminUtils.topicExists(zkClient, c.getString("name"))) {
+        AdminUtils.createTopic(
+          zkClient, c.getString("name"),
+          c.getInt("partitions"), c.getInt("replication"),
+          props(c.getConfig("conf")))
+        info("topic created: "+c.getString("name"))
+      }
+    }
 */
-    private[RootServer] def close() {
+    val esClient = esNode.client
+  /*
+    val kafkaProducer = new Producer[String, String](new ProducerConfig(props("kafka.producer")))
+    val consumerConnector = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props("kafka.consumer.conf")))
+    val kafkaStreams: Map[String, util.List[KafkaStream[String, String]]] = list[String]("kafka.consumer.topics").toSet[String].map(t=>t -> consumerConnector.createMessageStreamsByFilter(Whitelist(t), 1, new StringDecoder(), new StringDecoder())).toMap
+  */
+    RootServer.defContext = this
 
-      //userExecutionContext.shutdown()
-      //batchExecutionContext.shutdown()
+    private[RootServer] def close() {
       esClient.close()
+      //kafkaProducer.close
+      //consumerConnector.shutdown()
+      //zkClient.close()
       esNode.close()
-      //sparkContext.stop()
-      //hazel.shutdown()
+
     }
   }
 
