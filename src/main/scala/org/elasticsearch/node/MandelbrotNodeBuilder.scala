@@ -21,6 +21,5 @@ object MandelbrotNodeBuilder {
     def nodeCustom = {
       buildCustom.start()
     }
- 
   }
 }
