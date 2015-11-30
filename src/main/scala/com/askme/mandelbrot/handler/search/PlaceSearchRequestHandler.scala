@@ -198,6 +198,8 @@ object PlaceSearchRequestHandler extends Logging {
           shingleSpan("product_l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else if(field._1=="product_brandexact")
           shingleSpan("product_brand", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        //else if(field._1=="product_stringattribute_answerexact")
+        //  shingleSpan("product_stringattribute_answer", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
         else
           shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
       )
@@ -257,6 +259,7 @@ object PlaceSearchRequestHandler extends Logging {
     "product_categorykeywords" -> 10000000f,
     "product_parkedkeywords" -> 10000000f,
     "product_stringattribute_answer" -> 100f,
+    "tags" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"Address"->1f)
 
@@ -273,6 +276,7 @@ object PlaceSearchRequestHandler extends Logging {
     "product_categorykeywordsexact"->10000000000f,
     "product_parkedkeywordsexact"->10000000000f,
     "product_stringattribute_answerexact"->100000f,
+    "tags.exact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"AddressExact"->1f)
 

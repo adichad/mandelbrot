@@ -568,6 +568,33 @@
           }
         }
       },
+      "tags": {
+        "type": "multi_field",
+        "fields": {
+          "tags": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
+          },
+          "aggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          }
+        }
+      },
       "product_name": {
         "type": "string",
         "store": false,
@@ -1168,8 +1195,9 @@
                 "index": "analyzed",
                 "copy_to": [
                   "Product.stringattribute.aaggr", "Product.stringattribute.answershingle",
+                  "Product.stringattribute.answerexact",
                   "product_stringattribute_aaggr", "product_stringattribute_answershingle",
-                  "product_stringattribute_answer"
+                  "product_stringattribute_answerexact", "product_stringattribute_answer"
                 ]
               },
               "answerexact": {
