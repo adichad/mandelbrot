@@ -1195,8 +1195,9 @@
                 "index": "analyzed",
                 "copy_to": [
                   "Product.stringattribute.aaggr", "Product.stringattribute.answershingle",
+                  "Product.stringattribute.answerexact",
                   "product_stringattribute_aaggr", "product_stringattribute_answershingle",
-                  "product_stringattribute_answer"
+                  "product_stringattribute_answerexact", "product_stringattribute_answer"
                 ]
               },
               "answerexact": {

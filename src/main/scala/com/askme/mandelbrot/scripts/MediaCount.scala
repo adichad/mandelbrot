@@ -45,12 +45,20 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   private def mapAttributes(ans: String, ckws: util.ArrayList[AnyRef]): Array[String] = {
-    val exactAns = analyze(esClient, index, "Product.categorykeywordsexact", ans).mkString(" ")
+    val answerWords = analyze(esClient, index, "Product.categorykeywords", ans)
+
+    val exactAns = answerWords.mkString(" ")
 
     if(catkws.contains(exactAns))
-      ckws.map(exactAns+" "+XContentMapValues.nodeStringValue(_, "")).toArray
-    else
+      ckws.map(ckw => exactAns+" "+analyze(esClient, index, "Product.categorykeywords", XContentMapValues.nodeStringValue(ckw, "")).mkString(" ")).toArray
+    else if(shingleContains(answerWords, catkws))
       Array(exactAns)
+    else
+      Array[String]()
+
+    def shingleContains(words: Array[String], catkws: Set[String]): Boolean = {
+      (1 to words.length - 1).flatMap(len => words.sliding(len).map(_.mkString(" "))).exists(catkws.contains)
+    }
   }
 
   override def run(): AnyRef = {
@@ -78,7 +86,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
           source.put("MediaCount", new java.lang.Integer(mediaCount))
 
           val answers = new util.ArrayList[AnyRef]()
-          source.put("product_stringattribute_answerexact", answers)
+          source.put("tags", answers)
 
           // rejig product information to reduce noise
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
@@ -105,14 +113,18 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
               val att = a.asInstanceOf[util.Map[String, AnyRef]]
               val question = XContentMapValues.nodeStringValue(att.get("question"), "").trim
               if(question.nonEmpty) {
-                att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
-                  .flatMap(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws))))
-                answers.addAll(att.get("answerexact").asInstanceOf[util.ArrayList[AnyRef]])
+                val currAnswers = att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
+                val currAnswersStr = currAnswers.map(XContentMapValues.nodeStringValue(_, "").trim).filter(_.nonEmpty)
+                currAnswers.clear()
+                currAnswersStr.foreach { currAnswer =>
+                  val mapped = mapAttributes(currAnswer, catkws)
+                  if(mapped.nonEmpty)
+                    answers.addAll(mapped.toSeq)
+                  else
+                    currAnswers.add(currAnswer)
+                }
               } else {
                 att.put("answer", emptyArray)
-                att.put("answerexact", emptyArray)
-                att.put("aaggr", emptyArray)
-                att.put("answershingle", emptyArray)
               }
             }
             prod.put("parkedkeywordsdocval", new util.ArrayList[String](prod.getOrDefault("parkedkeywords", emptyArray).asInstanceOf[util.ArrayList[AnyRef]].map(parked=>analyze(esClient, index, "Product.parkedkeywordsexact", XContentMapValues.nodeStringValue(parked, "")).mkString(" ")).filter(!_.isEmpty)))
