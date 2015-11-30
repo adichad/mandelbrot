@@ -568,6 +568,33 @@
           }
         }
       },
+      "tags": {
+        "type": "multi_field",
+        "fields": {
+          "tags": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": {"enabled": false}
+          },
+          "aggr": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          }
+        }
+      },
       "product_name": {
         "type": "string",
         "store": false,
