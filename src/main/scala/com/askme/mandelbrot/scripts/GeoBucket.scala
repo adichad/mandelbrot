@@ -41,7 +41,7 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: 
     else if(mdoc.getOrDefault(synfield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
       0
     else if(mdoc.getOrDefault(skufield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
-      0
+      3
     else {
       val distance =
         if (lat != 0 || lon != 0)
