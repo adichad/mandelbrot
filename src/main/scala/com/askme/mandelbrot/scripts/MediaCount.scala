@@ -45,6 +45,11 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
   private def mapAttributes(ans: String, ckws: util.ArrayList[AnyRef]): Array[String] = {
+
+    def shingleContains(words: Array[String], catkws: Set[String]): Boolean = {
+      (1 to words.length - 1).flatMap(len => words.sliding(len).map(_.mkString(" "))).exists(catkws.contains)
+    }
+
     val answerWords = analyze(esClient, index, "Product.categorykeywords", ans)
 
     val exactAns = answerWords.mkString(" ")
@@ -56,9 +61,6 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
     else
       Array[String]()
 
-    def shingleContains(words: Array[String], catkws: Set[String]): Boolean = {
-      (1 to words.length - 1).flatMap(len => words.sliding(len).map(_.mkString(" "))).exists(catkws.contains)
-    }
   }
 
   override def run(): AnyRef = {
