@@ -80,7 +80,7 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
           val answers = new util.ArrayList[AnyRef]()
           source.put("product_stringattribute_answerexact", answers)
 
-          // augment noisy attribute values with pkws
+          // rejig product information to reduce noise
           source.get("Product").asInstanceOf[util.ArrayList[AnyRef]].foreach { p =>
             val prod = p.asInstanceOf[util.Map[String, AnyRef]]
             val kwraw = prod.get("categorykeywords")
@@ -103,9 +103,17 @@ class MediaCountScript(private val esClient: Client, index: String, esType: Stri
 
             prod.get("stringattribute").asInstanceOf[util.ArrayList[AnyRef]].foreach { a =>
               val att = a.asInstanceOf[util.Map[String, AnyRef]]
-              att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
-                .flatMap(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws))))
-              answers.addAll(att.get("answerexact").asInstanceOf[util.ArrayList[AnyRef]])
+              val question = XContentMapValues.nodeStringValue(att.get("question"), "").trim
+              if(question.nonEmpty) {
+                att.put("answerexact", new util.ArrayList[AnyRef](att.get("answer").asInstanceOf[util.ArrayList[AnyRef]]
+                  .flatMap(ans => mapAttributes(XContentMapValues.nodeStringValue(ans, ""), catkws))))
+                answers.addAll(att.get("answerexact").asInstanceOf[util.ArrayList[AnyRef]])
+              } else {
+                att.put("answer", emptyArray)
+                att.put("answerexact", emptyArray)
+                att.put("aaggr", emptyArray)
+                att.put("answershingle", emptyArray)
+              }
             }
             prod.put("parkedkeywordsdocval", new util.ArrayList[String](prod.getOrDefault("parkedkeywords", emptyArray).asInstanceOf[util.ArrayList[AnyRef]].map(parked=>analyze(esClient, index, "Product.parkedkeywordsexact", XContentMapValues.nodeStringValue(parked, "")).mkString(" ")).filter(!_.isEmpty)))
           }
