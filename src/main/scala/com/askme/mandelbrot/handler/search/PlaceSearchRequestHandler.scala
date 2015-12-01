@@ -141,9 +141,9 @@ object PlaceSearchRequestHandler extends Logging {
   private[PlaceSearchRequestHandler] def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length > 8 && fuzzy)
+      if(x.length > 4 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 8) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -178,30 +178,24 @@ object PlaceSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery)
   }
 
+  val forceFuzzy = Set("LocationName","LocationNameExact", "Address", "AddressExact", "CompanyAliases", "CompanyAliasesExact")
+  val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
+    "product_l3categoryexact"->"product_l3category", "product_l2categoryexact"->"product_l2category",
+    "product_l1categoryexact"->"product_l1category", "product_brandexact"->"product_brand",
+    "product_stringattribute_answerexact"->"product_stringattribute_answer")
+
   private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
                 w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
 
     if(span)
-      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, if(forceFuzzy.contains(field._1)) true else fuzzy)))
     else {
       disMaxQuery.addAll(recomFields.map(field =>
-        if(field._1=="LocationNameExact")
-          shingleSpan("LocationName", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="CompanyAliasesExact")
-          shingleSpan("CompanyAliases", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="product_l3categoryexact")
-          shingleSpan("product_l3category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="product_l2categoryexact")
-          shingleSpan("product_l2category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="product_l1categoryexact")
-          shingleSpan("product_l1category", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        else if(field._1=="product_brandexact")
-          shingleSpan("product_brand", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
-        //else if(field._1=="product_stringattribute_answerexact")
-        //  shingleSpan("product_stringattribute_answer", field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)
+        if(forceSpan.isDefinedAt(field._1))
+          shingleSpan(forceSpan.getOrDefault(field._1, ""), field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, if(forceFuzzy.contains(field._1)) true else fuzzy)
         else
-          shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), fuzzy))
+          shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), if(forceFuzzy.contains(field._1)) true else fuzzy))
       )
     }
   }
@@ -225,10 +219,10 @@ object PlaceSearchRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-      if(word.length > 8 && fuzzy)
+      if(word.length > 4 && fuzzy)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-          .fuzziness(if(word.length > 12) Fuzziness.TWO else Fuzziness.ONE)
-          .boost(if(word.length > 12) exactBoost/3f else exactBoost/2f)
+          .fuzziness(if(word.length > 8) Fuzziness.TWO else Fuzziness.ONE)
+          .boost(if(word.length > 8) exactBoost/3f else exactBoost/2f)
       else
         termQuery(field, word).boost(exactBoost)
 
