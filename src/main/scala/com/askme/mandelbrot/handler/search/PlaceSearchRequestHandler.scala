@@ -182,7 +182,7 @@ object PlaceSearchRequestHandler extends Logging {
   val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
     "product_l3categoryexact"->"product_l3category", "product_l2categoryexact"->"product_l2category",
     "product_l1categoryexact"->"product_l1category", "product_brandexact"->"product_brand",
-    "product_stringattribute_answerexact"->"product_stringattribute_answer")
+    "product_stringattribute_answerexact"->"product_stringattribute_answer") 
 
   private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
