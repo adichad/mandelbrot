@@ -374,7 +374,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if (city != "") {
       val cityFilter = boolQuery
-      city.split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+      (city+",All City").split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
         cityFilter.should(termQuery("City", c))
         cityFilter.should(termQuery("CitySynonyms", c))
       }
