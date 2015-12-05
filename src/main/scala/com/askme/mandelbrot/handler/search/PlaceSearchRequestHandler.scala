@@ -178,8 +178,8 @@ object PlaceSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery)
   }
 
-  val forceFuzzy = Set("LocationName","LocationNameExact", "Address", "AddressExact", "CompanyAliases", "CompanyAliasesExact",
-  "product_stringattribute_answerexact", "product_stringattribute_answer", "tags.exact")
+  val forceFuzzy = Set("LocationName","LocationNameExact"/*, "CompanyAliases", "CompanyAliasesExact",
+  "product_stringattribute_answerexact", "product_stringattribute_answer", "tags.exact", "Address", "AddressExact"*/)
   val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
     "product_l3categoryexact"->"product_l3category", "product_l2categoryexact"->"product_l2category",
     "product_l1categoryexact"->"product_l1category", "product_brandexact"->"product_brand",
