@@ -650,7 +650,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
 
       case response: WrappedResponse =>
-        val postStart = System.currentTimeMillis()
         try {
           import response.result
           import response.searchParams.filters._
@@ -663,7 +662,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           import response.relaxLevel
 
           val areaWords = analyze(esClient, index, "Area", area)
-          val postTimeTaken = System.currentTimeMillis() - postStart
 
           var slug = ""
           if (slugFlag) {
@@ -689,7 +687,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
 //          val cats = if (agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
 
+          val postStart = System.currentTimeMillis()
           val parsedResult = parse(result.toString)
+          val postTimeTaken = System.currentTimeMillis() - postStart
           /*.transformField {
             case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
           }.removeField(_._1=="_shards")*/
