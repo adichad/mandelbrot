@@ -663,7 +663,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           import response.relaxLevel
 
           val areaWords = analyze(esClient, index, "Area", area)
-
+          val postTimeTaken = System.currentTimeMillis() - postStart
 
           var slug = ""
           if (slugFlag) {
@@ -697,7 +697,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           val endTime = System.currentTimeMillis
           val timeTaken = endTime - startTime
-          val postTimeTaken = endTime - postStart
+
           info("[" + result.getTookInMillis+"+"+postTimeTaken + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
           context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
