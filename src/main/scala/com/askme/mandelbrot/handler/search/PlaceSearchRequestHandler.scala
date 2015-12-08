@@ -650,6 +650,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         }
 
       case response: WrappedResponse =>
+        val postStart = System.currentTimeMillis()
         try {
           import response.result
           import response.searchParams.filters._
@@ -696,7 +697,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           val endTime = System.currentTimeMillis
           val timeTaken = endTime - startTime
-          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
+          val postTimeTaken = endTime - postStart
+          info("[" + result.getTookInMillis+"+"+postTimeTaken + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]->[" + cats + "]")
           context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
           case e: Throwable =>
