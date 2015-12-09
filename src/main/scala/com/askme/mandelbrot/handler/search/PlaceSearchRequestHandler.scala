@@ -552,13 +552,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if (slugFlag) {
       search.addAggregation(nested("products").path("Product")
-        .subAggregation(terms("catkw").field("Product.l3categoryaggr").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(terms("kw").field("Product.categorykeywordsaggr").size(100))
+        .subAggregation(terms("catkw").field("Product.l3categorydocval").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
+          .subAggregation(terms("kw").field("Product.categorykeywordsdocval").size(100))
           .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])))
         )
       )
-      search.addAggregation(terms("areasyns").field("AreaAggr").size(aggbuckets)
-        .subAggregation(terms("syns").field("AreaSynonymsAggr").size(aggbuckets))
+      search.addAggregation(terms("areasyns").field("AreaDocVal").size(aggbuckets)
+        .subAggregation(terms("syns").field("AreaSynonymsDocVal").size(aggbuckets))
       )
     }
     search
@@ -663,19 +663,22 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
           val areaWords = analyze(esClient, index, "Area", area)
 
+          val postStart = System.currentTimeMillis()
           var slug = ""
           if (slugFlag) {
+            val words = w.mkString(" ")
             val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
             val matchedCat = catBucks
-              .find(b => matchAnalyzed(esClient, index, "Product.l3category", b.getKeyAsString, w)
-              || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => matchAnalyzed(esClient, index, "Product.categorykeywords", c.getKeyAsString, w)))
-              .fold("/search/" + urlize(w.mkString(" ")))(k => "/" + urlize(analyze(esClient, index, "Product.l3categoryexact", k.getKeyAsString).mkString(" ")))
-            val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+              .find(b => words == b.getKeyAsString
+              || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString==words))
+              .fold("/search/" + urlize(words))(k => "/" + urlize(k.getKeyAsString))
 
-            val matchedArea = areaBucks.find(b => matchAnalyzed(esClient, index, "Area", b.getKeyAsString, areaWords))
+            val areakw = areaWords.mkString(" ")
+            val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+            val matchedArea = areaBucks.find(b => b.getKeyAsString==areakw)
               .fold(//look in synonyms if name not found
                 areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
-                  c => matchAnalyzed(esClient, index, "AreaSynonyms", c.getKeyAsString, areaWords))
+                  c => c.getKeyAsString == areakw)
                 ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKeyAsString))
               )(k => "/in/" + urlize(k.getKeyAsString))
 
@@ -684,12 +687,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
               (if (category != "") "/cat/" + urlize(category) else "") +
               (if (area != "") matchedArea else "")
           }
+          val postTimeTaken = System.currentTimeMillis() - postStart
 
 //          val cats = if (agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
 
-          val postStart = System.currentTimeMillis()
+
           val parsedResult = parse(result.toString)
-          val postTimeTaken = System.currentTimeMillis() - postStart
+
           /*.transformField {
             case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
           }.removeField(_._1=="_shards")*/
