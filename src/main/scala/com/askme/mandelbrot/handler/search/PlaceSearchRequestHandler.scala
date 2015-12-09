@@ -661,33 +661,27 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           import response.searchParams.view._
           import response.relaxLevel
 
-          val areaWords = analyze(esClient, index, "Area", area)
 
-          val postStart = System.currentTimeMillis()
-          var slug = ""
-          if (slugFlag) {
-            val words = w.mkString(" ")
-            val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-            val matchedCat = catBucks
-              .find(b => words == b.getKeyAsString
-              || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString==words))
-              .fold("/search/" + urlize(words))(k => "/" + urlize(k.getKeyAsString))
+          val slug =
+            if (slugFlag) {
+              val words = w.mkString(" ")
+              val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
+              val matchedCat = catBucks.find(b => words == b.getKeyAsString
+                || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString==words))
+                .fold("/search/" + urlize(words))(k => "/" + urlize(k.getKeyAsString))
 
-            val areakw = areaWords.mkString(" ")
-            val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
-            val matchedArea = areaBucks.find(b => b.getKeyAsString==areakw)
-              .fold(//look in synonyms if name not found
-                areaBucks.find(b => b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(
-                  c => c.getKeyAsString == areakw)
+              val areaWords = analyze(esClient, index, "Area", area)
+              val areakw = areaWords.mkString(" ")
+              val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
+              val matchedArea = areaBucks.find(b => b.getKeyAsString==areakw).fold(
+                areaBucks.find(b =>
+                  b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString == areakw)
                 ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKeyAsString))
               )(k => "/in/" + urlize(k.getKeyAsString))
 
-            slug = (if (city != "") "/" + urlize(city) else "") +
-              matchedCat +
-              (if (category != "") "/cat/" + urlize(category) else "") +
-              (if (area != "") matchedArea else "")
-          }
-          val postTimeTaken = System.currentTimeMillis() - postStart
+              (if (city != "") "/" + urlize(city) else "") + matchedCat +
+                (if (category != "") "/cat/" + urlize(category) else "") + (if (area != "") matchedArea else "")
+          } else ""
 
 //          val cats = if (agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
 
@@ -702,7 +696,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           val endTime = System.currentTimeMillis
           val timeTaken = endTime - startTime
 
-          info("[" + result.getTookInMillis+"+"+postTimeTaken + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
           context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
           case e: Throwable =>
