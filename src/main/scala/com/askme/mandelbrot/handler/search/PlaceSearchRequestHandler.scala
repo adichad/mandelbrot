@@ -181,8 +181,7 @@ object PlaceSearchRequestHandler extends Logging {
   val forceFuzzy = Set("LocationName","LocationNameExact"/*, "CompanyAliases", "CompanyAliasesExact",
   "product_stringattribute_answerexact", "product_stringattribute_answer", "tags.exact", "Address", "AddressExact"*/)
   val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
-    "product_l3categoryexact"->"product_l3category", "product_l2categoryexact"->"product_l2category",
-    "product_l1categoryexact"->"product_l1category", "product_brandexact"->"product_brand",
+    "product_l3categoryexact"->"product_l3category", "product_brandexact"->"product_brand",
     "product_stringattribute_answerexact"->"product_stringattribute_answer") 
 
   private def currQuery(tokenFields: Map[String, Float],
@@ -243,6 +242,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 
   private val searchFields2 = Map("LocationName" -> 1000000000f, "CompanyAliases" -> 1000000000f,
+    "CompanyKeywords" -> 100f,
     "product_l3category" -> 10000000f,
     "product_l2category" -> 1000f,
     "product_l1category" -> 100f,
@@ -250,6 +250,7 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessType"->1000f,
     "product_name" -> 1000f,
     "product_brand" -> 10000f,
+    "product_keywords" -> 100f,
     "CuratedTags"-> 10000f,
     "product_categorykeywords" -> 10000000f,
     "product_parkedkeywords" -> 10000000f,
@@ -260,6 +261,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   private val fullFields2 = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
+    "CompanyKeywordsExact" -> 100f,
     "product_l3categoryexact"->10000000000f,
     "product_l2categoryexact"->10000000f,
     "product_l1categoryexact"->10000000f,
@@ -267,6 +269,7 @@ object PlaceSearchRequestHandler extends Logging {
     "BusinessTypeExact"->1000f,
     "product_nameexact" -> 1000f,
     "product_brandexact" -> 10000f,
+    "product_keywordsexact" -> 100f,
     "CuratedTagsExact"-> 10000f,
     "product_categorykeywordsexact"->10000000000f,
     "product_parkedkeywordsexact"->10000000000f,
