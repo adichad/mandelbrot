@@ -3,6 +3,7 @@ package org.elasticsearch.node
 import java.util
 
 import org.elasticsearch.Version
+import org.elasticsearch.node.internal.InternalSettingsPreparer
 import org.elasticsearch.plugins.Plugin
 import collection.JavaConversions._
 
@@ -15,7 +16,7 @@ object MandelbrotNodeBuilder {
       val settings = nodeBuilder.settings.build()
       val plugins: util.Collection[Class[_ <: Plugin]] =
         settings.getAsArray("plugin.types").map(t=>Class.forName(t).asInstanceOf[Class[Plugin]]).toSeq
-      new Node(settings, Version.CURRENT, plugins)
+      new Node(InternalSettingsPreparer.prepareEnvironment(settings, null), Version.CURRENT, plugins)
     }
 
     def nodeCustom = {
