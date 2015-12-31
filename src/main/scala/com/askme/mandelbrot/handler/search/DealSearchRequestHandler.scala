@@ -230,47 +230,46 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
     if (!kwids.isEmpty) {
       finalFilter.must(idsQuery(esType).addIds(kwids: _*))
-    } else {
-      finalFilter.must(termQuery("Published", 1l))
-      if (applicableTo != "") {
-        finalFilter.must(termQuery("ApplicableTo", applicableTo))
-      }
-      // Add area filters
-      val locFilter = boolQuery
-      if (area != "") {
-        val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-        areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-        finalFilter.should(locFilter)
+    }
+    finalFilter.must(termQuery("Published", 1l))
+    if (applicableTo != "") {
+      finalFilter.must(termQuery("ApplicableTo", applicableTo))
+    }
+    // Add area filters
+    val locFilter = boolQuery
+    if (area != "") {
+      val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+      areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+      areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+      areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+      finalFilter.should(locFilter)
+    }
+
+    if (category != "") {
+      val catFilter = boolQuery
+      val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories.Name.NameExact", _).mkString(" ")).filter(!_.isEmpty)
+      categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, fuzzy = true)).foreach(a => catFilter should a)
+      finalFilter.must(catFilter)
+    }
+
+    finalFilter.must(termQuery("Active", 1l))
+    if (city != "") {
+      val cityFilter = boolQuery
+      city.split( """,""").map(analyze(esClient, index, "VisiblePlaces.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+        cityFilter.should(termQuery("VisiblePlaces.City", c))
+        cityFilter.should(termQuery("VisiblePlaces.CitySynonyms", c))
+        cityFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
       }
 
-      if (category != "") {
-        val catFilter = boolQuery
-        val categories: Array[String] = category.split( """,""").map(analyze(esClient, index, "Categories.Name.NameExact", _).mkString(" ")).filter(!_.isEmpty)
-        categories.map(fuzzyOrTermQuery("Categories.Name.NameExact", _, 1f, 1, fuzzy = true)).foreach(a => catFilter should a)
-        finalFilter.must(catFilter)
-      }
-
-      finalFilter.must(termQuery("Active", 1l))
-      if (city != "") {
-        val cityFilter = boolQuery
-        city.split( """,""").map(analyze(esClient, index, "VisiblePlaces.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-          cityFilter.should(termQuery("VisiblePlaces.City", c))
-          cityFilter.should(termQuery("VisiblePlaces.CitySynonyms", c))
-          cityFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
-        }
-
-        if (cityFilter.hasClauses)
-          finalFilter.must(cityFilter)
-      }
-      if (featured == "true") {
-        finalFilter.must(termQuery("IsFeatured", 1l))
-      }
-      if (dealsource != "") {
-        finalFilter.must(termQuery("DealSource.Name", dealsource))
-      }
+      if (cityFilter.hasClauses)
+        finalFilter.must(cityFilter)
+    }
+    if (featured == "true") {
+      finalFilter.must(termQuery("IsFeatured", 1l))
+    }
+    if (dealsource != "") {
+      finalFilter.must(termQuery("DealSource.Name", dealsource))
     }
     finalFilter
   }
