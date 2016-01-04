@@ -73,6 +73,12 @@
         "store": false,
         "index": "no"
       },
+      "PayType": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
       "CustomerType": {
         "type": "string",
         "store": false,
