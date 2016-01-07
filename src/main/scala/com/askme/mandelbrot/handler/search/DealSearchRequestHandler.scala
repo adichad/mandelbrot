@@ -232,6 +232,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       finalFilter.must(idsQuery(esType).addIds(kwids: _*))
     }
     finalFilter.must(termQuery("Published", 1l))
+
+    finalFilter.must(rangeQuery("EndDate").gte("now-1d")).must(rangeQuery("StartDate").lte("now"))
     if (applicableTo != "") {
       finalFilter.must(termQuery("ApplicableTo", applicableTo))
     }
