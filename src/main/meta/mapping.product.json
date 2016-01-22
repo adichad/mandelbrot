@@ -1,5 +1,5 @@
 {
-  "suggestion": {
+  "product": {
     "_source": {
       "enabled": true
     },
@@ -9,7 +9,7 @@
     "transform" : [],
     "properties": {
       "product_id": {
-        "type": "int",
+        "type": "integer",
         "store": true,
         "doc_values": true
       },
@@ -17,7 +17,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -120,19 +120,19 @@
         "doc_values": true
       },
       "base_product_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "categories": {
         "properties": {
           "category_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "column": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -335,7 +335,7 @@
             }
           },
           "mpdm_category_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -402,22 +402,22 @@
             }
           },
           "parent_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "sort_order": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "status": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "top": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           }
@@ -425,19 +425,19 @@
       },
       "date_added": {
         "type": "date",
-        "format": "date_hour_minute_second",
+        "format": "yyyy-MM-dd HH:mm:ss",
         "store": false,
         "doc_values": true
       },
       "date_available": {
         "type": "date",
-        "format": "date_hour_minute_second",
+        "format": "yyyy-MM-dd HH:mm:ss",
         "store": false,
         "doc_values": true
       },
       "date_modified": {
         "type": "date",
-        "format": "date_hour_minute_second",
+        "format": "yyyy-MM-dd HH:mm:ss",
         "store": false,
         "doc_values": true
       },
@@ -521,7 +521,7 @@
         }
       },
       "language_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -531,12 +531,12 @@
         "doc_values": true
       },
       "length_class_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "manufacturer_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -628,7 +628,7 @@
         "doc_values": true
       },
       "minimum": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -697,7 +697,7 @@
       "options": {
         "properties": {
           "id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -758,7 +758,7 @@
             }
           },
           "sort_order": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -835,12 +835,12 @@
       "parent_categories": {
         "properties": {
           "category_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "column": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1043,7 +1043,7 @@
             }
           },
           "mpdm_category_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1110,22 +1110,22 @@
             }
           },
           "parent_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "sort_order": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "status": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "top": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           }
@@ -1142,12 +1142,12 @@
         "doc_values": true
       },
       "pgvisibility": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "points": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -1157,12 +1157,12 @@
         "doc_values": true
       },
       "quantity": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "review_count": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -1172,23 +1172,23 @@
             "type": "string"
           },
           "customer_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "date_added": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
           "id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "rating": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1201,7 +1201,7 @@
         }
       },
       "shipping": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -1209,24 +1209,24 @@
         "type": "string"
       },
       "sort_order": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "status": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "stock_status_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "stores": {
         "properties": {
           "id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1243,36 +1243,36 @@
       "subscriptions": {
         "properties": {
           "crm_seller_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "date_added": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
           "date_available": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
           "date_modified": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
           "flash_sale_end_date": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
           "flash_sale_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1283,7 +1283,7 @@
           },
           "flash_sale_start_date": {
             "type": "date",
-            "format": "date_hour_minute_second",
+            "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
           },
@@ -1298,7 +1298,7 @@
             "doc_values": true
           },
           "minimum": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1370,7 +1370,7 @@
           "options": {
             "properties": {
               "id": {
-                "type": "int",
+                "type": "integer",
                 "store": false,
                 "doc_values": true
               },
@@ -1431,7 +1431,7 @@
                 }
               },
               "sort_order": {
-                "type": "int",
+                "type": "integer",
                 "store": false,
                 "doc_values": true
               },
@@ -1516,12 +1516,12 @@
             "doc_values": true
           },
           "pgvisibility": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "points": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1531,17 +1531,17 @@
             "doc_values": true
           },
           "product_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "quantity": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "seller_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1554,17 +1554,17 @@
             "doc_values": true
           },
           "shipping": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "sort_order": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "status": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
@@ -1572,45 +1572,45 @@
             "type": "string"
           },
           "stock_status_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "subscribed_product_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "subtract": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "tax_class_id": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
           "viewed": {
-            "type": "int",
+            "type": "integer",
             "store": false,
             "doc_values": true
           }
         }
       },
       "subtract": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
       "tag": {
-        "enable": "false"
+        "enabled": false
       },
       "tag_title": {
-        "enable": "false"
+        "enabled": false
       },
       "tax_class_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -1618,7 +1618,7 @@
         "type": "string"
       },
       "viewed": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
@@ -1628,7 +1628,7 @@
         "doc_values": true
       },
       "weight_class_id": {
-        "type": "int",
+        "type": "integer",
         "store": false,
         "doc_values": true
       },
