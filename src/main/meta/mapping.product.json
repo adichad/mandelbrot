@@ -1,0 +1,1643 @@
+{
+  "suggestion": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "transform" : [],
+    "properties": {
+      "product_id": {
+        "type": "int",
+        "store": true,
+        "doc_values": true
+      },
+      "attributes": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "name_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              }
+            }
+          },
+          "value_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "value": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          }
+        }
+      },
+      "avg_rating": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "base_product_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "categories": {
+        "properties": {
+          "category_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "column": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "image": {
+            "enabled": false
+          },
+          "language_id": {
+            "enabled": false
+          },
+          "meta_description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_keyword": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_title": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "mpdm_category_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "name_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "parent_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "sort_order": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "status": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "top": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
+      "date_added": {
+        "type": "date",
+        "format": "date_hour_minute_second",
+        "store": false,
+        "doc_values": true
+      },
+      "date_available": {
+        "type": "date",
+        "format": "date_hour_minute_second",
+        "store": false,
+        "doc_values": true
+      },
+      "date_modified": {
+        "type": "date",
+        "format": "date_hour_minute_second",
+        "store": false,
+        "doc_values": true
+      },
+      "description": {
+        "type": "string"
+      },
+      "ean": {
+        "type": "string"
+      },
+      "height": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "image": {
+        "type": "string"
+      },
+      "images": {
+        "type": "string"
+      },
+      "isbn": {
+        "type": "string"
+      },
+      "jan": {
+        "type": "string"
+      },
+      "key_feature": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
+      "language_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "length": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "length_class_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "manufacturer_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "meta_description": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
+      "meta_keyword": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
+      "min_price": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "minimum": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "model": {
+        "enabled": false
+      },
+      "mpn": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
+      "options": {
+        "properties": {
+          "id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "sort_order": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "type": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "values_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "values": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          }
+        }
+      },
+      "parent_categories": {
+        "properties": {
+          "category_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "column": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "image": {
+            "enabled": false
+          },
+          "language_id": {
+            "enabled": false
+          },
+          "meta_description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_keyword": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_title": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "mpdm_category_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "name_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "parent_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "sort_order": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "status": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "top": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
+      "pgprice_from": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "pgprice_to": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "pgvisibility": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "points": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "price": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "quantity": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "review_count": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "reviews": {
+        "properties": {
+          "author": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "date_added": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "rating": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "store": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "shipping": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "sku": {
+        "type": "string"
+      },
+      "sort_order": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "status": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "stock_status_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "stores": {
+        "properties": {
+          "id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed"
+          },
+          "ssl": {
+            "enabled": false
+          }
+        }
+      },
+      "subscriptions": {
+        "properties": {
+          "crm_seller_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "date_added": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "date_available": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "date_modified": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "flash_sale_end_date": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "flash_sale_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "flash_sale_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "flash_sale_start_date": {
+            "type": "date",
+            "format": "date_hour_minute_second",
+            "store": false,
+            "doc_values": true
+          },
+          "is_ndd": {
+            "type": "boolean",
+            "store": false,
+            "doc_values": true
+          },
+          "min_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "minimum": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "model": {
+            "enabled": false
+          },
+          "ndd_city_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "ndd_city": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "options": {
+            "properties": {
+              "id": {
+                "type": "int",
+                "store": false,
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "sort_order": {
+                "type": "int",
+                "store": false,
+                "doc_values": true
+              },
+              "type": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "values_dv": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "values": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              }
+            }
+          },
+          "pgprice_from": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "pgprice_to": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "pgvisibility": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "points": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "product_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "quantity": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "seller_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "seller_name": {
+            "type": "string"
+          },
+          "selling_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "shipping": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "sort_order": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "status": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "stock_status": {
+            "type": "string"
+          },
+          "stock_status_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "subscribed_product_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "subtract": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "tax_class_id": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          },
+          "viewed": {
+            "type": "int",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
+      "subtract": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "tag": {
+        "enable": "false"
+      },
+      "tag_title": {
+        "enable": "false"
+      },
+      "tax_class_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "upc": {
+        "type": "string"
+      },
+      "viewed": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "weight": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "weight_class_id": {
+        "type": "int",
+        "store": false,
+        "doc_values": true
+      },
+      "width": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      }
+    }
+
+  }
+}
