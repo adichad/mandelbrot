@@ -354,8 +354,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
       search.addAggregation(
         nested("attributes").path("attributes")
-          .subAggregation(terms("attributes").field("attributes.name.agg").size(aggbuckets)
-            .subAggregation(terms("vals").field("attributes.value.agg").size(aggbuckets))))
+          .subAggregation(
+            filter("filters").filter(prefixQuery("attribute.name.exact", "filter")).subAggregation(
+              terms("attributes").field("attributes.name.agg").size(aggbuckets)
+                .subAggregation(terms("vals").field("attributes.value.agg").size(aggbuckets)))))
     }
 
     search
