@@ -14,7 +14,7 @@
         "doc_values": true
       },
       "attributes": {
-        "type": "object",
+        "type": "nested",
         "properties": {
           "id": {
             "type": "integer",
@@ -1233,7 +1233,8 @@
           "name": {
             "type": "string",
             "store": false,
-            "index": "not_analyzed"
+            "index": "not_analyzed",
+            "doc_values": true
           },
           "ssl": {
             "enabled": false
@@ -1241,6 +1242,7 @@
         }
       },
       "subscriptions": {
+        "type": "nested",
         "properties": {
           "crm_seller_id": {
             "type": "integer",
