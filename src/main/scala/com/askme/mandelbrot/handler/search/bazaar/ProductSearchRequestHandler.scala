@@ -307,7 +307,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       if(storeName == "flash")
         subscriptionFilter
           .must(rangeQuery("subscriptions.flash_sale_start_date").lte("now"))
-          .must(rangeQuery("subscriptions.flash_end_start_date").gte("now"))
+          .must(rangeQuery("subscriptions.flash_sale_end_date").gte("now"))
     }
 
     if(subscriptionFilter.hasClauses)
