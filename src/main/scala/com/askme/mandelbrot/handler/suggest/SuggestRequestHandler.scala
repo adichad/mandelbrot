@@ -309,7 +309,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
             if (front.isEmpty)
               q3.add(fuzzyOrTermQuery("targeting.kw.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = false))
           }
-          if(front.isInstanceOf)
+          if(front.isEmpty)
             q3.add(fuzzyOrTermQuery("targeting.label.keyword_edge_ngram", last_raw, if(tag=="search") 1e19f else 1e21f, 1, fuzzy = true))
 
 
