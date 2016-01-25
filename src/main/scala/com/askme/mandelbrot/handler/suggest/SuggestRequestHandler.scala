@@ -302,15 +302,14 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
           val q3 = disMaxQuery
             .add(fuzzyOrTermQuery("targeting.label.token_edge_ngram", last_raw, if(tag=="search") 1e17f else 1e19f, 1, fuzzy = true))
             .add(fuzzyOrTermQuery("targeting.label.shingle_nospace_edge_ngram", last_raw, if(tag=="search") 1e15f else 1e17f, 1, fuzzy = true))
-
-          if(tag!="search") {
-            q3.add(fuzzyOrTermQuery("targeting.kw.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
-              .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-            if (front.isEmpty)
-              q3.add(fuzzyOrTermQuery("targeting.kw.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = false))
-          }
           if(front.isEmpty)
             q3.add(fuzzyOrTermQuery("targeting.label.keyword_edge_ngram", last_raw, if(tag=="search") 1e19f else 1e21f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("targeting.kw.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("targeting.kw.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          if (front.isEmpty)
+            q3.add(fuzzyOrTermQuery("targeting.kw.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = false))
+
 
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
