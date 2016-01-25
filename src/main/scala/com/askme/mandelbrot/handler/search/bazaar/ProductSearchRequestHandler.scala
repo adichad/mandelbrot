@@ -211,16 +211,18 @@ object ProductSearchRequestHandler extends Logging {
 
 
   private val searchFields2 = Map(
-    "name" -> 1000000000f,
-    "description" -> 10000000f,
-    "category.name" -> 1000000000f,
-    "category.description" -> 100f)
+    "name" -> 1e6f,
+    "description" -> 1e2f,
+    "category.name" -> 1e5f,
+    "category.description" -> 1e4f,
+    "attributes_value" -> 1e4f)
 
   private val fullFields2 = Map(
-    "name.exact"->100000000000f,
-    "description.exact" -> 10000000f,
-    "category.name.exact"->100000000000f,
-    "category.description.exact" -> 100f)
+    "name.exact"->1e10f,
+    "description.exact" -> 1e2f,
+    "category.name.exact"->1e8f,
+    "category.description.exact" -> 1e7f,
+    "attributes_value.exact" -> 1e7f)
 
 
   private val emptyStringArray = new Array[String](0)
