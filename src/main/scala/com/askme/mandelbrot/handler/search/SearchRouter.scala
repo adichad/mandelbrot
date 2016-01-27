@@ -27,13 +27,13 @@ case object SearchRouter extends Router {
               'agg.as[Boolean] ? true,
               'collapse.as[Boolean] ? false, 'goldcollapse.as[Boolean] ? false, 'randomize.as[Boolean] ? true,
               'version.as[Int] ? 2,
-              'client_ip.as[String] ? "") { (kw, city, area, pin,
+              'pay_type.as[Int] ? -1) { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,
                lat, lon, fromkm, tokm,
                explain, select,
-               agg, collapse, goldcollapse, randomize, version,
-               trueClient) =>
+               agg, collapse, goldcollapse, randomize, version, pay_type
+               ) =>
               val fuzzyprefix = 2
               val fuzzysim = 1f
               val slugFlag = true
@@ -47,11 +47,11 @@ case object SearchRouter extends Router {
 
               respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
-                    RequestParams(httpReq, clip, trueClient),
+                    RequestParams(httpReq, clip, ""),
                     IndexParams(index, esType),
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon, fromkm, tokm),
-                    FilterParams(category, id, userid, locid), PageParams(size, offset),
+                    FilterParams(category, id, userid, locid, pay_type), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, goldcollapse, randomize, version),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis

@@ -340,6 +340,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     } else {
       finalFilter.mustNot(termQuery("DeleteFlag", 1l))
     }
+    if(pay_type>=0) {
+      finalFilter.must(termQuery("PayType", pay_type))
+    }
     if(userid != 0) {
       finalFilter.must(termQuery("UserID", userid))
     }
