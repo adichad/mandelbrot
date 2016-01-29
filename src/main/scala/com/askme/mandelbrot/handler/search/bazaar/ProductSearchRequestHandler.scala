@@ -290,9 +290,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     // filters
     val finalFilter = boolQuery()
-    val externalFilterString = compact(externalFilter)
-    if(externalFilterString.nonEmpty)
-      finalFilter.must(QueryBuilders.wrapperQuery(externalFilterString))
+    if(externalFilter!=JNothing)
+      finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
     finalFilter.must(termQuery("status", 1))
     if (product_id != 0) {
@@ -316,7 +315,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (city != "") {
       val cityFilter = boolQuery
-      (city+",All City").split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+      city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
         cityFilter.should(termQuery("subscriptions.ndd_city.exact", c))
       }
 
@@ -397,7 +396,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
         try {
           val externalString = httpReq.entity.data.asString
-          val externals = parse(if (externalString.isEmpty) "{}" else externalString)
+          val externals = parseOpt(externalString).getOrElse(JNothing)
 
 
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
