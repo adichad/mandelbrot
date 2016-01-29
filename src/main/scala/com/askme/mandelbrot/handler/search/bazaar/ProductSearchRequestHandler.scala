@@ -389,13 +389,13 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
   override def receive = {
       case searchParams: ProductSearchParams =>
-        try {
-          import searchParams.filters._
-          import searchParams.idx._
-          import searchParams.req._
-          import searchParams.startTime
-          import searchParams.text._
+        import searchParams.filters._
+        import searchParams.idx._
+        import searchParams.req._
+        import searchParams.startTime
+        import searchParams.text._
 
+        try {
           val externalString = httpReq.entity.data.asString
           val externals = parse(if (externalString.isEmpty) "{}" else externalString)
 
@@ -433,14 +433,22 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               }
 
               override def onFailure(e: Throwable): Unit = {
+                val reqBodyRaw = httpReq.entity.data.asString
+                val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+                val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
                 val timeTaken = System.currentTimeMillis() - startTime
-                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+"]->[]", e)
+                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]->[]", e)
                 context.parent ! ErrorResponse(e.getMessage, e)
               }
             })
           }
         } catch {
           case e: Throwable =>
+            val reqBodyRaw = httpReq.entity.data.asString
+            val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+            val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
@@ -466,16 +474,22 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               }
 
               override def onFailure(e: Throwable): Unit = {
+                val reqBodyRaw = httpReq.entity.data.asString
+                val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+                val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
                 val timeTaken = System.currentTimeMillis() - startTime
-                error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
+                error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+ "]->[]", e)
                 context.parent ! ErrorResponse(e.getMessage, e)
               }
             })
           }
         } catch {
           case e: Throwable =>
+            val reqBodyRaw = httpReq.entity.data.asString
+            val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+            val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
             val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
+            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+ "]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
@@ -487,15 +501,20 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         try {
           val parsedResult = parse(result.toString)
 
-          val endTime = System.currentTimeMillis
-          val timeTaken = endTime - startTime
+          val reqBodyRaw = httpReq.entity.data.asString
+          val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+          val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
+          val timeTaken = System.currentTimeMillis - startTime
 
-          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+"]")
+          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]")
           context.parent ! SearchResult("", result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
           case e: Throwable =>
+            val reqBodyRaw = httpReq.entity.data.asString
+            val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+            val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
             val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
+            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+ "]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
