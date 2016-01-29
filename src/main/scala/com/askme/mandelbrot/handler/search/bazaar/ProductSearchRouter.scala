@@ -40,19 +40,21 @@ case object ProductSearchRouter extends Router {
               val source = true
 
               respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[ProductSearchRequestCompleter], config, serverContext, ctx,
-                    ProductSearchParams(
-                      RequestParams(httpReq, clip, trueClient),
-                      IndexParams("bazaar", "product"),
-                      TextParams(kw.nonEmptyOrElse(category)),
-                      FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city),
-                      PageParams(sort, size, offset),
-                      ViewParams(source, agg, aggbuckets, explain, select, searchType, version),
-                      LimitParams(maxdocspershard, timeoutms),
-                      System.currentTimeMillis
-                    )
-                  ))
-                }
+                context.actorOf(Props(classOf[ProductSearchRequestCompleter], config, serverContext, ctx,
+                  ProductSearchParams(
+                    RequestParams(httpReq, clip, trueClient),
+                    IndexParams("bazaar", "product"),
+                    TextParams(kw.nonEmptyOrElse(category)),
+                    FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city),
+                    PageParams(sort, size, offset),
+                    ViewParams(source, agg, aggbuckets, explain, select, searchType, version),
+                    LimitParams(maxdocspershard, timeoutms),
+                    System.currentTimeMillis
+                  )
+                ))
+              }
+
+
             }
           }
         }

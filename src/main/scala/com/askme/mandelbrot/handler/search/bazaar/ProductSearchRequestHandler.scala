@@ -18,6 +18,7 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
+import org.elasticsearch.common.xcontent.XContentParser
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.script.ScriptService.ScriptType
@@ -69,15 +70,20 @@ object ProductSearchRequestHandler extends Logging {
 
 
 
-  private implicit class DisMaxQueryPimp(val q: DisMaxQueryBuilder) {
+  implicit class DisMaxQueryPimp(val q: DisMaxQueryBuilder) {
     def addAll(queries: Iterable[QueryBuilder]) = {
       queries.foreach(q.add)
       q
     }
   }
 
-  private implicit class BoolQueryPimp(val q: BoolQueryBuilder) {
+  implicit class BoolQueryPimp(val q: BoolQueryBuilder) {
     def shouldAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.should)
+      q
+    }
+
+    def shouldAll(queries: QueryBuilder*) = {
       queries.foreach(q.should)
       q
     }
@@ -87,13 +93,23 @@ object ProductSearchRequestHandler extends Logging {
       q
     }
 
+    def mustAll(queries: QueryBuilder*) = {
+      queries.foreach(q.must)
+      q
+    }
+
     def mustNotAll(queries: Iterable[QueryBuilder]) = {
+      queries.foreach(q.mustNot)
+      q
+    }
+
+    def mustNotAll(queries: QueryBuilder*) = {
       queries.foreach(q.mustNot)
       q
     }
   }
 
-  private implicit class SearchPimp(val search: SearchRequestBuilder) {
+  implicit class SearchPimp(val search: SearchRequestBuilder) {
     def addSorts(sorts: Iterable[SortBuilder]) = {
       sorts.foreach(search.addSort)
       search
@@ -105,7 +121,7 @@ object ProductSearchRequestHandler extends Logging {
     }
   }
 
-  private implicit class AggregationPimp(val agg: TopHitsBuilder) {
+  implicit class AggregationPimp(val agg: TopHitsBuilder) {
     def addSorts(sorts: Iterable[SortBuilder]) = {
       sorts.foreach(agg.addSort)
       agg
@@ -258,19 +274,26 @@ object ProductSearchRequestHandler extends Logging {
 
 }
 
+
+
 class ProductSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import ProductSearchRequestHandler._
+
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var kwids: Array[String] = emptyStringArray
 
-  private def buildFilter(searchParams: ProductSearchParams): BoolQueryBuilder = {
+  private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
-
+    implicit val formats = org.json4s.DefaultFormats
 
     // filters
     val finalFilter = boolQuery()
+    val externalFilterString = compact(externalFilter)
+    if(externalFilterString.nonEmpty)
+      finalFilter.must(QueryBuilders.wrapperQuery(externalFilterString))
+
     finalFilter.must(termQuery("status", 1))
     if (product_id != 0) {
       finalFilter.must(termQuery("product_id", product_id))
@@ -373,6 +396,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           import searchParams.startTime
           import searchParams.text._
 
+          val externalString = httpReq.entity.data.asString
+          val externals = parse(if (externalString.isEmpty) "{}" else externalString)
+
+
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "name", kw)
           if (w.length>20) w = emptyStringArray
@@ -389,7 +416,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
             // filters
-            val finalFilter = buildFilter(searchParams)
+            val finalFilter = buildFilter(searchParams, externals\"filter")
 
             val search = buildSearch(searchParams)
 
@@ -407,7 +434,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
               override def onFailure(e: Throwable): Unit = {
                 val timeTaken = System.currentTimeMillis() - startTime
-                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+"]->[]", e)
                 context.parent ! ErrorResponse(e.getMessage, e)
               }
             })
@@ -418,9 +445,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         }
 
       case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+        import searchParams.req._
+        import searchParams.startTime
+
         try {
-          import searchParams.req._
-          import searchParams.startTime
 
           if (relaxLevel >= qDefs.length)
             context.self ! WrappedResponse(searchParams, response, relaxLevel - 1)
@@ -439,32 +467,35 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
               override def onFailure(e: Throwable): Unit = {
                 val timeTaken = System.currentTimeMillis() - startTime
-                error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+                error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
                 context.parent ! ErrorResponse(e.getMessage, e)
               }
             })
           }
         } catch {
           case e: Throwable =>
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
       case response: WrappedResponse =>
+        import response.searchParams.limits._
+        import response.searchParams.req._
+        import response.searchParams.startTime
+        import response.{relaxLevel, result}
         try {
-          import response.searchParams.limits._
-          import response.searchParams.req._
-          import response.searchParams.startTime
-          import response.{relaxLevel, result}
-
           val parsedResult = parse(result.toString)
 
           val endTime = System.currentTimeMillis
           val timeTaken = endTime - startTime
 
-          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
+          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+"]")
           context.parent ! SearchResult("", result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
           case e: Throwable =>
+            val timeTaken = System.currentTimeMillis() - startTime
+            error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+compact(parse(httpReq.entity.data.asString))+ "]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 

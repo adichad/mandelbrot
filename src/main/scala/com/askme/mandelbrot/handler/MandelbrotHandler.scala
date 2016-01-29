@@ -48,7 +48,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
             ProductSearchRouter(this) ~ DealSearchRouter(this) ~ SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this) ~ SuggestRouter(this)
           } ~
             post {
-              WatchRouter(this) ~ indexRouter(this)
+              ProductSearchRouter(this) ~ WatchRouter(this) ~ indexRouter(this)
             }
         }
       }
