@@ -380,6 +380,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             filter("filters").filter(prefixQuery("attributes.name.exact", "filter")).subAggregation(
               terms("attributes").field("attributes.name.agg").size(aggbuckets)
                 .subAggregation(terms("vals").field("attributes.value.agg").size(aggbuckets)))))
+
+      search.addAggregation(stats("price_stats").field("min_price"))
     }
 
     search
