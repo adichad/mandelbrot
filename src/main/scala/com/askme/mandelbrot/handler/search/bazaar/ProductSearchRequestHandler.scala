@@ -40,7 +40,6 @@ import scala.collection.JavaConversions._
 object ProductSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
-  val idregex = """[uU]\d+[lL]\d+""".r
 
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
@@ -52,7 +51,7 @@ object ProductSearchRequestHandler extends Logging {
       case x =>
         val pair = x.split( """\.""", 2)
         if (pair.size == 2)
-          new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1)))
+          new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1).toUpperCase))
         else
           new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
     }
@@ -213,15 +212,6 @@ object ProductSearchRequestHandler extends Logging {
 
   }
 
-  private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
-    if(keywords.isEmpty) false else analyze(esClient, index, field, text).deep == keywords.deep
-  }
-
-  private def weakMatchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
-    val textWords = analyze(esClient, index, field, text)
-    if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
-  }
-
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
@@ -281,7 +271,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
-  private var kwids: Array[String] = emptyStringArray
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -400,12 +389,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val externalString = httpReq.entity.data.asString
           val externals = parseOpt(externalString).getOrElse(JNothing)
 
-
-          kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
-          w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "name", kw)
+          w = analyze(esClient, index, "name", kw)
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
-          if (w.isEmpty && kwids.isEmpty && category.trim == "" &&
+          if (w.isEmpty && category.trim == "" &&
             product_id == 0 && grouped_id == 0 && base_id == 0 && subscribed_id == 0) {
             context.parent ! EmptyResponse("empty search criteria")
           }
@@ -520,9 +507,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         }
 
   }
-
-  def urlize(k: String) =
-    URLEncoder.encode(k.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8")
 
 }
 
