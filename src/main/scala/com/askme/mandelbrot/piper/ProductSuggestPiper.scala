@@ -57,7 +57,10 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def stores = (doc\"stores").children.map(s=>(s\"name").asInstanceOf[JString].values)
 
-    def image = (doc\"image").asInstanceOf[JString].values
+    def image = {
+      val img = doc\"image"
+      if(img==null||img==JNull)"" else img.asInstanceOf[JString].values
+    }
 
   }
 
