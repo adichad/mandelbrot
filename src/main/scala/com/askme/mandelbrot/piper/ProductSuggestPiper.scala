@@ -36,10 +36,11 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
       (doc \ "categories").children.map(c =>
         (c \ "name").asInstanceOf[JString].values.trim).filter(!_.isEmpty)
 
-    def city =
-      (doc \ "subscriptions").children.map(s =>
-        (s \ "ndd_city").asInstanceOf[JString].values.trim
-      ).map(c=>if(c.isEmpty) "all city" else c)
+    def city = {
+      (doc \ "subscriptions").children.map(s=>s\"ndd_city").map(
+        c=>if(c==null)"all city" else c.asInstanceOf[JString].values.trim)
+
+    }
 
     def label = (doc \ "name").asInstanceOf[JString].values.trim
 
@@ -113,30 +114,30 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
-                warn("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
+                warn("[indexing base_product "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
               }
               else {
                 val timeTaken = System.currentTimeMillis - startTime
-                info("[indexed place "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + respStr + "]")
+                info("[indexed base_product "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + respStr + "]")
               }
             } catch {
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - startTime
-                error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
+                error("[indexing base_product "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
                 throw e
             }
           }
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - startTime
-            error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
+            error("[indexing base_product "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
             throw e
           }
         })
 
       } catch {
         case e: Throwable =>
-          error("[indexing place "+string("params.index")+"."+string("params.type")+"] [" + e.getMessage + "]", e)
+          error("[indexing base_product "+string("params.index")+"."+string("params.type")+"] [" + e.getMessage + "]", e)
           throw e
       }
 
