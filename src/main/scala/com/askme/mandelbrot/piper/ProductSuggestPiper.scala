@@ -38,7 +38,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def city = {
       (doc \ "subscriptions").children.map(s=>s\"ndd_city").map(
-        c=>if(c==null)"all city" else c.asInstanceOf[JString].values.trim)
+        c=>if(c==null||c==JNull)"all city" else c.asInstanceOf[JString].values.trim)
 
     }
 
