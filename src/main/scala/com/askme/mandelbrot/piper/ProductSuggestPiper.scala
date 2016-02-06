@@ -2,6 +2,8 @@ package com.askme.mandelbrot.piper
 
 import java.security.MessageDigest
 
+import akka.actor.ActorRef
+import com.askme.mandelbrot.handler.{IndexFailureResult, IndexSuccessResult}
 import com.askme.mandelbrot.server.RootServer
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -65,7 +67,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
   }
 
 
-  override def pipe(json: JValue): Unit = {
+  override def pipe(json: JValue, completer: ActorRef): Unit = {
     val startTime = System.currentTimeMillis()
     try {
       val bulkRequest = RootServer.defaultContext.esClient.prepareBulk
@@ -118,10 +120,12 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
                 warn("[indexing base_product "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
+                completer ! IndexFailureResult(parse(respStr))
               }
               else {
                 val timeTaken = System.currentTimeMillis - startTime
                 info("[indexed base_product "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + respStr + "]")
+                completer ! IndexSuccessResult(parse(respStr))
               }
             } catch {
               case e: Throwable =>

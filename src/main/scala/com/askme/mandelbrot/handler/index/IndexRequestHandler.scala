@@ -61,8 +61,9 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               else {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
                 info("[indexed] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + respStr + "]")
-                piperseq.foreach(_ pipe json)
-                completer ! IndexSuccessResult(resp)
+                piperseq.foreach(_.pipe(json, completer))
+                if(piperseq.isEmpty)
+                  completer ! IndexSuccessResult(resp)
               }
             } catch {
               case e: Throwable =>
