@@ -114,8 +114,8 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             try {
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
-              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
+              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId.dropRight("-base_product".length) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId.dropRight("-base_product".length) + "\"").mkString(",") + "]"
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime

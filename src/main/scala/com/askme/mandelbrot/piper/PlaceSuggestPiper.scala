@@ -2,7 +2,6 @@ package com.askme.mandelbrot.piper
 
 import java.security.MessageDigest
 
-import akka.actor.Actor.Receive
 import akka.actor.ActorRef
 import com.askme.mandelbrot.handler.{IndexFailureResult, IndexSuccessResult}
 import com.askme.mandelbrot.server.RootServer
@@ -101,8 +100,9 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
             try {
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
-              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
+
+              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\"").mkString(",") + "]"
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
