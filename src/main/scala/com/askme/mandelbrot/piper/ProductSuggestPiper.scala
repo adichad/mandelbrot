@@ -50,6 +50,8 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def base_product_id = (doc \ "base_product_id").asInstanceOf[JInt].values.toString()
 
+    def product_id = (doc \ "product_id").asInstanceOf[JInt].values.toString()
+
     def kw =
       ((doc \ "categories").children.map(c=>(c\"name").asInstanceOf[JString].values.trim).filter(!_.isEmpty) ++
         (doc \ "categories").children.map(c=>(c\"description").asInstanceOf[JString].values.trim).filter(!_.isEmpty)) :+
@@ -105,7 +107,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
 
           bulkRequest.add(
-            esClient.prepareIndex(string("params.index"), string("params.type"), doc.base_product_id.values+"-base_product")
+            esClient.prepareIndex(string("params.index"), string("params.type"), doc.product_id.values+"-base_product")
               .setSource(compact(render(suggestion)))
           )
 
