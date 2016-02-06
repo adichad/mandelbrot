@@ -207,14 +207,9 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     }
 
     if (lat != 0.0d || lon != 0.0d) {
-      locFilter.should(
-        geoDistanceRangeQuery("targeting.coordinates")
-          .point(lat, lon)
-          .from((if (area == "") fromkm else 0.0d) + "km")
-          .to((if (area == "") tokm else 8.0d) + "km")
-          .optimizeBbox("memory")
-          .geoDistance(GeoDistance.PLANE)
-      ).should(boolQuery.mustNot(existsQuery("targeting.coordinates")))
+      locFilter
+        .should(geoHashCellQuery("targeting.coordinates").point(lat, lon).precision("5km").neighbors(true))
+        .should(boolQuery.mustNot(existsQuery("targeting.coordinates")))
     }
 
 
