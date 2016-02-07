@@ -101,8 +101,8 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           override def onResponse(response: BulkResponse): Unit = {
             try {
 
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
-              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\"").mkString(",") + "]"
+              val failures = "[" + response.getItems.filter(_.isFailed).toSet.map(x => "{\""+"id"+"\": \"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+              val success = "[" + response.getItems.filter(!_.isFailed).toSet.map(x => "\"" + x.getId.dropRight(if (x.getId.endsWith("-search")) "-search".length else 0) + "\"").mkString(",") + "]"
               val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
