@@ -46,7 +46,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def label = (doc \ "name").asInstanceOf[JString].values.trim
 
-    def status = (doc \ "status").asInstanceOf[JInt].values.toInt
+    def deleted = 1 - (doc \ "status").asInstanceOf[JInt].values.toInt
 
     def base_product_id = (doc \ "base_product_id").asInstanceOf[JInt].values.toString()
 
@@ -101,7 +101,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
               )
             )
           ) ~
-          ("deleted" -> doc.status) ~
+          ("deleted" -> doc.deleted) ~
           ("groupby" -> doc.base_product_id) ~
           ("count" -> doc.orders)
 
