@@ -41,7 +41,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val area = JArray((doc \ "AreaSynonyms").children.map(_.asInstanceOf[JString]) :+ (doc \ "Area").asInstanceOf[JString])
           val displayCity = (doc \ "City").asInstanceOf[JString]
           val displayArea = (doc \ "Area").asInstanceOf[JString]
-          val categories = (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).filter(!_.isEmpty)
+          val categories = (doc \ "Product").children.map(p => (p \ "l3category").asInstanceOf[JString].values.trim).toSet[String].filter(!_.isEmpty).toList
           val coordinates = (doc \ "LatLong").asInstanceOf[JObject]
           val ctype = (doc \ "CustomerType").asInstanceOf[JInt].values.toInt
           val masterid = JString((doc \ "MasterID").asInstanceOf[JInt].values.toString())
@@ -50,21 +50,21 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
           val labelSearch = (doc \ "LocationName").asInstanceOf[JString].values.trim + ", "+(doc \ "Area").asInstanceOf[JString].values.trim + ", "+(doc \ "City").asInstanceOf[JString].values.trim
           val id = (doc \ "PlaceID").asInstanceOf[JString].values.trim
 
-          val kw: List[String] = ((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
+          val kw: List[String] = (((doc \ "CompanyAliases").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) :+ (doc \ "LocationName").asInstanceOf[JString].values.trim) ++
             (doc \ "Product").children.flatMap(p => (p \ "categorykeywords").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty)) ++ categories ++
             (doc \ "CuratedTags").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty) ++
             (doc \ "Product").children.flatMap(p => (p \ "stringattribute").children.map(a => ((a \ "question").asInstanceOf[JString].values, (a \ "answer").children.map(_.asInstanceOf[JString].values.trim).filter(!_.isEmpty))))
               .filter(att => att._1.trim.toLowerCase().startsWith("brand") || att._1.trim.toLowerCase().startsWith("menu"))
-              .flatMap(a => a._2.filter(!_.isEmpty))
+              .flatMap(a => a._2.filter(!_.isEmpty))).toSet[String].toList
 
           val address = doc\"Address"
 
           val paytype = doc\"PayType"
           val paytag =
             if(paytype == null || paytype==JNull || paytype.asInstanceOf[JInt].values.toInt==0 )
-              List(JString("non_pay_outlet"), JString("non_pay"))
+              List(JString("non_pay_outlet"), JString("non_pay"), JString("outlet"), JString("unified"))
             else
-              List(JString("pay_outlet"), JString("pay"))
+              List(JString("pay_outlet"), JString("pay"), JString("outlet"), JString("unified"))
 
           val callToAction =
             ("did_phone", doc\"LocationDIDNumber") ~
@@ -195,7 +195,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
     )
   }
 
-  def suggestPlace(label: String, id: String, masterid: JValue, ctype: Int, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, address: JValue, categories: JValue, paytag: List[JString], callToAction: JValue, deleteFlag: Int) = {
+  def suggestPlace(label: String, id: String, masterid: JValue, ctype: Int, kw: List[String], city: JValue, area: JValue, coordinates: JValue, displayCity: JValue, displayArea: JValue, address: JValue, categories: JValue, tags: List[JString], callToAction: JValue, deleteFlag: Int) = {
     val payload = JArray(
       List(
         JObject(
@@ -236,7 +236,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
               JField("coordinates", coordinates),
               JField("kw", JArray(kw.map(JString(_)))),
               JField("label", JString(label)),
-              JField("tag", JArray(List(JString("outlet"))::paytag))
+              JField("tag", JArray(tags))
             )
           )
         )
