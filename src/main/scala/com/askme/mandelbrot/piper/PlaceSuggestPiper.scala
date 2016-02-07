@@ -61,7 +61,7 @@ class PlaceSuggestPiper(val config: Config) extends Piper with Logging {
 
           val paytype = doc\"PayType"
           val paytag =
-            if(paytype == null || paytype==JNull || !paytype.asInstanceOf[JBool].value)
+            if(paytype == null || paytype==JNull || paytype.asInstanceOf[JInt].values.toInt==0 )
               List(JString("non_pay_outlet"), JString("non_pay"))
             else
               List(JString("pay_outlet"), JString("pay"))
