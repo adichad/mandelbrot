@@ -2,9 +2,10 @@ package com.askme.mandelbrot.handler.get
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.get.message.GetParams
 import com.askme.mandelbrot.handler.message.ErrorResponse
-import com.askme.mandelbrot.handler.search.message.SuggestResult
+import com.askme.mandelbrot.handler.search.message.{GetResult, SuggestResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -13,8 +14,6 @@ import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.client.Client
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{Extraction, NoTypeHints}
-import org.json4s.JsonDSL.WithDouble._
 import org.json4s.jackson.Serialization
 
 
@@ -41,11 +40,19 @@ class GetRequestHandler(val config: Config, serverContext: SearchContext) extend
             .setFetchSource(select, null).setRealtime(true).setTransformSource(transform)
             .execute(new ActionListener[GetResponse] {
               override def onResponse(response: GetResponse): Unit = {
-                val res = parse(response.getSourceAsString)
-                val endTime = System.currentTimeMillis
-                val timeTaken = endTime - startTime
-                info("[" + timeTaken + "] [" + clip.toString + "]->[" + req.uri + "]")
-                context.parent ! SuggestResult(timeTaken, res)
+                if(response.isExists) {
+                  val res = parse(response.getSourceAsString)
+                  val endTime = System.currentTimeMillis
+                  val timeTaken = endTime - startTime
+                  info("[" + timeTaken + "] [" + clip.toString + "]->[" + req.uri + "]")
+                  context.parent ! GetResult(timeTaken, response.getVersion, response.getIndex, res)
+                }
+                else {
+                  val endTime = System.currentTimeMillis
+                  val timeTaken = endTime - startTime
+                  info("[" + timeTaken + "] [" + clip.toString + "]->[" + req.uri + "]")
+                  context.parent ! EmptyResponse("resource not found")
+                }
               }
 
               override def onFailure(e: Throwable): Unit = {

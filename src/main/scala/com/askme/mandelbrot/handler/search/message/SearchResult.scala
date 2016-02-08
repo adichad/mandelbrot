@@ -8,3 +8,4 @@ import org.json4s.JsonAST.JValue
  */
 case class SearchResult(slug: String, `hit-count`: Int, `server-time-ms`: Long, relaxLevel: Int, results: JValue) extends RestMessage
 case class SuggestResult(`server-time-ms`: Long, results: JValue) extends RestMessage
+case class GetResult(`server-time-ms`: Long, version: Long, index: String, results: JValue) extends RestMessage

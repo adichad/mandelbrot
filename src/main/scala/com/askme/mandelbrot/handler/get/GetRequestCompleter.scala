@@ -21,14 +21,17 @@ class GetRequestCompleter(val config: Config, serverContext: SearchContext, requ
   val json4sFormats = DefaultFormats
 
   val target = context.actorOf (Props (classOf[GetRequestHandler], config, serverContext))
-  context.setReceiveTimeout(Duration(100, MILLISECONDS))
+  context.setReceiveTimeout(Duration(500, MILLISECONDS))
   target ! getParams
 
   override def receive = {
+    case empty: EmptyResponse => {
+      complete(NotFound, empty)
+    }
     case tout: ReceiveTimeout => {
       val timeTaken = System.currentTimeMillis - getParams.startTime
       warn("[timeout/" + timeTaken + "] [" + getParams.clip.toString + "]->[" + getParams.req.uri + "]")
-      complete(GatewayTimeout, Timeout(timeTaken, 100))
+      complete(GatewayTimeout, Timeout(timeTaken, 500))
     }
     case err: ErrorResponse => complete(InternalServerError, err.message)
     case res: RestMessage => complete(OK, res)
