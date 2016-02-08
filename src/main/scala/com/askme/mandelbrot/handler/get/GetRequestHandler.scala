@@ -41,7 +41,7 @@ class GetRequestHandler(val config: Config, serverContext: SearchContext) extend
             .setFetchSource(select, null).setRealtime(true).setTransformSource(transform)
             .execute(new ActionListener[GetResponse] {
               override def onResponse(response: GetResponse): Unit = {
-                val res = Extraction.decompose(response)
+                val res = parse(response.getSourceAsString)
                 val endTime = System.currentTimeMillis
                 val timeTaken = endTime - startTime
                 info("[" + timeTaken + "] [" + clip.toString + "]->[" + req.uri + "]")
