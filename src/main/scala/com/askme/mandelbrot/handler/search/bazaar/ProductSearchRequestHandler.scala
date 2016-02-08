@@ -1,6 +1,5 @@
 package com.askme.mandelbrot.handler.search.bazaar
 
-import java.net.URLEncoder
 import java.util
 
 import akka.actor.Actor
@@ -18,11 +17,8 @@ import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, Se
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
-import org.elasticsearch.common.xcontent.XContentParser
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.script.ScriptService.ScriptType
-import org.elasticsearch.script._
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
