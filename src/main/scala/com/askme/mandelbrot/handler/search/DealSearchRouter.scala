@@ -42,7 +42,7 @@ case object DealSearchRouter extends Router {
                   req = RequestParams(httpReq, clip, clip.toString()),
                   idx = IndexParams("askmedeal", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
-                  geo = GeoParams(city, area, "", 0.0d, 0.0d, 0d, 20.0d),
+                  geo = GeoParams(city, area, "", 0.0d, 0.0d),
                   filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource, pay_merchant_id), page = PageParams(size, offset),
                   view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, slugFlag = slugFlag, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),

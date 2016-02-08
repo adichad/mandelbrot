@@ -44,7 +44,7 @@ case object SuggestRouter extends Router {
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, "suggestion"),
                     TargetingParams(kw, tag, id),
-                    GeoParams(city, area, pin, lat, lon, fromkm, tokm),
+                    GeoParams(city, area, pin, lat, lon),
                     PageParams(size, offset),
                     SuggestViewParams(explain, select, unselect, searchType, version),
                     LimitParams(maxdocspershard, timeoutms),

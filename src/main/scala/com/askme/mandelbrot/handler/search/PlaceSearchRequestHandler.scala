@@ -367,12 +367,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
     if (lat != 0.0d || lon != 0.0d)
       locFilter.should(
-        geoDistanceRangeQuery("LatLong")
-          .point(lat, lon)
-          .from((if (area == "") fromkm else 0.0d) + "km")
-          .to((if (area == "") tokm else 8.0d) + "km")
-          .optimizeBbox("memory")
-          .geoDistance(GeoDistance.PLANE))
+        geoHashCellQuery("LatLong").point(lat, lon).precision("8km").neighbors(true))
 
 
     if (locFilter.hasClauses) {

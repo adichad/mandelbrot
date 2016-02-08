@@ -22,7 +22,7 @@ case object SearchRouter extends Router {
             parameters('kw.as[String] ? "", 'city ? "", 'area ? "", 'pin ? "",
               'category ? "", 'id ? "", 'userid.as[Int] ? 0, 'locid.as[String]? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
-              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'fromkm.as[Double] ? 0d, 'tokm.as[Double] ? 20.0d,
+              'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d,
               'explain.as[Boolean] ? false, 'select ? "_id",
               'agg.as[Boolean] ? true,
               'collapse.as[Boolean] ? false, 'goldcollapse.as[Boolean] ? false, 'randomize.as[Boolean] ? true,
@@ -30,7 +30,7 @@ case object SearchRouter extends Router {
               'pay_type.as[Int] ? -1) { (kw, city, area, pin,
                category, id, userid, locid,
                size, offset,
-               lat, lon, fromkm, tokm,
+               lat, lon,
                explain, select,
                agg, collapse, goldcollapse, randomize, version, pay_type
                ) =>
@@ -50,7 +50,7 @@ case object SearchRouter extends Router {
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, esType),
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
-                    GeoParams(city, area, pin, lat, lon, fromkm, tokm),
+                    GeoParams(city, area, pin, lat, lon),
                     FilterParams(category, id, userid, locid, pay_type), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, goldcollapse, randomize, version),
                     LimitParams(maxdocspershard, timeoutms),

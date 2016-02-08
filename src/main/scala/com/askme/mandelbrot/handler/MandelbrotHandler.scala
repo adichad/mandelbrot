@@ -6,6 +6,7 @@ import akka.actor.SupervisorStrategy.{Restart, Resume}
 import akka.actor.{Actor, OneForOneStrategy, Props}
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.analyse.AnalyseRouter
+import com.askme.mandelbrot.handler.get.GetRouter
 import com.askme.mandelbrot.handler.helper.CORS
 import com.askme.mandelbrot.handler.index.IndexRouter
 import com.askme.mandelbrot.handler.aggregate.AggregateRouter
@@ -45,7 +46,9 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
       compressResponseIfRequested() {
         decompressRequest() {
           get {
-            ProductSearchRouter(this) ~ DealSearchRouter(this) ~ SearchDocsRouter(this) ~ SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this) ~ SuggestRouter(this)
+            ProductSearchRouter(this) ~ DealSearchRouter(this) ~ SearchDocsRouter(this) ~
+              SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this) ~ SuggestRouter(this) ~
+              GetRouter(this)
           } ~
             post {
               ProductSearchRouter(this) ~ WatchRouter(this) ~ indexRouter(this)
