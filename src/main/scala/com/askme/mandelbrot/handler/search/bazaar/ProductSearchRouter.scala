@@ -33,8 +33,8 @@ case object ProductSearchRouter extends Router {
                explain, select, sort, store,
                agg, version,
                trueClient) =>
-              val maxdocspershard = 50000
-              val searchType = "query_then_fetch"
+              val maxdocspershard = 5000
+              val searchType = "dfs_query_then_fetch"
               val timeoutms = 600l
               val aggbuckets = 10
               val source = true
