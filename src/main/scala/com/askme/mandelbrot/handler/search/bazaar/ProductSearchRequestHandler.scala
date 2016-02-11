@@ -7,7 +7,7 @@ import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
 import com.askme.mandelbrot.handler.search.bazaar.message.ProductSearchParams
-import com.askme.mandelbrot.handler.search.message.SearchResult
+import com.askme.mandelbrot.handler.search.bazaar.message.SearchResult
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
@@ -231,8 +231,8 @@ object ProductSearchRequestHandler extends Logging {
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
 
-  private case class WrappedResponse(searchParams: ProductSearchParams, result: SearchResponse, relaxLevel: Int)
-  private case class ReSearch(searchParams: ProductSearchParams, filter: BoolQueryBuilder, search: SearchRequestBuilder, relaxLevel: Int, response: SearchResponse)
+  private case class WrappedResponse(searchParams: ProductSearchParams, result: SearchResponse, query: QueryBuilder, relaxLevel: Int)
+  private case class ReSearch(searchParams: ProductSearchParams, filter: BoolQueryBuilder, search: SearchRequestBuilder, query: QueryBuilder, relaxLevel: Int, response: SearchResponse)
 
   private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingle: Int = 1, tokenRelax: Int = 0)
                           (w: Array[String], maxShingle: Int) = {
@@ -404,16 +404,17 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
             val search = buildSearch(searchParams)
 
-            search.setQuery(boolQuery.must(query).filter(finalFilter))
+            val qfinal = boolQuery.must(query).filter(finalFilter)
+            search.setQuery(query)
 
             val me = context.self
 
             search.execute(new ActionListener[SearchResponse] {
               override def onResponse(response: SearchResponse): Unit = {
                 if (response.getHits.totalHits() >= leastCount || isMatchAll)
-                  me ! WrappedResponse(searchParams, response, 0)
+                  me ! WrappedResponse(searchParams, response, qfinal, 0)
                 else
-                  me ! ReSearch(searchParams, finalFilter, search, 1, response)
+                  me ! ReSearch(searchParams, finalFilter, search, qfinal, 1, response)
               }
 
               override def onFailure(e: Throwable): Unit = {
@@ -436,25 +437,27 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
-      case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+      case ReSearch(searchParams, filter, search, qfinal, relaxLevel, response) =>
         import searchParams.req._
         import searchParams.startTime
 
         try {
 
           if (relaxLevel >= qDefs.length)
-            context.self ! WrappedResponse(searchParams, response, relaxLevel - 1)
+            context.self ! WrappedResponse(searchParams, response, qfinal, relaxLevel - 1)
           else {
             val query = qDefs(relaxLevel)._1(w, w.length)
             val leastCount = qDefs(relaxLevel)._2
             val me = context.self
 
-            search.setQuery(boolQuery.must(query).filter(filter)).execute(new ActionListener[SearchResponse] {
+            val qfinal = boolQuery.must(query).filter(filter)
+            search.setQuery(qfinal)
+            search.execute(new ActionListener[SearchResponse] {
               override def onResponse(response: SearchResponse): Unit = {
                 if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
-                  me ! WrappedResponse(searchParams, response, relaxLevel)
+                  me ! WrappedResponse(searchParams, response, qfinal, relaxLevel)
                 else
-                  me ! ReSearch(searchParams, filter, search, relaxLevel + 1, response)
+                  me ! ReSearch(searchParams, filter, search, qfinal, relaxLevel + 1, response)
               }
 
               override def onFailure(e: Throwable): Unit = {
@@ -481,7 +484,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         import response.searchParams.limits._
         import response.searchParams.req._
         import response.searchParams.startTime
+        import response.searchParams.view._
         import response.{relaxLevel, result}
+        import response._
         try {
           val parsedResult = parse(result.toString)
 
@@ -491,7 +496,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val timeTaken = System.currentTimeMillis - startTime
 
           info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]")
-          context.parent ! SearchResult("", result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
+          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, if(explain) parse(query.toString) else JObject(), parsedResult)
         } catch {
           case e: Throwable =>
             val reqBodyRaw = httpReq.entity.data.asString
