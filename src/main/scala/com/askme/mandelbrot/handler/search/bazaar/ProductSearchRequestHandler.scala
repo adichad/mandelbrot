@@ -309,9 +309,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(store!="") {
-      val storeName = store.toLowerCase.trim
-      finalFilter.must(termQuery("stores.name", storeName))
-      if(storeName == "flash")
+      val storeNames = store.toLowerCase.trim.split(",")
+      finalFilter.must(termsQuery("stores.name", storeNames:_*))
+      if(storeNames.contains("flash"))
         subscriptionFilter
           .must(rangeQuery("subscriptions.flash_sale_start_date").lte("now"))
           .must(rangeQuery("subscriptions.flash_sale_end_date").gte("now"))
