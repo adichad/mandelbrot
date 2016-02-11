@@ -18,7 +18,7 @@ case object ProductSearchRouter extends Router {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         jsonpWithParameter("callback") {
-          path("search" / "bazaar" / "product") {
+          path("search" / Segment / "product") { (index) =>
             parameters('kw.as[String] ? "", 'city ? "",
               'category ? "", 'product_id.as[Int] ? 0, 'grouped_id.as[Int] ? 0, 'base_id.as[Int] ? 0, 'subscribed_id.as[Int] ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
@@ -43,7 +43,7 @@ case object ProductSearchRouter extends Router {
                 context.actorOf(Props(classOf[ProductSearchRequestCompleter], config, serverContext, ctx,
                   ProductSearchParams(
                     RequestParams(httpReq, clip, trueClient),
-                    IndexParams("bazaar", "product"),
+                    IndexParams(index, "product"),
                     TextParams(kw.nonEmptyOrElse(category)),
                     FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city),
                     PageParams(sort, size, offset),
