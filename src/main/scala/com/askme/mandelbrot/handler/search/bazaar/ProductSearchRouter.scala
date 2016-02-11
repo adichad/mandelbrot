@@ -24,7 +24,7 @@ case object ProductSearchRouter extends Router {
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "product_id,name",
               'sort.as[String]?"popularity",
-              'store.as[String]?"ndd",
+              'store.as[String]?"",
               'agg.as[Boolean] ? true,
               'version.as[Int] ? 1,
               'client_ip.as[String] ? "") { (kw, city,
