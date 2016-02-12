@@ -239,7 +239,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     }
 
     if(pay_merchant_id!="") {
-      finalFilter.must(termQuery("PayMerchantID", pay_merchant_id))
+      finalFilter.must(termQuery("Locations.PayMerchantID", pay_merchant_id))
     }
     // Add area filters
     val locFilter = boolQuery

@@ -35,11 +35,6 @@
           }
         }
       },
-      "PayMerchantID": {
-        "type": "integer",
-        "store": false,
-        "doc_values": true
-      },
       "ContactNO": {
         "type": "string",
         "store": false,
@@ -875,6 +870,16 @@
             "index": "no"
           },
           "eDMSLocationID": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "PayMerchantID": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "PayOrganizationID": {
             "type": "integer",
             "store": false,
             "doc_values": true

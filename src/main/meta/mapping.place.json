@@ -79,6 +79,18 @@
         "ignore_malformed": false,
         "doc_values": true
       },
+      "PayMerchantID": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
+      "PayOrganizationID": {
+        "type": "integer",
+        "store": false,
+        "ignore_malformed": false,
+        "doc_values": true
+      },
       "CustomerType": {
         "type": "string",
         "store": false,
