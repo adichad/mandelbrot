@@ -40,7 +40,7 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, store_front_id: Int, w: Array[String]) = {
+  private def getSort(sort: String, store_front_id: Int, w: Array[String]): List[SortBuilder] = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
       case "popularity" => scoreSort.order(SortOrder.DESC)
