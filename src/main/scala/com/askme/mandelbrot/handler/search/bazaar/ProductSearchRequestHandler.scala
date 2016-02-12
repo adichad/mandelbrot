@@ -68,6 +68,8 @@ object ProductSearchRequestHandler extends Logging {
     else if(sort=="price.desc") {
       sorters.+:(fieldSort("min_price").order(SortOrder.DESC))
     }
+
+    info(sorters.toString)
     sorters
 
   }
