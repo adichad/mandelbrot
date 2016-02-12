@@ -19,11 +19,8 @@ import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.script.Script
-import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -64,7 +61,7 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        Some(scriptSort(new Script("doc['subscriptions.is_ndd'].value?1:0", ScriptType.INLINE, null, null), "number").order(SortOrder.DESC).setNestedPath("subscriptions")) ::
+        Some(fieldSort("subscriptions.is_ndd").order(SortOrder.DESC).sortMode("max")) ::
           (if (store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").order(SortOrder.DESC)
               .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id))) else None) ::

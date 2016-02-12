@@ -1346,7 +1346,7 @@
             "doc_values": true
           },
           "is_ndd": {
-            "type": "boolean",
+            "type": "integer",
             "store": false,
             "doc_values": true
           },
