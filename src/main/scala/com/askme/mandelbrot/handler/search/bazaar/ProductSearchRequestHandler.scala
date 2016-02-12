@@ -54,7 +54,7 @@ object ProductSearchRequestHandler extends Logging {
 
     val sorters = List()
     if(sort=="popularity") {
-      sorters.+:(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max"))
+      sorters.+:(fieldSort("subscriptions.is_ndd").order(SortOrder.DESC).sortMode("max"))
       if (store_front_id > 0)
         sorters.+:(fieldSort("subscriptions.store_fronts.boost").order(SortOrder.DESC)
           .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id)))
@@ -380,6 +380,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if (agg) {
       if (category == ""||category.contains(""","""))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+
+      if(store_front_id==0)
+        search.addAggregation(
+          nested("subscriptions").path("subscriptions")
+            .subAggregation(
+              terms("store_fronts").field("subscriptions.store_fronts.id").size(aggbuckets)
+            )
+        )
 
 
       search.addAggregation(
