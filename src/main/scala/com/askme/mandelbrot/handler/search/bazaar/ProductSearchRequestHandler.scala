@@ -21,6 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -52,21 +53,23 @@ object ProductSearchRequestHandler extends Logging {
           new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
     }
 
-    val sorters = List()
-    if(sort=="popularity") {
-      sorters.+:(fieldSort("subscriptions.is_ndd").order(SortOrder.DESC).sortMode("max"))
-      if (store_front_id > 0)
-        sorters.+:(fieldSort("subscriptions.store_fronts.boost").order(SortOrder.DESC)
-          .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id)))
-
-      sorters.+:(scoreSort().order(SortOrder.DESC))
-      sorters.+:(fieldSort("product_id").order(SortOrder.DESC))
-    }
-    else if(sort=="price.asc") {
-      sorters.+:(fieldSort("min_price").order(SortOrder.ASC))
+    val sorters =
+    if(sort=="price.asc") {
+      List(fieldSort("min_price").order(SortOrder.ASC))
     }
     else if(sort=="price.desc") {
-      sorters.+:(fieldSort("min_price").order(SortOrder.DESC))
+      List(fieldSort("min_price").order(SortOrder.DESC))
+    }
+    else {
+      (
+        Some(fieldSort("subscriptions.is_ndd").order(SortOrder.DESC).sortMode("max")) ::
+          (if (store_front_id > 0)
+            Some(fieldSort("subscriptions.store_fronts.boost").order(SortOrder.DESC)
+              .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id))) else None) ::
+          Some(scoreSort().order(SortOrder.DESC))::
+          Some(fieldSort("product_id").order(SortOrder.DESC))::
+          Nil
+        ).flatten
     }
 
     info(sorters.toString)
