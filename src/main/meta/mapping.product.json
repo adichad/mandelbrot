@@ -1425,6 +1425,88 @@
               }
             }
           },
+          "store_fronts": {
+            "type": "nested",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "mpdm_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "boost": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "title_dv": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "title": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              }
+            }
+          },
           "options": {
             "properties": {
               "id": {

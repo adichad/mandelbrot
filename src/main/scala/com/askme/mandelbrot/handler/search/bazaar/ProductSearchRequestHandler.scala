@@ -40,7 +40,7 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, w: Array[String]) = {
+  private def getSort(sort: String, store_front_id: Int, w: Array[String]) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
       case "popularity" => scoreSort.order(SortOrder.DESC)
@@ -51,6 +51,25 @@ object ProductSearchRequestHandler extends Logging {
         else
           new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
     }
+
+    val sorters = List()
+    if(sort=="popularity") {
+      sorters.+:(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max"))
+      if (store_front_id > 0)
+        sorters.+:(fieldSort("subscriptions.store_fronts.boost").order(SortOrder.DESC)
+          .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id)))
+
+      sorters.+:(scoreSort().order(SortOrder.DESC))
+      sorters.+:(fieldSort("product_id").order(SortOrder.DESC))
+    }
+    else if(sort=="price.asc") {
+      sorters.+:(fieldSort("min_price").order(SortOrder.ASC))
+    }
+    else if(sort=="price.desc") {
+      sorters.+:(fieldSort("min_price").order(SortOrder.DESC))
+    }
+    sorters
+
   }
 
 
@@ -317,6 +336,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           .must(rangeQuery("subscriptions.flash_sale_end_date").gte("now"))
     }
 
+    if(store_front_id > 0) {
+      termQuery("subscriptions.store_fronts.id", store_front_id)
+    }
+
     if(subscriptionFilter.hasClauses)
       finalFilter.must(nestedQuery("subscriptions", subscriptionFilter))
 
@@ -340,7 +363,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w)
+    val sorters = getSort(sort, store_front_id, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
