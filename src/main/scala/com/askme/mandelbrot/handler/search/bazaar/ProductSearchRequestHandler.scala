@@ -341,7 +341,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(store_front_id > 0) {
-      subscriptionFilter.must(nestedQuery("subscriptions.store_fronts", termQuery("subscriptions.store_fronts.id", store_front_id)))
+      subscriptionFilter.must(nestedQuery("store_fronts", termQuery("store_fronts.id", store_front_id)))
     }
 
     if(subscriptionFilter.hasClauses)
