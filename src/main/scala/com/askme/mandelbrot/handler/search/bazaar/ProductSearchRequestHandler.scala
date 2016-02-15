@@ -341,7 +341,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(store_front_id > 0) {
-      subscriptionFilter.must(nestedQuery("store_fronts", termQuery("subscriptions.store_fronts.id", store_front_id)))
+      subscriptionFilter.must(nestedQuery("subscriptions.store_fronts", termQuery("subscriptions.store_fronts.id", store_front_id)))
     }
 
     if(subscriptionFilter.hasClauses)
@@ -387,10 +387,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
       if(store_front_id==0)
         search.addAggregation(
-          nested("subscriptions").path("subscriptions")
-            .subAggregation(
+          nested("subscriptions").path("subscriptions").subAggregation(
+            nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
               terms("store_fronts").field("subscriptions.store_fronts.id").size(aggbuckets)
             )
+          )
         )
 
 
