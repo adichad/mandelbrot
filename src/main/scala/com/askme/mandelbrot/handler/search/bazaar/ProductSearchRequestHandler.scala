@@ -444,7 +444,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             val search = buildSearch(searchParams)
 
             val qfinal = boolQuery.must(query).filter(finalFilter)
-            search.setQuery(query)
+            search.setQuery(qfinal)
 
             val me = context.self
 
