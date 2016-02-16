@@ -586,7 +586,7 @@
         }
       },
       "tags": {
-        "type": "multi_field",
+        "type": "string",
         "fields": {
           "tags": {
             "type": "string",

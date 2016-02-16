@@ -84,7 +84,7 @@
             "doc_values": true
           },
           "kw": {
-            "type": "multi_field",
+            "type": "string",
             "fields": {
               "highlight": {
                 "type": "string",
@@ -213,7 +213,7 @@
             }
           },
           "label": {
-            "type": "multi_field",
+            "type": "string",
             "fields": {
               "highlight": {
                 "type": "string",
