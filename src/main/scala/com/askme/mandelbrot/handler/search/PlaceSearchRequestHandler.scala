@@ -574,12 +574,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           import searchParams.filters._
           import searchParams.startTime
           import searchParams.req._
+          import searchParams.geo._
 
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
-          if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "") {
+          if (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "" && lat==0.0d && lon ==0.0d) {
             context.parent ! EmptyResponse("empty search criteria")
           }
           else {
