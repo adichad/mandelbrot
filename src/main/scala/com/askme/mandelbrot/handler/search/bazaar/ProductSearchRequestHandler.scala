@@ -321,6 +321,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
     }
 
+    if(crm_seller_id !=0) {
+      subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
+    }
+
     if (city != "") {
       val cityFilter = boolQuery
       city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
@@ -428,7 +432,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
           if (w.isEmpty && category.trim == "" &&
-            product_id == 0 && grouped_id == 0 && base_id == 0 && subscribed_id == 0) {
+            product_id == 0 && grouped_id == 0 && base_id == 0 && subscribed_id == 0 && store_front_id==0 &&
+            crm_seller_id ==0 && city.trim=="") {
             context.parent ! EmptyResponse("empty search criteria")
           }
           else {
