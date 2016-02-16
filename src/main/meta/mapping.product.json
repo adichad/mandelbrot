@@ -291,7 +291,6 @@
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
             "term_vector": "with_positions_offsets",
             "fields": {
@@ -307,7 +306,8 @@
                 "index": "analyzed",
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
-                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "position_increment_gap": 100
               },
               "shingle2": {
                 "type": "string",
