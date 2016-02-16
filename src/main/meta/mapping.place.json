@@ -396,7 +396,6 @@
         "geohash_prefix": true,
         "store": false,
         "doc_values": true,
-        "coerce": true,
         "ignore_malformed": true
       },
       "CompanyID": {
