@@ -197,7 +197,6 @@
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
             "term_vector": "with_positions_offsets",
             "fields": {
@@ -223,7 +222,6 @@
                 "analyzer": "shingle2_analyzer",
                 "search_analyzer": "shingle2_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle3": {
@@ -233,7 +231,6 @@
                 "analyzer": "shingle3_analyzer",
                 "search_analyzer": "shingle3_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -243,7 +240,6 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -259,7 +255,6 @@
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
             "fields": {
               "shingle2": {
@@ -269,7 +264,6 @@
                 "analyzer": "shingle2_analyzer",
                 "search_analyzer": "shingle2_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle3": {
@@ -279,7 +273,6 @@
                 "analyzer": "shingle3_analyzer",
                 "search_analyzer": "shingle3_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -289,7 +282,6 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -316,7 +308,6 @@
                 "analyzer": "keyword_analyzer",
                 "search_analyzer": "keyword_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false }
               },
               "shingle2": {
                 "type": "string",
@@ -325,7 +316,6 @@
                 "analyzer": "shingle2_analyzer",
                 "search_analyzer": "shingle2_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle3": {
@@ -335,7 +325,6 @@
                 "analyzer": "shingle3_analyzer",
                 "search_analyzer": "shingle3_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -345,7 +334,6 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -355,7 +343,6 @@
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
             "fields": {
               "shingle2": {
@@ -365,7 +352,6 @@
                 "analyzer": "shingle2_analyzer",
                 "search_analyzer": "shingle2_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle3": {
@@ -375,7 +361,6 @@
                 "analyzer": "shingle3_analyzer",
                 "search_analyzer": "shingle3_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -385,7 +370,6 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -406,7 +390,6 @@
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
             "term_vector": "with_positions_offsets",
             "fields": {
@@ -432,7 +415,6 @@
                 "analyzer": "shingle2_analyzer",
                 "search_analyzer": "shingle2_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle3": {
@@ -442,7 +424,6 @@
                 "analyzer": "shingle3_analyzer",
                 "search_analyzer": "shingle3_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -452,7 +433,6 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
-                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -699,7 +679,6 @@
         "store": false,
         "index": "analyzed",
         "position_increment_gap": 100,
-        "norms": { "enabled": false },
         "similarity": "bazaar_bm25",
         "term_vector": "with_positions_offsets",
         "fields": {
@@ -725,7 +704,6 @@
             "analyzer": "shingle2_analyzer",
             "search_analyzer": "shingle2_analyzer",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
           "shingle3": {
@@ -735,7 +713,6 @@
             "analyzer": "shingle3_analyzer",
             "search_analyzer": "shingle3_analyzer",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
           "shingle_nospace": {
@@ -745,7 +722,6 @@
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
             "position_increment_gap": 100,
-            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           }
         }
@@ -1297,6 +1273,67 @@
           }
         }
       },
+      "store_fronts_title_dv": {
+        "type": "string",
+        "store": false,
+        "index": "not_analyzed",
+        "doc_values": true
+      },
+      "store_fronts_title": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
       "subscriptions": {
         "type": "nested",
         "properties": {
@@ -1425,18 +1462,30 @@
               }
             }
           },
+          "store_fronts_id": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "store_fronts_mpdm_id": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
           "store_fronts": {
             "type": "nested",
             "properties": {
               "id": {
                 "type": "integer",
                 "store": false,
-                "doc_values": true
+                "doc_values": true,
+                "copy_to": ["subscriptions.store_fronts_id"]
               },
               "mpdm_id": {
                 "type": "integer",
                 "store": false,
-                "doc_values": true
+                "doc_values": true,
+                "copy_to": ["subscriptions.store_fronts_mpdm_id"]
               },
               "boost": {
                 "type": "integer",
@@ -1447,6 +1496,7 @@
                 "type": "string",
                 "store": false,
                 "index": "not_analyzed",
+                "copy_to": ["store_fronts_title_dv"],
                 "doc_values": true
               },
               "title": {
@@ -1457,6 +1507,7 @@
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25",
                 "term_vector": "with_positions_offsets",
+                "copy_to": ["store_fronts_title"],
                 "fields": {
                   "agg": {
                     "type": "string",

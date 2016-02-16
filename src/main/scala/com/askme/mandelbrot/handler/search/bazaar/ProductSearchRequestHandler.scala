@@ -342,16 +342,13 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if(store_front_id > 0) {
       subscriptionFilter.must(
-        nestedQuery(
-          "subscriptions.store_fronts",
-          termQuery("subscriptions.store_fronts.id", store_front_id)
-        )
+        termQuery("subscriptions.store_fronts_id", store_front_id)
       )
 
     }
 
     if(subscriptionFilter.hasClauses)
-      finalFilter.must(wrapperQuery(nestedQuery("subscriptions", subscriptionFilter).toString))
+      finalFilter.must(nestedQuery("subscriptions", subscriptionFilter))
 
 
     if (category != "") {
