@@ -75,7 +75,6 @@
             "geohash_prefix": true,
             "store": true,
             "doc_values": true,
-            "coerce": true,
             "ignore_malformed": true
           },
           "tag": {
