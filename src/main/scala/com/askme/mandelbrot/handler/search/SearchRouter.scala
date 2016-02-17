@@ -36,7 +36,6 @@ case object SearchRouter extends Router {
                ) =>
               val fuzzyprefix = 2
               val fuzzysim = 1f
-              val slugFlag = true
               val maxdocspershard = 50000
               val sort = "_distance,_score"
               val unselect = "keywords"
@@ -52,7 +51,7 @@ case object SearchRouter extends Router {
                     TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon),
                     FilterParams(category, id, userid, locid, pay_type), PageParams(size, offset),
-                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, slugFlag, collapse, goldcollapse, randomize, version),
+                    ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, collapse, goldcollapse, randomize, version),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
                   )))

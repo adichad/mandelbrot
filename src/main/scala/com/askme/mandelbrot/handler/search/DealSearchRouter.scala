@@ -26,7 +26,6 @@ case object DealSearchRouter extends Router {
             val version = 1
             val fuzzyprefix = 2
             val fuzzysim = 1f
-            val slugFlag = true
             val maxdocspershard = 30000
             val sort = "_distance,_score"
             val unselect = ""
@@ -44,7 +43,7 @@ case object DealSearchRouter extends Router {
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d),
                   filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource, pay_merchant_id), page = PageParams(size, offset),
-                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, slugFlag = slugFlag, collapse = false, goldcollapse = false, randomize=false, version),
+                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))

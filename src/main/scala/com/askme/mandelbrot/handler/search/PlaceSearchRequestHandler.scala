@@ -40,7 +40,6 @@ import scala.collection.JavaConversions._
  */
 object PlaceSearchRequestHandler extends Logging {
 
-  val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
 
   private val randomParams = new util.HashMap[String, AnyRef]
@@ -550,18 +549,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         */
     }
 
-
-    if (slugFlag) {
-      search.addAggregation(nested("products").path("Product")
-        .subAggregation(terms("catkw").field("Product.l3categorydocval").size(aggbuckets*3).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(terms("kw").field("Product.categorykeywordsdocval").size(100))
-          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])))
-        )
-      )
-      search.addAggregation(terms("areasyns").field("AreaDocVal").size(aggbuckets)
-        .subAggregation(terms("syns").field("AreaSynonymsDocVal").size(aggbuckets))
-      )
-    }
     search
   }
 
@@ -662,32 +649,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           import response.searchParams.startTime
           import response.searchParams.view._
           import response.relaxLevel
-
-
-          val slug =
-            if (slugFlag) {
-              val words = w.mkString(" ")
-              val catBucks = result.getAggregations.get("products").asInstanceOf[Nested].getAggregations.get("catkw").asInstanceOf[Terms].getBuckets
-              val matchedCat = catBucks.find(b => words == b.getKeyAsString
-                || b.getAggregations.get("kw").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString==words))
-                .fold("/search/" + urlize(words))(k => "/" + urlize(k.getKeyAsString))
-
-              val areaWords = analyze(esClient, index, "Area", area)
-              val areakw = areaWords.mkString(" ")
-              val areaBucks = result.getAggregations.get("areasyns").asInstanceOf[Terms].getBuckets
-              val matchedArea = areaBucks.find(b => b.getKeyAsString==areakw).fold(
-                areaBucks.find(b =>
-                  b.getAggregations.get("syns").asInstanceOf[Terms].getBuckets.exists(c => c.getKeyAsString == areakw)
-                ).fold("/in/" + urlize(area))(k => "/in/" + urlize(k.getKeyAsString))
-              )(k => "/in/" + urlize(k.getKeyAsString))
-
-              (if (city != "") "/" + urlize(city) else "") + matchedCat +
-                (if (category != "") "/cat/" + urlize(category) else "") + (if (area != "") matchedArea else "")
-          } else ""
-
-//          val cats = if (agg) result.getAggregations.get("categories").asInstanceOf[Terms].getBuckets.map(_.getKey).mkString(", ") else ""
-
-
           val parsedResult = parse(result.toString)
 
           /*.transformField {
@@ -699,16 +660,13 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           val timeTaken = endTime - startTime
 
           info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
-          context.parent ! SearchResult(slug, result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
+          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
         } catch {
           case e: Throwable =>
             context.parent ! ErrorResponse(e.getMessage, e)
         }
 
   }
-
-  def urlize(k: String) =
-    URLEncoder.encode(k.replaceAll(pat, " ").trim.replaceAll( """\s+""", "-").toLowerCase, "UTF-8")
 
 }
 
