@@ -1,0 +1,671 @@
+{
+  "geo": {
+    "_source": {
+      "enabled": true
+    },
+    "_all": {
+      "enabled": false
+    },
+    "transform" : [],
+    "properties": {
+      "archived": {
+        "type": "boolean",
+        "store": false,
+        "doc_values": true
+      },
+      "center": {
+        "type": "geo_point",
+        "lat_lon": true,
+        "geohash": true,
+        "geohash_precision": "1m",
+        "geohash_prefix": true,
+        "store": true,
+        "doc_values": true,
+        "ignore_malformed": true
+      },
+      "containers": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
+      },
+      "containers_dag_name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "containers_dag_synonyms": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "containers_dag": {
+        "type": "nested",
+        "properties": {
+          "center": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "doc_values": true,
+            "ignore_malformed": true
+          },
+          "containers": {
+            "type": "long",
+            "store": false,
+            "doc_values": true
+          },
+          "gid": {
+            "type": "long",
+            "store": false,
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25",
+            "term_vector": "with_positions_offsets",
+            "copy_to": ["containers_dag_name"],
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              }
+            }
+          },
+          "shape": {
+            "type": "geo_shape",
+            "doc_values": true,
+            "tree": "geohash",
+            "precision": "1m",
+            "strategy": "recursive",
+            "distance_error_pct": 0.025,
+            "orientation": "ccw",
+            "points_only": false
+          },
+          "synonyms": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25",
+            "term_vector": "with_positions_offsets",
+            "copy_to": ["containers_dag_synonyms"],
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              }
+            }
+          },
+          "types": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
+      "created_on": {
+        "type": "date",
+        "store": false,
+        "format": "yyyy-MM-dd HH:mm:ss",
+        "doc_values": true
+      },
+      "gid": {
+        "type": "long",
+        "store": true,
+        "doc_values": true
+      },
+      "name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "related_name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "related_synonyms": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "related": {
+        "type": "nested",
+        "properties": {
+          "center": {
+            "type": "geo_point",
+            "lat_lon": true,
+            "geohash": true,
+            "geohash_precision": "1m",
+            "geohash_prefix": true,
+            "store": true,
+            "doc_values": true,
+            "ignore_malformed": true
+          },
+          "containers": {
+            "type": "long",
+            "store": false,
+            "doc_values": true
+          },
+          "gid": {
+            "type": "long",
+            "store": false,
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25",
+            "term_vector": "with_positions_offsets",
+            "copy_to": ["related_name"],
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              }
+            }
+          },
+          "shape": {
+            "type": "geo_shape",
+            "doc_values": true,
+            "tree": "geohash",
+            "precision": "1m",
+            "strategy": "recursive",
+            "distance_error_pct": 0.025,
+            "orientation": "ccw",
+            "points_only": false
+          },
+          "synonyms": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25",
+            "term_vector": "with_positions_offsets",
+            "copy_to": ["related_synonyms"],
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "mandelbrot_bm25"
+              }
+            }
+          },
+          "types": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
+      "shape": {
+        "type": "geo_shape",
+        "doc_values": true,
+        "tree": "geohash",
+        "precision": "1m",
+        "strategy": "recursive",
+        "distance_error_pct": 0.025,
+        "orientation": "ccw",
+        "points_only": false
+      },
+      "synonyms": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "types": {
+        "type": "string",
+        "index": "not_analyzed",
+        "store": false,
+        "doc_values": true
+      },
+      "updated_on": {
+        "type": "date",
+        "store": true,
+        "format": "yyyy-MM-dd HH:mm:ss"
+      }
+    }
+  }
+}
