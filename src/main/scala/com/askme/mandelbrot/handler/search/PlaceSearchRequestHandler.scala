@@ -352,7 +352,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if (pin != "") {
       finalFilter.must(termsQuery("PinCode", pin.split( """,""").map(_.trim): _*))
     }
-
+/*  area should never be a filter, only a sorting hint.
     val locFilter = boolQuery
     if (area != "") {
       val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
@@ -363,16 +363,16 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
       areaSlugs = areas.mkString("#")
     }
-
+*/
     if (lat != 0.0d || lon != 0.0d)
-      locFilter.should(
-        geoHashCellQuery("LatLong").point(lat, lon).precision("8km").neighbors(true))
+      finalFilter.must(
+        geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
 
-
+/*
     if (locFilter.hasClauses) {
       finalFilter.must(locFilter)
     }
-
+*/
     if (city != "") {
       val cityFilter = boolQuery
       (city+",All City").split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
