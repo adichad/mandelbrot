@@ -352,30 +352,47 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     if (pin != "") {
       finalFilter.must(termsQuery("PinCode", pin.split( """,""").map(_.trim): _*))
     }
-/*  area should never be a filter, only a sorting hint.
-    val locFilter = boolQuery
-    if (area != "") {
-      val areas: Array[String] = area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-      areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("City", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+
+
+    val cities: Array[String] =
+      if(city!="")
+        (city+",All City").split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty)
+      else
+        Array[String]()
+
+    val areas: Array[String] =
+      if(area!="")
+        area.split(""",""").map(analyze(esClient, index, "AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      else
+        Array[String]()
+
+    if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
     }
-*/
-    if (lat != 0.0d || lon != 0.0d)
-      finalFilter.must(
-        geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
+    if (lat != 0.0d || lon != 0.0d) {
+      val locFilter = boolQuery.should(geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
+      if (areas.nonEmpty) {
+        areas.map(fuzzyOrTermQuery("AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("City", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("CitySynonyms", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+        areas.map(fuzzyOrTermQuery("SKUAreas", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
+      }
+      if (cities.nonEmpty) {
+        cities.map(termQuery("City", _)).foreach(locFilter.should)
+        cities.map(termQuery("CitySynonyms", _)).foreach(locFilter.should)
+      }
+      finalFilter.must(locFilter)
+    }
 
 /*
     if (locFilter.hasClauses) {
       finalFilter.must(locFilter)
     }
 */
-    if (city != "") {
+    if (cities.nonEmpty) {
       val cityFilter = boolQuery
-      (city+",All City").split( """,""").map(analyze(esClient, index, "City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+      cities.foreach { c =>
         cityFilter.should(termQuery("City", c))
         cityFilter.should(termQuery("CitySynonyms", c))
       }
