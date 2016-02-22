@@ -48,11 +48,14 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
+            val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+idField+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+            val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
+            val all = "[" + response.getItems.map(x => "\"" + x.getId + "\"").mkString(",") + "]"
+            val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
+            val respAllFailedStr = "{\"failed\": " + all + ", \"successful\": []}"
+            val respAllFailed = parse(respAllFailedStr)
+            val resp = parse(respStr)
             try {
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+idField+"\": \"" + x.getId + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
-              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId + "\"").mkString(",") + "]"
-              val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
-              val resp = parse(respStr)
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
                 warn("[indexing] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [" + response.buildFailureMessage() + "] "+charset+" [" + respStr + "]")
@@ -69,7 +72,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - indexParams.startTime
                 error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
-                throw e
+                completer ! IndexFailureResult(respAllFailed)
             }
           }
 
