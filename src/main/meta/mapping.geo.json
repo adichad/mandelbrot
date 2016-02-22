@@ -279,6 +279,11 @@
           }
         }
       },
+      "count": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
+      },
       "created_on": {
         "type": "date",
         "store": false,
@@ -288,6 +293,11 @@
       "gid": {
         "type": "long",
         "store": true,
+        "doc_values": true
+      },
+      "mapped_to_id": {
+        "type": "long",
+        "store": false,
         "doc_values": true
       },
       "name": {
@@ -342,111 +352,116 @@
           }
         }
       },
-      "related_name": {
-        "type": "string",
-        "store": false,
-        "index": "analyzed",
-        "position_increment_gap": 100,
-        "similarity": "mandelbrot_bm25",
-        "term_vector": "with_positions_offsets",
-        "fields": {
-          "agg": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "doc_values": true
-          },
-          "exact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": { "enabled": false }
-          },
-          "shingle2": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          },
-          "shingle3": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          },
-          "shingle_nospace": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle_nospace_analyzer",
-            "search_analyzer": "shingle_nospace_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          }
-        }
-      },
-      "related_synonyms": {
-        "type": "string",
-        "store": false,
-        "index": "analyzed",
-        "position_increment_gap": 100,
-        "similarity": "mandelbrot_bm25",
-        "term_vector": "with_positions_offsets",
-        "fields": {
-          "agg": {
-            "type": "string",
-            "store": false,
-            "index": "not_analyzed",
-            "doc_values": true
-          },
-          "exact": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "keyword_analyzer",
-            "search_analyzer": "keyword_analyzer",
-            "position_increment_gap": 100,
-            "norms": { "enabled": false }
-          },
-          "shingle2": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          },
-          "shingle3": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          },
-          "shingle_nospace": {
-            "type": "string",
-            "store": false,
-            "index": "analyzed",
-            "analyzer": "shingle_nospace_analyzer",
-            "search_analyzer": "shingle_nospace_analyzer",
-            "position_increment_gap": 100,
-            "similarity": "mandelbrot_bm25"
-          }
-        }
-      },
       "related": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
+      },
+      "related_list_name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "related_list_synonyms": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "mandelbrot_bm25",
+        "term_vector": "with_positions_offsets",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle2": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle2_analyzer",
+            "search_analyzer": "shingle2_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle3": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle3_analyzer",
+            "search_analyzer": "shingle3_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          }
+        }
+      },
+      "related_list": {
         "type": "nested",
         "properties": {
           "center": {
@@ -476,7 +491,7 @@
             "position_increment_gap": 100,
             "similarity": "mandelbrot_bm25",
             "term_vector": "with_positions_offsets",
-            "copy_to": ["related_name"],
+            "copy_to": ["related_list_name"],
             "fields": {
               "agg": {
                 "type": "string",
@@ -539,7 +554,7 @@
             "position_increment_gap": 100,
             "similarity": "mandelbrot_bm25",
             "term_vector": "with_positions_offsets",
-            "copy_to": ["related_synonyms"],
+            "copy_to": ["related_list_synonyms"],
             "fields": {
               "agg": {
                 "type": "string",
