@@ -314,14 +314,13 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
   override def receive = {
     case searchParams: DealSearchParams =>
+      import searchParams.text._
+      import searchParams.idx._
+      import searchParams.filters._
+      import searchParams.startTime
+      import searchParams.req._
+      import searchParams.geo._
       try {
-        import searchParams.text._
-        import searchParams.idx._
-        import searchParams.filters._
-        import searchParams.startTime
-        import searchParams.req._
-        import searchParams.geo._
-
         kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 20) w = emptyStringArray
@@ -349,19 +348,22 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis() - startTime
-            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+            error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]", e)
             context.parent ! ErrorResponse(e.getMessage, e)
           }
         })
       } catch {
         case e: Throwable =>
+          val timeTaken = System.currentTimeMillis() - startTime
+          error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]", e)
           context.parent ! ErrorResponse(e.getMessage, e)
       }
 
     case ReSearch(searchParams, filter, search, relaxLevel, response) =>
+      import searchParams.startTime
+      import searchParams.req._
+
       try {
-        import searchParams.startTime
-        import searchParams.req._
 
         if (relaxLevel >= qDefs.length)
           context.self ! WrappedResponse(searchParams, response, relaxLevel - 1)
@@ -380,13 +382,15 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
             override def onFailure(e: Throwable): Unit = {
               val timeTaken = System.currentTimeMillis() - startTime
-              error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]")
+              error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]", e)
               context.parent ! ErrorResponse(e.getMessage, e)
             }
           })
         }
       } catch {
         case e: Throwable =>
+          val timeTaken = System.currentTimeMillis() - startTime
+          error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]", e)
           context.parent ! ErrorResponse(e.getMessage, e)
       }
 
@@ -404,6 +408,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
       } catch {
         case e: Throwable =>
+          val timeTaken = System.currentTimeMillis - startTime
+          error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + "]->[]", e)
           context.parent ! ErrorResponse(e.getMessage, e)
       }
   }
