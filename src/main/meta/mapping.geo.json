@@ -210,7 +210,6 @@
           },
           "shape": {
             "type": "geo_shape",
-            "doc_values": true,
             "tree": "geohash",
             "precision": "1m",
             "strategy": "recursive",
@@ -539,7 +538,6 @@
           },
           "shape": {
             "type": "geo_shape",
-            "doc_values": true,
             "tree": "geohash",
             "precision": "1m",
             "strategy": "recursive",
@@ -610,7 +608,6 @@
       },
       "shape": {
         "type": "geo_shape",
-        "doc_values": true,
         "tree": "geohash",
         "precision": "1m",
         "strategy": "recursive",
