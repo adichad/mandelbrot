@@ -58,7 +58,7 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
       ("name" -> (c\"name").asInstanceOf[JString].values) ~
         ("types" -> (c\"types").children.map(t=>t.asInstanceOf[JString].values))
     )
-    def center = (doc \ "center").children.map(c=>c.asInstanceOf[JDouble].values)
+    def center = doc \ "center"
     def shape = doc \ "shape"
     def count = if(doc.types.contains("city")) 1000 else if(doc.types.contains("area")) 100 else 10
 
