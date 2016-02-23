@@ -79,11 +79,14 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - indexParams.startTime
             error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
-            throw e
+            completer ! IndexFailureResult(JString("batch failed with exception: "+e.toString))
           }
         })
       } catch {
-        case e: Throwable => throw e
+        case e: Throwable =>
+          val timeTaken = System.currentTimeMillis - indexParams.startTime
+          error("[indexing] [" + timeTaken + "] [?] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] "+charset+" [" + e.getMessage + "]", e)
+          completer ! IndexFailureResult(JString("batch failed with exception: "+e.toString))
       }
   }
 

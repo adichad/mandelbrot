@@ -106,7 +106,7 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
               ("display" ->
                 ("label" -> doc.label) ~
                   ("center" -> doc.center) ~
-                  ("shape" -> doc.shape) ~
+                  //("shape" -> doc.shape) ~
                   ("type" -> doc.types) ~
                   ("containers" -> doc.types) ~
                   ("related" -> doc.related)
@@ -127,10 +127,10 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
           override def onResponse(response: BulkResponse): Unit = {
+            val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId.dropRight("-geo".length) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
+            val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId.dropRight("-geo".length) + "\"").mkString(",") + "]"
+            val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
             try {
-              val failures = "[" + response.getItems.filter(_.isFailed).map(x => "{\""+"id"+"\": \"" + x.getId.dropRight("-geo".length) + "\", \"error\": " + x.getFailureMessage.toJson.toString + "}").mkString(",") + "]"
-              val success = "[" + response.getItems.filter(!_.isFailed).map(x => "\"" + x.getId.dropRight("-geo".length) + "\"").mkString(",") + "]"
-              val respStr = "{\"failed\": " + failures + ", \"successful\": " + success + "}"
               if (response.hasFailures) {
                 val timeTaken = System.currentTimeMillis - startTime
                 warn("[indexing geo "+string("params.index")+"."+string("params.type")+"] [" + response.getTookInMillis + "/" + timeTaken + "] [" + reqSize + "] [" + response.buildFailureMessage() + "] [" + respStr + "]")
@@ -145,21 +145,21 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
               case e: Throwable =>
                 val timeTaken = System.currentTimeMillis - startTime
                 error("[indexing geo "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
-                throw e
+                completer ! IndexFailureResult(parse(respStr))
             }
           }
 
           override def onFailure(e: Throwable): Unit = {
             val timeTaken = System.currentTimeMillis - startTime
             error("[indexing geo "+string("params.index")+"."+string("params.type")+"] [" + timeTaken + "] [" + reqSize + "] [" + e.getMessage + "]", e)
-            throw e
+            completer ! IndexFailureResult(JString("batch failed with exception: "+e.toString))
           }
         })
 
       } catch {
         case e: Throwable =>
           error("[indexing geo "+string("params.index")+"."+string("params.type")+"] [" + e.getMessage + "]", e)
-          throw e
+          completer ! IndexFailureResult(JString("batch failed with exception: "+e.toString))
       }
 
   }
