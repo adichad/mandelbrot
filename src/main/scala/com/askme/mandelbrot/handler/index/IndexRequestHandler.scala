@@ -25,6 +25,8 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
   override def receive = {
     case indexParams: IndexingParams =>
       val completer = context.parent
+      val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
+
       try {
         val json = parse(indexParams.data.data)
 
@@ -43,7 +45,6 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
               .setSource(compact(render(doc)))
           )
         }
-        val charset = (if(indexParams.data.detected) "[detected " else "[declared ") + indexParams.data.source_charset+"]"
 
         val reqSize = bulkRequest.numberOfActions()
         bulkRequest.execute(new ActionListener[BulkResponse] {
