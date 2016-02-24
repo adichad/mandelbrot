@@ -61,6 +61,8 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def stores = (doc\"stores").children.map(s=>(s\"name").asInstanceOf[JString].values)
 
+    def store_fronts = (doc\"subscriptions").children.flatMap(s=>(s\"store_fronts").children.map(sf=>"store_front_"+(sf\"id").asInstanceOf[JInt].values))
+
     def image = {
       val img = doc\"image"
       if(img==null||img==JNull)"" else img.asInstanceOf[JString].values
@@ -81,7 +83,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
               ("city" -> doc.city) ~
               ("kw" -> doc.kw) ~
               ("label" -> doc.label) ~
-              ("tag" -> (List("unified", "base_product") ++ doc.stores))
+              ("tag" -> (List("unified", "base_product") ++ doc.stores ++ doc.store_fronts))
             )
           ) ~
           ("payload" ->

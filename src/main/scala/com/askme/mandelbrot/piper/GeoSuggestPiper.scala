@@ -49,13 +49,17 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
         (doc \ "related_list").children.flatMap(c=>(c\"synonyms").children.map(s=>s.asInstanceOf[JString].values.trim)).filter(!_.isEmpty)
         )
 
+
+    def container_ids = doc\"containers"
     def containers = (doc \ "containers_dag").children.map( c =>
       ("name" -> (c\"name").asInstanceOf[JString].values) ~
+        ("gid" -> (c\"gid").asInstanceOf[JInt].values) ~
         ("types" -> (c\"types").children.map(t=>t.asInstanceOf[JString].values))
     )
 
     def related = (doc \ "related_list").children.map( c =>
       ("name" -> (c\"name").asInstanceOf[JString].values) ~
+        ("gid" -> (c\"gid").asInstanceOf[JInt].values) ~
         ("types" -> (c\"types").children.map(t=>t.asInstanceOf[JString].values))
     )
     def center = doc \ "center"
@@ -64,6 +68,8 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
 
     def tags = if (doc\"tags" == null) List[String]() else (doc\"tags").children.map(t=>t.asInstanceOf[JString].values)
     def types = (doc\"types").children.map(s=>s.asInstanceOf[JString].values)
+
+    def phone_prefix = doc\"phone_prefix"
 
 
   }
@@ -100,16 +106,18 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
               ("queries" ->
                 List(
                   ("type" -> "geo") ~
-                  ("id" -> doc.gid)
+                  ("id" -> doc.gid.toInt)
                 )
               ) ~
               ("display" ->
                 ("label" -> doc.label) ~
+                  ("id" -> doc.gid.toInt) ~
                   ("center" -> doc.center) ~
-                  //("shape" -> doc.shape) ~
+                  ("shape" -> doc.shape) ~
                   ("type" -> doc.types) ~
-                  ("containers" -> doc.types) ~
-                  ("related" -> doc.related)
+                  ("containers" -> doc.containers) ~
+                  ("related" -> doc.related) ~
+                  ("phone_prefix" -> doc.phone_prefix)
               )
             )
           ) ~
