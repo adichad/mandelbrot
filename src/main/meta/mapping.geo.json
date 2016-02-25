@@ -215,7 +215,8 @@
             "strategy": "recursive",
             "distance_error_pct": 0.025,
             "orientation": "ccw",
-            "points_only": false
+            "points_only": false,
+            "ignore_malformed": true
           },
           "synonyms": {
             "type": "string",
@@ -543,7 +544,8 @@
             "strategy": "recursive",
             "distance_error_pct": 0.025,
             "orientation": "ccw",
-            "points_only": false
+            "points_only": false,
+            "ignore_malformed": true
           },
           "synonyms": {
             "type": "string",
@@ -613,7 +615,8 @@
         "strategy": "recursive",
         "distance_error_pct": 0.025,
         "orientation": "ccw",
-        "points_only": false
+        "points_only": false,
+        "ignore_malformed": true
       },
       "phone_prefix": {
         "type": "string",
