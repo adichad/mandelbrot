@@ -209,14 +209,8 @@
             }
           },
           "shape": {
-            "type": "geo_shape",
-            "tree": "geohash",
-            "precision": "1m",
-            "strategy": "recursive",
-            "distance_error_pct": 0.025,
-            "orientation": "ccw",
-            "points_only": false,
-            "ignore_malformed": true
+            "type": "object",
+            "enabled": false
           },
           "synonyms": {
             "type": "string",
@@ -538,14 +532,8 @@
             }
           },
           "shape": {
-            "type": "geo_shape",
-            "tree": "geohash",
-            "precision": "1m",
-            "strategy": "recursive",
-            "distance_error_pct": 0.025,
-            "orientation": "ccw",
-            "points_only": false,
-            "ignore_malformed": true
+            "type": "object",
+            "enabled": false
           },
           "synonyms": {
             "type": "string",
@@ -609,14 +597,8 @@
         }
       },
       "shape": {
-        "type": "geo_shape",
-        "tree": "geohash",
-        "precision": "1m",
-        "strategy": "recursive",
-        "distance_error_pct": 0.025,
-        "orientation": "ccw",
-        "points_only": false,
-        "ignore_malformed": true
+        "type": "object",
+        "enabled": false
       },
       "phone_prefix": {
         "type": "string",
