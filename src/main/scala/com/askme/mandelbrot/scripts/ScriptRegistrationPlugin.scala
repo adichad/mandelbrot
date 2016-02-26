@@ -14,6 +14,7 @@ class ScriptRegistrationPlugin extends Plugin {
   def onModule(module: ScriptModule): Unit = {
     module.registerScript("geobucket", classOf[GeoBucket])
     module.registerScript("geobucketsuggest", classOf[GeoBucketSuggestions])
+    module.registerScript("geodistancebucket", classOf[GeoDistanceBucket])
     module.registerScript("docscore", classOf[DocScore])
     module.registerScript("docscoreexponent", classOf[DocScoreExponent])
     module.registerScript("customertype", classOf[CustomerTypeBucket])
@@ -25,7 +26,6 @@ class ScriptRegistrationPlugin extends Plugin {
     module.registerScript("randomizer", classOf[RandomBucketComparator])
     module.registerScript("dealchannelsort", classOf[DealChannelComparator])
     module.registerScript("dealsort", classOf[DealComparator])
-
   }
 
 }
