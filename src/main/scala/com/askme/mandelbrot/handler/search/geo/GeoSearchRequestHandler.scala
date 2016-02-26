@@ -286,7 +286,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
       finalFilter.must(termsQuery("gid", gids.split(",").map(_.trim.toLong):_*))
     }
     if (`type`.trim != "") {
-      finalFilter.must(termQuery("type", `type`.trim))
+      finalFilter.must(termQuery("types", `type`.trim))
     }
     if (tags.trim != "") {
       finalFilter.must(termsQuery("tags.exact", tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
@@ -300,7 +300,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
       containerFilter.must(termsQuery("containers_dag.gid", container.gids.split(",").map(_.trim.toLong):_*))
     }
     if (container.`type`.trim != "") {
-      containerFilter.must(termQuery("containers_dag.type", container.`type`.trim))
+      containerFilter.must(termQuery("containers_dag.types", container.`type`.trim))
     }
     if (container.tags.trim != "") {
       containerFilter.must(termsQuery("containers_dag.tags", container.tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
@@ -325,7 +325,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
       relatedFilter.must(termsQuery("related_list.gid", related.gids.split(",").map(_.trim.toLong):_*))
     }
     if (related.`type`.trim != "") {
-      relatedFilter.must(termQuery("related_list.type", related.`type`.trim))
+      relatedFilter.must(termQuery("related_list.types", related.`type`.trim))
     }
     if (related.tags.trim != "") {
       relatedFilter.must(termsQuery("related_list.tags", related.tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
