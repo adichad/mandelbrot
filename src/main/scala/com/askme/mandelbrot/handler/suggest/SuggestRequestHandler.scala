@@ -256,6 +256,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
               Map("targeting.kw.token" -> 1f, "targeting.label.token" -> 1e3f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.token_edge_ngram" -> 1e1f, "targeting.label.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.shingle_nospace_edge_ngram" -> 1e0f, "targeting.label.shingle_nospace_edge_ngram" -> 1e1f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
           )
         }
         else
@@ -275,6 +285,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
               Map("targeting.kw.token" -> 1e3f, "targeting.label.token" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.token_edge_ngram" -> 1e3f, "targeting.label.token_edge_ngram" -> 1e5f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("targeting.kw.shingle_nospace_edge_ngram" -> 1e1f, "targeting.label.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
           )
 
           val q2 = boolQuery
@@ -289,6 +309,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
                 shinglePartition(
                   Map("targeting.kw.token" -> 1e3f, "targeting.label.token" -> 1e5f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("targeting.kw.token_edge_ngram" -> 1e3f, "targeting.label.token_edge_ngram" -> 1e5f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("targeting.kw.shingle_nospace_edge_ngram" -> 1e1f, "targeting.label.shingle_nospace_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               )
             )
