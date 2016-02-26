@@ -45,7 +45,7 @@ object GeoSearchRequestHandler extends Logging {
 
     val sorters =
       if(lat==0.0d && lon==0.0d) List(scoreSort.order(SortOrder.DESC))
-      else if(w.isEmpty) List(geoDistanceSort("center").point(lat, lon).geoDistance(GeoDistance.PLANE).order(SortOrder.ASC).coerce(true).ignoreMalformed(true))
+      else if(w.isEmpty) List(geoDistanceSort("center").point(lat, lon).geoDistance(GeoDistance.PLANE).order(SortOrder.ASC).coerce(true))
       else {
         val geoParams = new util.HashMap[String, AnyRef]
         geoParams.put("lat", double2Double(lat))
