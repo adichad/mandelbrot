@@ -30,7 +30,7 @@ case object GeoSearchRouter extends Router {
                                        lat, lon, to_km,
                                        size, offset,
                                        explain, select) =>
-              val maxdocspershard = 500
+              val maxdocspershard = 10000
               val searchType = "query_then_fetch"
               val timeoutms = 200l
               val aggbuckets = 10
