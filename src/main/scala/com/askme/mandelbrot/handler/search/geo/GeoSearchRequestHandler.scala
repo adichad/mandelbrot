@@ -280,7 +280,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
-    finalFilter.must(termQuery("archived", 0))
+    finalFilter.must(termQuery("archived", false))
     if (gids.trim != "") {
       finalFilter.must(termsQuery("gid", gids.split(",").map(_.trim.toLong):_*))
     }
