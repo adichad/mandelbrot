@@ -15,6 +15,7 @@ import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeReq
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.ParseFieldMatcher
+import org.elasticsearch.common.geo.GeoDistance
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
@@ -44,7 +45,7 @@ object GeoSearchRequestHandler extends Logging {
 
     val sorters =
       if(lat==0.0d && lon==0.0d) List(scoreSort.order(SortOrder.DESC))
-      else if(w.isEmpty) List(geoDistanceSort("center"))
+      else if(w.isEmpty) List(geoDistanceSort("center").point(lat, lon).geoDistance(GeoDistance.PLANE).order(SortOrder.ASC).coerce(true).ignoreMalformed(true))
       else {
         val geoParams = new util.HashMap[String, AnyRef]
         geoParams.put("lat", double2Double(lat))
