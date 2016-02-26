@@ -208,6 +208,23 @@
               }
             }
           },
+          "phone_prefix": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "fields": {
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              }
+            }
+          },
           "shape": {
             "type": "object",
             "enabled": false
@@ -545,6 +562,23 @@
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
                 "similarity": "mandelbrot_bm25"
+              }
+            }
+          },
+          "phone_prefix": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true,
+            "fields": {
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
               }
             }
           },
