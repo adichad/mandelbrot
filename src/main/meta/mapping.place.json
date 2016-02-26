@@ -91,6 +91,14 @@
         "ignore_malformed": false,
         "doc_values": true
       },
+      "PayMerchantContactNo": {
+        "type": "string",
+        "enabled": false
+      },
+      "PayMerchantUser": {
+        "type": "string",
+        "enabled": false
+      },
       "CustomerType": {
         "type": "string",
         "store": false,
