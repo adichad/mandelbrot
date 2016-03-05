@@ -239,7 +239,16 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     import suggestParams.view._
     import suggestParams.target._
 
-    val sort = if(lat != 0.0d || lon !=0.0d) "_score,_distance,_count" else "_score,_count"
+    val sort =
+      if(lat != 0.0d || lon !=0.0d)
+        if(tag.contains("geo_"))
+          "_count,_score,_distance"
+        else
+          "_score,_distance,_count"
+      else if(tag.contains("geo_"))
+        "_count,_score"
+      else
+        "_score,_count"
     val sorters = getSort(sort, lat, lon, areas)
 
     val w = analyze(esClient, index, "targeting.kw.token", kw)
