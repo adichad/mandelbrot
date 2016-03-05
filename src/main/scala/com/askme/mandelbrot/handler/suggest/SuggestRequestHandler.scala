@@ -242,7 +242,7 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
     val sort =
       if(lat != 0.0d || lon !=0.0d)
         if(tag.contains("geo_"))
-          "_count,_score,_distance"
+          "_count,_distance,_score"
         else
           "_score,_distance,_count"
       else if(tag.contains("geo_"))
@@ -362,12 +362,19 @@ class SuggestRequestHandler(val config: Config, serverContext: SearchContext) ex
       .setFetchSource(false)
       .setQuery(boolQuery.must(query).filter(buildFilter(suggestParams)))
 
-    val orders: List[Terms.Order] = (
-        Some(Terms.Order.aggregation("score", false)) ::
-          (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+    val orders: List[Terms.Order] =
+      (
+        if(tag.contains("geo_"))
           Some(Terms.Order.aggregation("count", false)) ::
-          Nil
-      ).flatten
+            (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+            Some(Terms.Order.aggregation("score", false)) ::
+            Nil
+        else
+          Some(Terms.Order.aggregation("score", false)) ::
+            (if (lat != 0.0d || lon != 0.0d) Some(Terms.Order.aggregation("geo", true)) else None) ::
+            Some(Terms.Order.aggregation("count", false)) ::
+            Nil
+        ).flatten
     val order = if(orders.size==1) orders.head else Terms.Order.compound(orders)
     val masters = terms("suggestions").field("groupby").order(order).size(offset+size)
       .subAggregation(
