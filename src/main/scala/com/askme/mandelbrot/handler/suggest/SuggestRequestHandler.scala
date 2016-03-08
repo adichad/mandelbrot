@@ -112,9 +112,9 @@ object SuggestRequestHandler extends Logging {
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length > 8 && fuzzy)
+      if(x.length > 5 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 12) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 9) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -163,10 +163,10 @@ object SuggestRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-    if(word.length > 6 && fuzzy)
+    if(word.length > 5 && fuzzy)
       fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-        .fuzziness(if(word.length > 10) Fuzziness.TWO else Fuzziness.ONE)
-        .boost(if(word.length > 10) exactBoost/3f else exactBoost/2f)
+        .fuzziness(if(word.length > 9) Fuzziness.TWO else Fuzziness.ONE)
+        .boost(if(word.length > 9) exactBoost/3f else exactBoost/2f)
     else
       termQuery(field, word).boost(exactBoost)
 
