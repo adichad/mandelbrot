@@ -93,11 +93,11 @@
       },
       "PayMerchantContactNo": {
         "type": "string",
-        "enabled": false
+        "index": "no"
       },
       "PayMerchantUser": {
         "type": "string",
-        "enabled": false
+        "index": "no"
       },
       "CustomerType": {
         "type": "string",
