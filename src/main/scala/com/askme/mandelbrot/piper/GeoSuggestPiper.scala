@@ -35,13 +35,14 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
 
   implicit class GeoJValue(doc: JValue) {
 
-    def label = (doc \ "name").asInstanceOf[JString].values.trim
+    lazy val label = (doc \ "name").asInstanceOf[JString].values.trim
+    lazy val synonyms = (doc \ "synonyms").children.map(s=>s.asInstanceOf[JString].values)
 
-    def deleted = if((doc \ "archived").asInstanceOf[JBool].values) 1 else 0
+    lazy val deleted = if((doc \ "archived").asInstanceOf[JBool].values) 1 else 0
 
-    def gid = (doc \ "gid").asInstanceOf[JInt].values.toString()
+    lazy val gid = (doc \ "gid").asInstanceOf[JInt].values.toString()
 
-    def kw = (doc \ "name").asInstanceOf[JString].values.trim +:
+    lazy val kw = (doc \ "name").asInstanceOf[JString].values.trim +:
       ((doc \ "synonyms").children.map(s=>s.asInstanceOf[JString].values) ++
         (doc \ "containers_dag").children.map(c=>(c\"name").asInstanceOf[JString].values.trim).filter(!_.isEmpty) ++
         (doc \ "containers_dag").children.flatMap(c=>(c\"synonyms").children.map(s=>s.asInstanceOf[JString].values.trim)).filter(!_.isEmpty) ++
@@ -50,26 +51,28 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
         )
 
 
-    def container_ids = doc\"containers"
-    def containers = (doc \ "containers_dag").children.map( c =>
+    lazy val container_ids = doc\"containers"
+    lazy val containers = (doc \ "containers_dag").children.map( c =>
       ("name" -> (c\"name").asInstanceOf[JString].values) ~
+        ("synonyms" -> (c\"synonyms").children.map(s=>s.asInstanceOf[JString].values.trim)) ~
         ("gid" -> (c\"gid").asInstanceOf[JInt].values) ~
         ("types" -> (c\"types").children.map(t=>t.asInstanceOf[JString].values))
     )
 
-    def related = (doc \ "related_list").children.map( c =>
+    lazy val related = (doc \ "related_list").children.map( c =>
       ("name" -> (c\"name").asInstanceOf[JString].values) ~
+        ("synonyms" -> (c\"synonyms").children.map(s=>s.asInstanceOf[JString].values.trim)) ~
         ("gid" -> (c\"gid").asInstanceOf[JInt].values) ~
         ("types" -> (c\"types").children.map(t=>t.asInstanceOf[JString].values))
     )
-    def center = doc \ "center"
-    def shape = doc \ "shape"
-    def count = if(doc.types.contains("city")) 1000 else if(doc.types.contains("area")) 100 else 10
+    lazy val center = doc \ "center"
+    lazy val shape = doc \ "shape"
+    lazy val count = if(doc.types.contains("city")) 1000 else if(doc.types.contains("area")) 100 else 10
 
-    def tags = if (doc\"tags" == null) List[String]() else (doc\"tags").children.map(t=>t.asInstanceOf[JString].values)
-    def types = (doc\"types").children.map(s=>s.asInstanceOf[JString].values)
+    lazy val tags = if (doc\"tags" == null) List[String]() else (doc\"tags").children.map(t=>t.asInstanceOf[JString].values)
+    lazy val types = (doc\"types").children.map(s=>s.asInstanceOf[JString].values)
 
-    def phone_prefix = doc\"phone_prefix"
+    lazy val phone_prefix = doc\"phone_prefix"
 
 
   }
@@ -97,6 +100,8 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
                     doc.types.map("geo_"+_)
                     ++
                     doc.tags.map("geo_"+_)
+                    ++
+                    doc.types.flatMap(tp=>doc.tags.map(tg=>"geo_"+tg+"_"+tp))
                   )
                   )
             )
@@ -112,6 +117,7 @@ class GeoSuggestPiper(val config: Config) extends Piper with Logging {
               ("display" ->
                 ("label" -> doc.label) ~
                   ("id" -> doc.gid.toInt) ~
+                  ("synonyms" -> doc.synonyms) ~
                   ("center" -> doc.center) ~
                   ("shape" -> doc.shape) ~
                   ("type" -> doc.types) ~
