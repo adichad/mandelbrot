@@ -40,17 +40,7 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, store_front_id: Int, w: Array[String]): List[SortBuilder] = {
-    val parts = for (x <- sort.split(",")) yield x.trim
-    parts.map {
-      case "popularity" => scoreSort.order(SortOrder.DESC)
-      case x =>
-        val pair = x.split( """\.""", 2)
-        if (pair.size == 2)
-          new FieldSortBuilder(pair(0)).order(SortOrder.valueOf(pair(1).toUpperCase))
-        else
-          new FieldSortBuilder(pair(0)).order(SortOrder.DESC)
-    }
+  private def getSort(sort: String, store_front_id: Int, cities: Array[String], w: Array[String]): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -64,7 +54,12 @@ object ProductSearchRequestHandler extends Logging {
         (if (store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").setNestedPath("subscriptions.store_fronts").order(SortOrder.DESC)
               .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id))) else None) ::
-          Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max")) ::
+          (if (cities.nonEmpty)
+            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
+              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)))
+          else
+            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC))
+            ) ::
           Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
           Nil
@@ -310,6 +305,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     val subscriptionFilter = boolQuery().must(termQuery("subscriptions.status", 1))
+    subscriptionFilter.must(rangeQuery("subscriptions.quantity").gt(0))
     if(grouped_id != 0) {
       subscriptionFilter.must(
         termQuery("subscriptions.product_id", grouped_id)
@@ -325,6 +321,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
     }
 
+    /*
     if (city != "") {
       val cityFilter = boolQuery
       city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
@@ -334,6 +331,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       if(cityFilter.hasClauses)
         subscriptionFilter.must(cityFilter)
     }
+    */
 
     if(store!="") {
       val storeNames = store.toLowerCase.trim.split(",")
@@ -374,7 +372,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, store_front_id, w)
+    val sorters = getSort(sort, store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
