@@ -56,9 +56,9 @@ object ProductSearchRequestHandler extends Logging {
               .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id))) else None) ::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)))
+              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)).sortMode("max"))
           else
-            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC))
+            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max"))
             ) ::
           Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
