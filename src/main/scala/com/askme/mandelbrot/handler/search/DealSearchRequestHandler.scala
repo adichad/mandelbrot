@@ -233,8 +233,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     }
     finalFilter.must(termQuery("Published", 1l))
 
-    finalFilter.must(rangeQuery("EndDate").gt("now")).must(rangeQuery("StartDate").lte("now"))
-    finalFilter.must(rangeQuery("Offers.EndDate").gt("now"))
+    finalFilter.must(rangeQuery("EndDate").gt("now-1d")).must(rangeQuery("StartDate").lte("now"))
+    finalFilter.must(rangeQuery("Offers.EndDate").gt("now-1d"))
     if (applicableTo != "") {
       finalFilter.must(termQuery("ApplicableTo", applicableTo))
     }
