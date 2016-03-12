@@ -1337,6 +1337,50 @@
       "subscriptions": {
         "type": "nested",
         "properties": {
+          "bazaar_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "bazaar_price_end_date": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "bazaar_price_start_date": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "bazaar_prices": {
+            "type": "nested",
+            "properties": {
+              "price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "end_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "start_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "priority": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
+          },
           "crm_seller_id": {
             "type": "integer",
             "store": false,
@@ -1381,6 +1425,38 @@
             "format": "yyyy-MM-dd HH:mm:ss",
             "store": false,
             "doc_values": true
+          },
+          "flash_sales": {
+            "type": "nested",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "end_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "start_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "priority": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
           },
           "is_ndd": {
             "type": "integer",
@@ -1743,6 +1819,45 @@
             "type": "float",
             "store": false,
             "doc_values": true
+          },
+          "selling_price_end_date": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "selling_price_start_date": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "selling_prices": {
+            "type": "nested",
+            "properties": {
+              "price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "end_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "start_date": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "priority": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
           },
           "shipping": {
             "type": "integer",
