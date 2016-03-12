@@ -304,8 +304,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       finalFilter.must(termQuery("base_product_id", base_id))
     }
 
-    val subscriptionFilter = boolQuery().must(termQuery("subscriptions.status", 1))
-    subscriptionFilter.must(rangeQuery("subscriptions.quantity").gt(0))
+    val subscriptionFilter =
+      boolQuery().must(termQuery("subscriptions.status", 1))
+        .must(rangeQuery("subscriptions.quantity").gt(0))
     if(grouped_id != 0) {
       subscriptionFilter.must(
         termQuery("subscriptions.product_id", grouped_id)
