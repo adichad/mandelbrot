@@ -242,11 +242,11 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     if(pay_merchant_id!="") {
       finalFilter.must(termQuery("Locations.PayMerchantID", pay_merchant_id))
     }
-    if(edms_loc_id!=0) {
-      finalFilter.must(termQuery("Locations.eDMSLocationID", edms_loc_id))
+    if(edms_outlet_id!=0) {
+      finalFilter.must(termQuery("Locations.eDMSLocationID", edms_outlet_id))
     }
-    if(gll_loc_id!=0) {
-      finalFilter.must(termQuery("Locations.Oltp_Location_ID", gll_loc_id))
+    if(gll_outlet_id!=0) {
+      finalFilter.must(termQuery("Locations.Oltp_Location_ID", gll_outlet_id))
     }
     // Add area filters
     val locFilter = boolQuery

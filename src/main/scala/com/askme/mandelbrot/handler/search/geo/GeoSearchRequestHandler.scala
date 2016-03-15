@@ -131,101 +131,8 @@ object GeoSearchRequestHandler extends Logging {
     }
   }
 
-  private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
-    val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
-    val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length > 4 && fuzzy)
-        spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 8) Fuzziness.TWO else Fuzziness.ONE))
-      else
-        spanTermQuery(field, x)
-    )
-
-    (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
-      val slop = if(sloppy) len/3 else 0
-      terms.sliding(len).foreach { shingle =>
-        if(shingle.length>1) {
-          val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
-          shingle.foreach(nearQuery.clause)
-          fieldQuery1.should(nearQuery)
-        }
-        else {
-          fieldQuery1.should(shingle.head)
-        }
-      }
-    }
-    nestIfNeeded(field, fieldQuery1)
-  }
-
-  private def shingleFull(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = true) = {
-    val fieldQuery = boolQuery.minimumShouldMatch("33%")
-    (minShingle to math.min(maxShingle, w.length)).foreach { len =>
-      val lboost = boost * superBoost(len)
-      w.sliding(len).foreach { shingle =>
-        fieldQuery.should(fuzzyOrTermQuery(field, shingle.mkString(" "), lboost, fuzzyprefix, fuzzy))
-      }
-    }
-    nestIfNeeded(field, fieldQuery)
-  }
-
-  val forceFuzzy = Set()
-  val forceSpan = Map("name.exact"->"name", "synonyms.exact"->"synonyms")
-
-  private def currQuery(tokenFields: Map[String, Float],
-                recomFields: Map[String, Float],
-                w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, tokenRelax: Int = 0) = {
-
-    if(span)
-      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, if(forceFuzzy.contains(field._1)) true else fuzzy)))
-    else {
-      disMaxQuery.addAll(recomFields.map(field =>
-        if(forceSpan.isDefinedAt(field._1))
-          shingleSpan(forceSpan.getOrDefault(field._1, ""), field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, if(forceFuzzy.contains(field._1)) true else fuzzy)
-        else
-          shingleFull(field._1, field._2, w, 1, w.length, math.max(w.length - tokenRelax, 1), if(forceFuzzy.contains(field._1)) true else fuzzy))
-      )
-    }
-  }
-
-  private def shinglePartition(tokenFields: Map[String, Float], recomFields: Map[String, Float], w: Array[String],
-                               maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
-                               span: Boolean = false, tokenRelax: Int = 0): BoolQueryBuilder = {
-
-    if(w.length>0)
-      boolQuery.minimumNumberShouldMatch(1).shouldAll(
-        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
-          if (x._2.length > 0)
-            shinglePartition(tokenFields, recomFields, x._2, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
-              .must(currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax))
-          else
-            currQuery(tokenFields, recomFields, x._1, fuzzy, sloppy, span, tokenRelax)
-        }
-      )
-    else
-      boolQuery
-  }
-
-  private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-      if(word.length > 4 && fuzzy)
-        fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-          .fuzziness(if(word.length > 8) Fuzziness.TWO else Fuzziness.ONE)
-          .boost(if(word.length > 8) exactBoost/3f else exactBoost/2f)
-      else
-        termQuery(field, word).boost(exactBoost)
-
-  }
-
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
-
-
-  private val searchFields2 = Map(
-    "name" -> 1e8f,
-    "synonyms" -> 1e7f)
-
-  private val fullFields2 = Map(
-    "name.exact" -> 1e8f,
-    "synonyms.exact" -> 1e7f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -233,31 +140,174 @@ object GeoSearchRequestHandler extends Logging {
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
 
   private case class WrappedResponse(searchParams: GeoSearchParams, result: SearchResponse, query: QueryBuilder, relaxLevel: Int)
-  private case class ReSearch(searchParams: GeoSearchParams, filter: BoolQueryBuilder, search: SearchRequestBuilder, query: QueryBuilder, relaxLevel: Int, response: SearchResponse)
 
-  private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingle: Int = 1, tokenRelax: Int = 0)
-                          (w: Array[String], maxShingle: Int) = {
-    shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
+
+  private def buildQuery(w: Array[String], kw: String, esClient: Client, index: String) = {
+    def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
+      val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
+      val terms: Array[SpanQueryBuilder] = w.map(x=>
+        if(x.length > 5 && fuzzy)
+          spanMultiTermQueryBuilder(
+            fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 9) Fuzziness.TWO else Fuzziness.ONE))
+        else
+          spanTermQuery(field, x)
+      )
+
+      (minShingle to Math.min(terms.length, maxShingle)).foreach { len =>
+        //var i = 100000
+        val slop = if(sloppy) len/3 else 0
+        terms.sliding(len).foreach { shingle =>
+          if(shingle.length>1) {
+            val nearQuery = spanNearQuery.slop(slop).inOrder(!sloppy).boost(boost * 2 * len) // * math.max(1,i)
+            shingle.foreach(nearQuery.clause)
+            fieldQuery1.should(nearQuery)
+          }
+          else {
+            fieldQuery1.should(shingle.head)
+          }
+
+          //i /= 10
+        }
+      }
+      fieldQuery1
+    }
+
+    def currQuery(tokenFields: Map[String, Float],
+                          w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, tokenRelax: Int = 0) = {
+
+      disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+    }
+
+    def shinglePartition(tokenFields: Map[String, Float], w: Array[String],
+                                 maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                                 tokenRelax: Int = 0): BoolQueryBuilder = {
+
+      if(w.length>0)
+        boolQuery.minimumNumberShouldMatch(1).shouldAll(
+          (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+            if (x._2.length > 0)
+              shinglePartition(tokenFields, x._2, maxShingle, minShingle, fuzzy, sloppy, tokenRelax)
+                .must(currQuery(tokenFields, x._1, fuzzy, sloppy, tokenRelax))
+            else
+              currQuery(tokenFields, x._1, fuzzy, sloppy, tokenRelax)
+          }
+        )
+      else
+        boolQuery
+    }
+
+    def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
+      if(word.length > 5 && fuzzy)
+        fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
+          .fuzziness(if(word.length > 9) Fuzziness.TWO else Fuzziness.ONE)
+          .boost(if(word.length > 9) exactBoost/3f else exactBoost/2f)
+      else
+        termQuery(field, word).boost(exactBoost)
+
+    }
+
+
+    val w = analyze(esClient, index, "synonyms", kw)
+    val query =
+      if(kw.endsWith(" ")) {
+        if (w.nonEmpty) {
+          disMaxQuery.add(
+            shinglePartition(
+              Map("synonyms" -> 1e9f, "name" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms" -> 1f, "name" -> 1e3f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms.token_edge_ngram" -> 1e1f, "name.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms.shingle_nospace_edge_ngram" -> 1e0f, "name.shingle_nospace_edge_ngram" -> 1e1f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+        }
+        else
+          matchAllQuery
+      } else {
+        if (w.nonEmpty) {
+          val front = w.take(w.length - 1)
+          val last_raw = kw.split(pat).last.toLowerCase.trim
+
+          val q = disMaxQuery.add(
+            shinglePartition(
+              Map("synonyms" -> 1e9f, "name" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms" -> 1e3f, "name" -> 1e5f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartition(
+              Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+
+          val q2 = boolQuery
+          if (front.nonEmpty) {
+            q2.must(
+              disMaxQuery.add(
+                shinglePartition(
+                  Map("synonyms" -> 1e9f, "name" -> 1e11f),
+                  front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("synonyms" -> 1e3f, "name" -> 1e5f),
+                  front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartition(
+                  Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              )
+            )
+          }
+
+          val q3 = disMaxQuery
+            .add(fuzzyOrTermQuery("name.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("name.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+          if(front.isEmpty)
+            q3.add(fuzzyOrTermQuery("name.keyword_edge_ngram", last_raw, 1e21f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("synonyms.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("synonyms.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          if (front.isEmpty)
+            q3.add(fuzzyOrTermQuery("synonyms.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = false))
+
+
+
+          q.add(if (q2.hasClauses) q2.must(q3) else q3)
+        } else
+          matchAllQuery
+      }
+    query
   }
-
-  private val qDefs: Seq[((Array[String], Int)=>QueryBuilder, Int)] = Seq(
-
-    (queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = true, span = false, 1, 0), 1), //1
-    // full-shingle exact full matches
-
-    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = true, span = false, 1, 0), 1), //3
-    // full-shingle fuzzy full matches
-
-    //(queryBuilder(searchFields2, fullFields2, fuzzy = false, sloppy = true, span = true, 1, 0), 1), //5
-    // full-shingle exact sloppy-span matches
-
-    //(queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = false, span = false, 1, 1), 1), //6
-    // relaxed-shingle fuzzy full matches
-
-    (queryBuilder(searchFields2, fullFields2, fuzzy = true, sloppy = true, span = true, 2, 1), 1)//7
-    // relaxed-shingle fuzzy sloppy-span matches
-
-  )
 
 }
 
@@ -391,11 +441,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
         if (w.length>20) w = emptyStringArray
         w = w.take(8)
 
-        val query =
-          if (w.length > 0) qDefs.head._1(w, w.length)
-          else matchAllQuery()
-        val leastCount = qDefs.head._2
-        val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
+        val query = buildQuery(w, kw, esClient, index)
 
         // filters
         val finalFilter = buildFilter(searchParams, externals\"filter")
@@ -409,10 +455,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
 
         search.execute(new ActionListener[SearchResponse] {
           override def onResponse(response: SearchResponse): Unit = {
-            if (response.getHits.totalHits() >= leastCount || isMatchAll)
-              me ! WrappedResponse(searchParams, response, qfinal, 0)
-            else
-              me ! ReSearch(searchParams, finalFilter, search, qfinal, 1, response)
+            me ! WrappedResponse(searchParams, response, qfinal, 0)
           }
 
           override def onFailure(e: Throwable): Unit = {
@@ -431,49 +474,6 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
           val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
           val timeTaken = System.currentTimeMillis() - startTime
           error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]->[]", e)
-          context.parent ! ErrorResponse(e.getMessage, e)
-      }
-
-    case ReSearch(searchParams, filter, search, qfinal, relaxLevel, response) =>
-      import searchParams.req._
-        import searchParams.startTime
-
-      try {
-
-        if (relaxLevel >= qDefs.length)
-          context.self ! WrappedResponse(searchParams, response, qfinal, relaxLevel - 1)
-        else {
-          val query = qDefs(relaxLevel)._1(w, w.length)
-          val leastCount = qDefs(relaxLevel)._2
-          val me = context.self
-
-          val qfinal = boolQuery.must(query).filter(filter)
-          search.setQuery(qfinal)
-          search.execute(new ActionListener[SearchResponse] {
-            override def onResponse(response: SearchResponse): Unit = {
-              if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
-                me ! WrappedResponse(searchParams, response, qfinal, relaxLevel)
-              else
-                me ! ReSearch(searchParams, filter, search, qfinal, relaxLevel + 1, response)
-            }
-
-            override def onFailure(e: Throwable): Unit = {
-              val reqBodyRaw = httpReq.entity.data.asString
-              val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
-              val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
-              val timeTaken = System.currentTimeMillis() - startTime
-              error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+ "]->[]", e)
-              context.parent ! ErrorResponse(e.getMessage, e)
-            }
-          })
-        }
-      } catch {
-        case e: Throwable =>
-          val reqBodyRaw = httpReq.entity.data.asString
-          val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
-          val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
-          val timeTaken = System.currentTimeMillis() - startTime
-          error("[" + timeTaken + "] [q" + relaxLevel + "] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+ "]->[]", e)
           context.parent ! ErrorResponse(e.getMessage, e)
       }
 

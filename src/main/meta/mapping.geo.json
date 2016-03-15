@@ -377,6 +377,42 @@
             "search_analyzer": "shingle_nospace_analyzer",
             "position_increment_gap": 100,
             "similarity": "mandelbrot_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "token_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
           }
         }
       },
@@ -732,6 +768,42 @@
             "index": "analyzed",
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "token_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "similarity": "mandelbrot_bm25"
+          },
+          "shingle_nospace_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
             "position_increment_gap": 100,
             "similarity": "mandelbrot_bm25"
           }
