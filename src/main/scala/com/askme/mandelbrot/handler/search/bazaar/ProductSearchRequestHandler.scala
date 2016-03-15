@@ -347,7 +347,12 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       subscriptionFilter.must(
         termQuery("subscriptions.store_fronts_id", store_front_id)
       )
+    }
 
+    if(mpdm_store_front_id > 0) {
+      subscriptionFilter.must(
+        termQuery("subscriptions.store_fronts_mpdm_id", mpdm_store_front_id)
+      )
     }
 
     if(subscriptionFilter.hasClauses)

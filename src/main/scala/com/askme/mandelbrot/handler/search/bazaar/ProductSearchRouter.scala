@@ -28,11 +28,12 @@ case object ProductSearchRouter extends Router {
               'agg.as[Boolean] ? true,
               'version.as[Int] ? 1,
               'store_front_id.as[Int] ? 0,
+              'mpdm_store_front_id.as[Int] ? 0,
               'crm_seller_id.as[Int]?0) { (kw, city,
                category, product_id, grouped_id, base_id, subscribed_id,
                size, offset,
                explain, select, sort, store,
-               agg, version, store_front_id, crm_seller_id) =>
+               agg, version, store_front_id, mpdm_store_front_id, crm_seller_id) =>
               val maxdocspershard = 5000
               val searchType = "dfs_query_then_fetch"
               val timeoutms = 600l
@@ -45,7 +46,7 @@ case object ProductSearchRouter extends Router {
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "product"),
                     TextParams(kw.nonEmptyOrElse(category)),
-                    FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, store_front_id, crm_seller_id),
+                    FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, store_front_id, mpdm_store_front_id, crm_seller_id),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, version),
                     LimitParams(maxdocspershard, timeoutms),
@@ -53,7 +54,6 @@ case object ProductSearchRouter extends Router {
                   )
                 ))
               }
-
 
             }
           }

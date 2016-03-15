@@ -497,6 +497,11 @@
       "isbn": {
         "type": "string"
       },
+      "is_cod_apriori": {
+        "type": "boolean",
+        "store": false,
+        "doc_values": true
+      },
       "jan": {
         "type": "string"
       },
@@ -569,6 +574,11 @@
       "length_class_id": {
         "type": "integer",
         "store": false,
+        "doc_values": true
+      },
+      "layout": {
+        "type": "string",
+        "index": "not_analyzed",
         "doc_values": true
       },
       "manufacturer_id": {
@@ -1237,6 +1247,11 @@
         "store": false,
         "doc_values": true
       },
+      "shipping_charge": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
       "sku": {
         "type": "string"
       },
@@ -1815,6 +1830,51 @@
           "seller_name": {
             "type": "string"
           },
+          "seller_firstname": {
+            "type": "string"
+          },
+          "seller_lastname": {
+            "type": "string"
+          },
+          "seller_address_1": {
+            "type": "string"
+          },
+          "seller_address_2": {
+            "type": "string"
+          },
+          "seller_city": {
+            "type": "string"
+          },
+          "seller_postcode": {
+            "type": "string",
+            "store": false
+          },
+          "seller_country": {
+            "type": "string",
+            "store": false
+          },
+          "seller_country_code_iso_2": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
+          },
+          "seller_country_code_iso_3": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
+          },
+          "seller_zone": {
+            "type": "string",
+            "store": false
+          },
+          "seller_zone_code": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
+          },
           "selling_price": {
             "type": "float",
             "store": false,
@@ -1917,6 +1977,11 @@
       },
       "tax_class_id": {
         "type": "integer",
+        "store": false,
+        "doc_values": true
+      },
+      "transfer_price": {
+        "type": "float",
         "store": false,
         "doc_values": true
       },
