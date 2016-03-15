@@ -6,4 +6,4 @@ import com.askme.mandelbrot.handler.message.RestMessage
  * Created by adichad on 31/03/15.
  */
 case class FilterParams(category: String, id: String, userid: Int, locid: String, pay_type: Int) extends RestMessage
-case class DealFilterParams(id: String, applicableTo: String, screentype: String, category: String, featured: String, dealsource: String, pay_merchant_id: String) extends RestMessage
+case class DealFilterParams(id: String, applicableTo: String, screentype: String, category: String, featured: String, dealsource: String, pay_merchant_id: String, edms_loc_id: Int, gll_loc_id: Int) extends RestMessage

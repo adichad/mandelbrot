@@ -19,9 +19,11 @@ case object DealSearchRouter extends Router {
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
             'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0,
-            'select ? "", 'pay_merchant_id ? "", 'screentype ? "", 'category ? "", 'featured ? "", 'dealsource ? "", "explain".as[Boolean]?false)
+            'select ? "", 'pay_merchant_id ? "", 'edms_loc_id.as[Int]? 0,
+            'gll_loc_id.as[Int]? 0,
+            'screentype ? "", 'category ? "", 'featured ? "", 'dealsource ? "", "explain".as[Boolean]?false)
           { (kw, city, area, id, applicableTo, wantaggrs, size, offset, select,
-             pay_merchant_id, screentype, category, featured, dealsource, explain) =>
+             pay_merchant_id, edms_loc_id, gll_loc_id, screentype, category, featured, dealsource, explain) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
@@ -42,7 +44,7 @@ case object DealSearchRouter extends Router {
                   idx = IndexParams("askmedeal", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d),
-                  filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource, pay_merchant_id), page = PageParams(size, offset),
+                  filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource, pay_merchant_id, edms_loc_id, gll_loc_id), page = PageParams(size, offset),
                   view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis

@@ -242,6 +242,12 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     if(pay_merchant_id!="") {
       finalFilter.must(termQuery("Locations.PayMerchantID", pay_merchant_id))
     }
+    if(edms_loc_id!=0) {
+      finalFilter.must(termQuery("Locations.eDMSLocationID", edms_loc_id))
+    }
+    if(gll_loc_id!=0) {
+      finalFilter.must(termQuery("Locations.Oltp_Location_ID", gll_loc_id))
+    }
     // Add area filters
     val locFilter = boolQuery
     if (area != "") {
@@ -303,6 +309,8 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       search.addAggregation(
         terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
           .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))))
+      search.addAggregation(
+        terms("areas").field("Locations.Area.AreaAggr").size(aggbuckets).order(Terms.Order.count(false)))
     }
     if(select == "") {
       search.setFetchSource(source)
