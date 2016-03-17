@@ -439,7 +439,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
 
         w = analyze(esClient, index, "name", kw)
         if (w.length>20) w = emptyStringArray
-        w = w.take(8)
+        w = w.take(5)
 
         val query = buildQuery(w, kw, esClient, index)
 

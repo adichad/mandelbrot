@@ -40,7 +40,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid timeout requested]")
     complete(BadRequest, "invalid timeout: " + suggestParams.limits.timeoutms)
   }
-  else if(suggestParams.target.kw.length > 50) {
+  else if(suggestParams.target.kw.length > 40) {
     warn("[" + suggestParams.req.clip.toString + "]->[" + suggestParams.req.httpReq.uri + "] [invalid kw length]")
     complete(BadRequest, "invalid kw parameter size: " + suggestParams.target.kw.length)
   }
