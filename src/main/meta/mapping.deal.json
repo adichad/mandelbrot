@@ -812,6 +812,27 @@
           "OfferLimitation": {
             "type": "object",
             "enabled": false
+          },
+          "PartialPaymentAmount": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "PartialPaymentAvailable": {
+            "type": "boolean",
+            "store": false,
+            "doc_values": true
+          },
+          "PaymentPercentage": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "PaymentType": {
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
           }
         }
       },

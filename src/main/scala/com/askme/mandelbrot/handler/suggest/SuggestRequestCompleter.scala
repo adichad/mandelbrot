@@ -53,9 +53,8 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
     complete(BadRequest, "invalid area parameter size: " + suggestParams.target.kw.length)
   }
   else {
-
     val target =
-        context.actorOf (Props (classOf[SuggestRequestHandler], config, serverContext))
+      context.actorOf (Props (classOf[SuggestRequestHandler], config, serverContext))
 
     context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 10, MILLISECONDS))
     target ! suggestParams
