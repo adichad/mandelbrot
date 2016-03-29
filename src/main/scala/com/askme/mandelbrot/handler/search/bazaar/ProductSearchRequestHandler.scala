@@ -438,6 +438,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val externals = parseOpt(externalString).getOrElse(JNothing)
 
           w = analyze(esClient, index, "name", kw)
+          info("here")
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
           if (bannedPhrase(w, index) || (w.isEmpty && category.trim == "" &&
