@@ -419,12 +419,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     search
   }
 
-  def bannedPhrase(w: Array[String], index: String): Boolean = {
-    info("hello")
-    info("banned-phrases: "+list[String]("banned-phrases").mkString(", ")+"<?>"+w.mkString(" "))
-    list[String]("banned-phrases").contains(w.mkString(" "))
-  }
-
   override def receive = {
       case searchParams: ProductSearchParams =>
         import searchParams.filters._
@@ -438,12 +432,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val externals = parseOpt(externalString).getOrElse(JNothing)
 
           w = analyze(esClient, index, "name", kw)
-          info("here")
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
-          if (bannedPhrase(w, index) || (w.isEmpty && category.trim == "" &&
+          if (w.isEmpty && category.trim == "" &&
             product_id == 0 && grouped_id == 0 && base_id == 0 && subscribed_id == 0 && store_front_id==0 &&
-            crm_seller_id ==0 && city.trim=="")) {
+            crm_seller_id ==0 && city.trim=="") {
             context.parent ! EmptyResponse("empty search criteria")
           }
           else {
