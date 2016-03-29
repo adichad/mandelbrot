@@ -420,7 +420,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
   }
 
   def bannedPhrase(w: Array[String], index: String): Boolean = {
-    warn("banned-phrases: "+list[String]("banned-phrases").mkString(", ")+"<?>"+w.mkString(" "))
+    info("hello")
+    info("banned-phrases: "+list[String]("banned-phrases").mkString(", ")+"<?>"+w.mkString(" "))
     list[String]("banned-phrases").contains(w.mkString(" "))
   }
 
