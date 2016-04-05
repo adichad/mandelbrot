@@ -11,7 +11,7 @@ import scala.collection.JavaConversions._
   */
 class DealPayComparator extends NativeScriptFactory {
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript =
-    new DealChannelComparatorScript
+    new DealPayComparatorScript
 
   override def needsScores = false
 }
