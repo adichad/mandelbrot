@@ -26,6 +26,8 @@ class ScriptRegistrationPlugin extends Plugin {
     module.registerScript("randomizer", classOf[RandomBucketComparator])
     module.registerScript("dealchannelsort", classOf[DealChannelComparator])
     module.registerScript("dealsort", classOf[DealComparator])
+    module.registerScript("dealpaysort", classOf[DealPayComparator])
+
   }
 
 }

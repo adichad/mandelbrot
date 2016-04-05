@@ -36,6 +36,7 @@ object DealSearchRequestHandler extends Logging {
   private def getSort(sort: String) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
+      case "_pay" => scriptSort(new Script("dealpaysort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
       case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
       case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
       case "_channel" => scriptSort(new Script("dealchannelsort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
@@ -235,7 +236,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
     finalFilter.must(rangeQuery("EndDate").gt("now-1d")).must(rangeQuery("StartDate").lte("now"))
     finalFilter.must(rangeQuery("Offers.EndDate").gt("now-1d"))
-    if (applicableTo != "") {
+    if (applicableTo != "" && pay_type==0) {
       finalFilter.must(termQuery("ApplicableTo", applicableTo))
     }
 
@@ -292,8 +293,10 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.limits._
     import searchParams.page._
     import searchParams.view._
+    import searchParams.filters._
 
-    val sort = "_home,_base,_channel,_score"
+
+    val sort = if(pay_type==0) "_home,_base,_channel,_score" else "_pay,_home,_base,_channel,_score"
 
     val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
