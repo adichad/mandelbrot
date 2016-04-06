@@ -36,22 +36,32 @@
             "position_increment_gap": 100,
             "norms": { "enabled": false }
           },
-          "shingle2": {
+          "shingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
-          "shingle3": {
+          "shingle_edge_ngram": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -62,6 +72,26 @@
             "index": "analyzed",
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -136,22 +166,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -162,6 +202,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -215,22 +275,34 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -240,6 +312,27 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -408,22 +501,34 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
               "shingle_nospace": {
@@ -433,6 +538,27 @@
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
                 "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               }
             }
@@ -529,22 +655,32 @@
             "position_increment_gap": 100,
             "norms": { "enabled": false }
           },
-          "shingle2": {
+          "shingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
-          "shingle3": {
+          "shingle_edge_ngram": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -555,6 +691,26 @@
             "index": "analyzed",
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -707,22 +863,34 @@
             "position_increment_gap": 100,
             "norms": { "enabled": false }
           },
-          "shingle2": {
+          "shingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "position_increment_gap": 100,
+            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
-          "shingle3": {
+          "shingle_edge_ngram": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
             "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
           "shingle_nospace": {
@@ -732,6 +900,27 @@
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
             "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           }
         }
@@ -767,22 +956,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -793,6 +992,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -840,22 +1059,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -866,6 +1095,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -910,22 +1159,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -936,6 +1195,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -1012,22 +1291,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -1038,6 +1327,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -1119,22 +1428,32 @@
                 "position_increment_gap": 100,
                 "norms": { "enabled": false }
               },
-              "shingle2": {
+              "shingle": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle2_analyzer",
-                "search_analyzer": "shingle2_analyzer",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
               },
-              "shingle3": {
+              "shingle_edge_ngram": {
                 "type": "string",
                 "store": false,
                 "index": "analyzed",
-                "analyzer": "shingle3_analyzer",
-                "search_analyzer": "shingle3_analyzer",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -1145,6 +1464,26 @@
                 "index": "analyzed",
                 "analyzer": "shingle_nospace_analyzer",
                 "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_ngram_analyzer",
+                "search_analyzer": "token_ngram_analyzer",
                 "position_increment_gap": 100,
                 "norms": { "enabled": false },
                 "similarity": "bazaar_bm25"
@@ -1317,22 +1656,32 @@
             "position_increment_gap": 100,
             "norms": { "enabled": false }
           },
-          "shingle2": {
+          "shingle": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle2_analyzer",
-            "search_analyzer": "shingle2_analyzer",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
           },
-          "shingle3": {
+          "shingle_edge_ngram": {
             "type": "string",
             "store": false,
             "index": "analyzed",
-            "analyzer": "shingle3_analyzer",
-            "search_analyzer": "shingle3_analyzer",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -1343,6 +1692,26 @@
             "index": "analyzed",
             "analyzer": "shingle_nospace_analyzer",
             "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_ngram_analyzer",
+            "search_analyzer": "token_ngram_analyzer",
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25"
@@ -1615,22 +1984,32 @@
                     "position_increment_gap": 100,
                     "norms": { "enabled": false }
                   },
-                  "shingle2": {
+                  "shingle": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle2_analyzer",
-                    "search_analyzer": "shingle2_analyzer",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
                   },
-                  "shingle3": {
+                  "shingle_edge_ngram": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle3_analyzer",
-                    "search_analyzer": "shingle3_analyzer",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
@@ -1641,6 +2020,26 @@
                     "index": "analyzed",
                     "analyzer": "shingle_nospace_analyzer",
                     "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_ngram_analyzer",
+                    "search_analyzer": "token_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
@@ -1680,22 +2079,32 @@
                     "position_increment_gap": 100,
                     "norms": { "enabled": false }
                   },
-                  "shingle2": {
+                  "shingle": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle2_analyzer",
-                    "search_analyzer": "shingle2_analyzer",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
                   },
-                  "shingle3": {
+                  "shingle_edge_ngram": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle3_analyzer",
-                    "search_analyzer": "shingle3_analyzer",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
@@ -1706,6 +2115,26 @@
                     "index": "analyzed",
                     "analyzer": "shingle_nospace_analyzer",
                     "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_ngram_analyzer",
+                    "search_analyzer": "token_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
@@ -1753,22 +2182,32 @@
                     "position_increment_gap": 100,
                     "norms": { "enabled": false }
                   },
-                  "shingle2": {
+                  "shingle": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle2_analyzer",
-                    "search_analyzer": "shingle2_analyzer",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
                   },
-                  "shingle3": {
+                  "shingle_edge_ngram": {
                     "type": "string",
                     "store": false,
                     "index": "analyzed",
-                    "analyzer": "shingle3_analyzer",
-                    "search_analyzer": "shingle3_analyzer",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"
@@ -1779,6 +2218,26 @@
                     "index": "analyzed",
                     "analyzer": "shingle_nospace_analyzer",
                     "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_ngram_analyzer",
+                    "search_analyzer": "token_ngram_analyzer",
                     "position_increment_gap": 100,
                     "norms": { "enabled": false },
                     "similarity": "bazaar_bm25"

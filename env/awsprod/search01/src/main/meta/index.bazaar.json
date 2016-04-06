@@ -148,7 +148,7 @@
         },
         "edge_ngram": {
           "type": "edgeNGram",
-          "min_gram": 2,
+          "min_gram": 1,
           "max_gram": 20
         }
       },
@@ -176,6 +176,18 @@
           "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
           "tokenizer": "standard",
           "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle"]
+        },
+        "shingle_edge_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "edge_ngram"]
+        },
+        "shingle_ngram_analyzer": {
+          "type": "custom",
+          "char_filter": ["html_strip_char_filter", "mapping_char_filter"],
+          "tokenizer": "standard",
+          "filter": ["standard", "lowercase", "asciifolding", "pre-synonym", "stopword", "possessive_stemmer", "word_delimiter", "plural_stem", "participle_stem", "synonym", "shingle", "ngram"]
         },
         "shingle2_analyzer": {
           "type": "custom",
