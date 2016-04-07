@@ -21,6 +21,7 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -216,6 +217,31 @@ object ProductSearchRequestHandler extends Logging {
       boolQuery
   }
 
+
+  def currQuerySuggest(tokenFields: Map[String, Float],
+                       w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, tokenRelax: Int = 0) = {
+
+    disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+  }
+
+  def shinglePartitionSuggest(tokenFields: Map[String, Float], w: Array[String],
+                              maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                              tokenRelax: Int = 0): BoolQueryBuilder = {
+
+    if(w.length>0)
+      boolQuery.minimumNumberShouldMatch(1).shouldAll(
+        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+          if (x._2.length > 0)
+            shinglePartitionSuggest(tokenFields, x._2, maxShingle, minShingle, fuzzy, sloppy, tokenRelax)
+              .must(currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax))
+          else
+            currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax)
+        }
+      )
+    else
+      boolQuery
+  }
+
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
       if(word.length > 4 && fuzzy)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
@@ -368,6 +394,17 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         finalFilter.must(b)
     }
 
+    if (brand != "") {
+      val b = boolQuery.must(termQuery("attributes.name.agg", "Filter_Brand"))
+      val sub = boolQuery
+      brand.split("""#""").map(analyze(esClient, index, "attributes.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
+        sub.should(termQuery("attributes.value.exact", br))
+      }
+      b.must(sub)
+      if(b.hasClauses)
+        finalFilter.must(nestedQuery("attributes", b))
+    }
+
     finalFilter
   }
 
@@ -394,7 +431,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (agg) {
       if (category == ""||category.contains(""","""))
-        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets).subAggregation(
+          nested("subscriptions").path("subscriptions").subAggregation(
+            nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
+              terms("store_fronts").field("subscriptions.store_fronts.id").size(1).order(Terms.Order.count(false))
+            )
+          )
+        )
+        )
 
       if(store_front_id==0)
         search.addAggregation(
@@ -419,6 +463,138 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     search
   }
 
+
+
+  def buildSuggestQuery(kw: String, w: Array[String]) = {
+    val query =
+      if(kw.endsWith(" ")) {
+        if (w.nonEmpty) {
+          disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map(
+                "name" -> 1e12f,
+                "category.name" -> 1e9f,
+                "category.description" -> 1e7f,
+                "attributes_value" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "category.name" -> 1e3f,
+                "category.description" -> 1e1f,
+                "attributes_value" -> 1e5f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name.token_edge_ngram" -> 1e2f,
+                "category.name.token_edge_ngram" -> 1e1f,
+                "category.description.token_edge_ngram" -> 1e0f,
+                "attributes_value.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category.description.shingle_nospace_edge_ngram" -> 1e0f,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+        }
+        else
+          matchAllQuery
+      } else {
+        if (w.nonEmpty) {
+          val front = w.take(w.length - 1)
+          val last_raw = kw.split(pat).last.toLowerCase.trim
+
+          val q = disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e12f,
+                "category.name" -> 1e9f,
+                "attributes_value" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "category.name" -> 1e3f,
+                "attributes_value" -> 1e5f),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name.token_edge_ngram" -> 1e2f,
+                "category.name.token_edge_ngram" -> 1e1f,
+                "attributes_value.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+
+          val q2 = boolQuery
+          if (front.nonEmpty) {
+            q2.must(
+              disMaxQuery.add(
+                shinglePartitionSuggest(
+                  Map("name" -> 1e12f,
+                    "category.name" -> 1e9f,
+                    "attributes_value" -> 1e11f),
+                  front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+                )
+              ).add(
+                shinglePartitionSuggest(
+                  Map("name" -> 1e6f,
+                    "category.name" -> 1e3f,
+                    "attributes_value" -> 1e5f),
+                  front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartitionSuggest(
+                  Map("name.token_edge_ngram" -> 1e2f,
+                    "category.name.token_edge_ngram" -> 1e1f,
+                    "attributes_value.token_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartitionSuggest(
+                  Map("name.shingle_nospace_edge_ngram" -> 1e2f,
+                    "category.name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              )
+            )
+          }
+
+          val q3 = disMaxQuery
+            .add(fuzzyOrTermQuery("name.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("name.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("category.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("attributes_value.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("attributes_value.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+
+
+          q.add(if (q2.hasClauses) q2.must(q3) else q3)
+        } else
+          matchAllQuery
+      }
+    query
+  }
+
   override def receive = {
       case searchParams: ProductSearchParams =>
         import searchParams.filters._
@@ -434,46 +610,42 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           w = analyze(esClient, index, "name", kw)
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
-          if (w.isEmpty && category.trim == "" &&
-            product_id == 0 && grouped_id == 0 && base_id == 0 && subscribed_id == 0 && store_front_id==0 &&
-            crm_seller_id ==0 && city.trim=="") {
-            context.parent ! EmptyResponse("empty search criteria")
+
+          val query = if(suggest) buildSuggestQuery(kw, w) else {
+            if (w.length > 0) qDefs.head._1(w, w.length)
+            else matchAllQuery()
           }
-          else {
-            val query =
-              if (w.length > 0) qDefs.head._1(w, w.length)
-              else matchAllQuery()
-            val leastCount = qDefs.head._2
-            val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
+          val leastCount = qDefs.head._2
+          val isMatchAll = suggest || query.isInstanceOf[MatchAllQueryBuilder]
 
-            // filters
-            val finalFilter = buildFilter(searchParams, externals\"filter")
+          // filters
+          val finalFilter = buildFilter(searchParams, externals\"filter")
 
-            val search = buildSearch(searchParams)
+          val search = buildSearch(searchParams)
 
-            val qfinal = boolQuery.must(query).filter(finalFilter)
-            search.setQuery(qfinal)
+          val qfinal = boolQuery.must(query).filter(finalFilter)
+          search.setQuery(qfinal)
 
-            val me = context.self
+          val me = context.self
 
-            search.execute(new ActionListener[SearchResponse] {
-              override def onResponse(response: SearchResponse): Unit = {
-                if (response.getHits.totalHits() >= leastCount || isMatchAll)
-                  me ! WrappedResponse(searchParams, response, qfinal, 0)
-                else
-                  me ! ReSearch(searchParams, finalFilter, search, qfinal, 1, response)
-              }
+          search.execute(new ActionListener[SearchResponse] {
+            override def onResponse(response: SearchResponse): Unit = {
+              if (response.getHits.totalHits() >= leastCount || isMatchAll)
+                me ! WrappedResponse(searchParams, response, qfinal, 0)
+              else
+                me ! ReSearch(searchParams, finalFilter, search, qfinal, 1, response)
+            }
 
-              override def onFailure(e: Throwable): Unit = {
-                val reqBodyRaw = httpReq.entity.data.asString
-                val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
-                val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
-                val timeTaken = System.currentTimeMillis() - startTime
-                error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]->[]", e)
-                context.parent ! ErrorResponse(e.getMessage, e)
-              }
-            })
-          }
+            override def onFailure(e: Throwable): Unit = {
+              val reqBodyRaw = httpReq.entity.data.asString
+              val temp = parseOpt(reqBodyRaw).getOrElse(JNothing)
+              val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
+              val timeTaken = System.currentTimeMillis() - startTime
+              error("[" + timeTaken + "] [q0] [na/na] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]->[]", e)
+              context.parent ! ErrorResponse(e.getMessage, e)
+            }
+          })
+
         } catch {
           case e: Throwable =>
             val reqBodyRaw = httpReq.entity.data.asString

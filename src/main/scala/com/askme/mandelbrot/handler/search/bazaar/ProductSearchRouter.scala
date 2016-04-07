@@ -26,14 +26,15 @@ case object ProductSearchRouter extends Router {
               'sort.as[String]?"popularity",
               'store.as[String]?"",
               'agg.as[Boolean] ? true,
-              'version.as[Int] ? 1,
+              'suggest.as[Boolean] ? true,
               'store_front_id.as[Int] ? 0,
               'mpdm_store_front_id.as[Int] ? 0,
-              'crm_seller_id.as[Int]?0) { (kw, city,
+              'crm_seller_id.as[Int]?0,
+              'brand.as[String]?"") { (kw, city,
                category, product_id, grouped_id, base_id, subscribed_id,
                size, offset,
                explain, select, sort, store,
-               agg, version, store_front_id, mpdm_store_front_id, crm_seller_id) =>
+               agg, suggest, store_front_id, mpdm_store_front_id, crm_seller_id, brand) =>
               val maxdocspershard = 5000
               val searchType = "dfs_query_then_fetch"
               val timeoutms = 600l
@@ -45,10 +46,10 @@ case object ProductSearchRouter extends Router {
                   ProductSearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "product"),
-                    TextParams(kw.nonEmptyOrElse(category)),
-                    FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, store_front_id, mpdm_store_front_id, crm_seller_id),
+                    TextParams(kw.nonEmptyOrElse(category), suggest),
+                    FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, store_front_id, mpdm_store_front_id, crm_seller_id, brand),
                     PageParams(sort, size, offset),
-                    ViewParams(source, agg, aggbuckets, explain, select, searchType, version),
+                    ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis
                   )

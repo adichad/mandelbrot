@@ -746,13 +746,11 @@
           "OriginalPrice": {
             "type": "float",
             "store": false,
-            "null_value": 0.0,
             "doc_values": true
           },
           "OfferPrice": {
             "type": "float",
             "store": false,
-            "null_value": 0.0,
             "doc_values": true
           },
           "CouponPrice": {
@@ -768,19 +766,16 @@
           "SavedPrice": {
             "type": "float",
             "store": false,
-            "null_value": 0.0,
             "doc_values": true
           },
           "SavedPercentage": {
             "type": "float",
             "store": false,
-            "null_value": 0.0,
             "doc_values": true
           },
           "UsePercentage": {
             "type": "boolean",
             "store": false,
-            "null_value": false,
             "doc_values": true
           },
           "CommisionPercentage": {
