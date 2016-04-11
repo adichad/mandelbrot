@@ -310,8 +310,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     val finalFilter = boolQuery()
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
-
-    finalFilter.must(termQuery("status", 1))
+    
     if (variant_id != 0) {
       finalFilter.must(termQuery("variant_id", product_id))
     }
