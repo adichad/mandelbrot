@@ -12,7 +12,8 @@ import com.askme.mandelbrot.handler.index.IndexRouter
 import com.askme.mandelbrot.handler.aggregate.AggregateRouter
 import com.askme.mandelbrot.handler.search.bazaar.ProductSearchRouter
 import com.askme.mandelbrot.handler.search.geo.GeoSearchRouter
-import com.askme.mandelbrot.handler.search.{SearchDocsRouter, SearchRouter, DealSearchRouter}
+import com.askme.mandelbrot.handler.search.grocery.GrocerySearchRouter
+import com.askme.mandelbrot.handler.search.{DealSearchRouter, SearchDocsRouter, SearchRouter}
 import com.askme.mandelbrot.handler.suggest.SuggestRouter
 import com.askme.mandelbrot.handler.watch.WatchRouter
 import com.askme.mandelbrot.loader.FileSystemWatcher
@@ -21,6 +22,7 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
+
 import scala.language.postfixOps
 import scala.concurrent.duration._
 
@@ -47,12 +49,12 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
       compressResponseIfRequested() {
         decompressRequest() {
           get {
-            GeoSearchRouter(this) ~ ProductSearchRouter(this) ~ DealSearchRouter(this) ~ SearchDocsRouter(this) ~
+            GrocerySearchRouter(this) ~ GeoSearchRouter(this) ~ ProductSearchRouter(this) ~ DealSearchRouter(this) ~ SearchDocsRouter(this) ~
               SearchRouter(this) ~ aggRouter(this) ~ AnalyseRouter(this) ~ SuggestRouter(this) ~
               GetRouter(this)
           } ~
             post {
-              GeoSearchRouter(this) ~ ProductSearchRouter(this) ~ WatchRouter(this) ~ indexRouter(this)
+              GrocerySearchRouter(this) ~ GeoSearchRouter(this) ~ ProductSearchRouter(this) ~ WatchRouter(this) ~ indexRouter(this)
             }
         }
       }

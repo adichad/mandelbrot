@@ -274,10 +274,10 @@
             }
           },
           "availability_max": {
-            "type": "int"
+            "type": "integer"
           },
           "availability_min": {
-            "type": "int"
+            "type": "integer"
           },
           "brand_deal": {
             "type": "string",
