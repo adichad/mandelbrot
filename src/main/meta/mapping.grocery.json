@@ -446,7 +446,9 @@
             "type": "string"
           },
           "zone_code": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed",
+            "store": false
           },
           "zone_id": {
             "type": "long"

@@ -4,7 +4,6 @@ import java.util
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
 import com.askme.mandelbrot.handler.search.grocery.message.GrocerySearchParams
 import com.askme.mandelbrot.handler.search.grocery.message.SearchResult
@@ -20,10 +19,7 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
-import org.elasticsearch.search.aggregations.pipeline._
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders._
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -310,7 +306,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     val finalFilter = boolQuery()
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
-    
+
     if (variant_id != 0) {
       finalFilter.must(termQuery("variant_id", product_id))
     }
@@ -323,7 +319,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (zone_code != "") {
       val zoneFilter = boolQuery
-      zone_code.split( """,""").map(analyze(esClient, index, "items.zone_code", _).mkString(" ")).filter(!_.isEmpty).foreach { z =>
+      zone_code.split( """,""").foreach { z =>
         zoneFilter.should(termQuery("items.zone_code", z))
       }
 
