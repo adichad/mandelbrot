@@ -4,7 +4,6 @@ import java.util
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
 import com.askme.mandelbrot.handler.search.bazaar.message.ProductSearchParams
 import com.askme.mandelbrot.handler.search.bazaar.message.SearchResult
@@ -21,7 +20,6 @@ import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -431,14 +429,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (agg) {
       if (category == ""||category.contains(""","""))
-        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets).subAggregation(
-          nested("subscriptions").path("subscriptions").subAggregation(
-            nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-              terms("store_fronts").field("subscriptions.store_fronts.id").size(1).order(Terms.Order.count(false))
-            )
-          )
-        )
-        )
+        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
       if(store_front_id==0)
         search.addAggregation(
@@ -448,7 +439,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             )
           )
         )
-
 
       search.addAggregation(
         nested("attributes").path("attributes")
@@ -585,7 +575,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
           q3.add(fuzzyOrTermQuery("attributes_value.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
             .add(fuzzyOrTermQuery("attributes_value.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-
 
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
