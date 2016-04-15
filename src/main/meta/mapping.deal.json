@@ -799,12 +799,21 @@
             "store": false,
             "doc_values": true
           },
+          "MinimumStay": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
           "DisplayOrder": {
             "type": "integer",
             "store": false,
             "doc_values": true
           },
           "OfferLimitation": {
+            "type": "object",
+            "enabled": false
+          },
+          "OfferType": {
             "type": "object",
             "enabled": false
           },
