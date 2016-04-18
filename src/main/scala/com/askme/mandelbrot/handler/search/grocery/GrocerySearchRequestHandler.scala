@@ -39,18 +39,29 @@ object GrocerySearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, w: Array[String]): List[SortBuilder] = {
+  private def getSort(sort: String, w: Array[String], zone_code: String): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
-      List(fieldSort("min_price").order(SortOrder.ASC))
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))
     }
     else if(sort=="price.desc") {
-      List(fieldSort("min_price").order(SortOrder.DESC))
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC)
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))
+    }
+    else if(sort=="alpha.asc") {
+      List(fieldSort("product_name.agg").order(SortOrder.ASC))
+    }
+    else if(sort=="alpha.desc") {
+      List(fieldSort("product_name.agg").order(SortOrder.DESC))
     }
     else {
       (
         Some(scoreSort().order(SortOrder.DESC))::
+          Some(fieldSort("order_count").order(SortOrder.DESC))::
+          Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))::
           Some(fieldSort("variant_id").order(SortOrder.DESC))::
           Nil
         ).flatten
@@ -134,9 +145,9 @@ object GrocerySearchRequestHandler extends Logging {
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length > 4 && fuzzy)
+      if(x.length > 3 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 8) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 5) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -169,7 +180,7 @@ object GrocerySearchRequestHandler extends Logging {
   }
 
   val forceFuzzy = Set()
-  val forceSpan = Map("variant_title.exact"->"variant_title", "brand_name.exact"->"brand_name",
+  val forceSpan = Map("variant_title.exact"->"variant_title", "variant_title_head.exact"->"variant_title_head", "brand_name.exact"->"brand_name",
     "categories.name.exact"->"categories.name")
 
   private def currQuery(tokenFields: Map[String, Float],
@@ -232,10 +243,10 @@ object GrocerySearchRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-      if(word.length > 4 && fuzzy)
+      if(word.length > 3 && fuzzy)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-          .fuzziness(if(word.length > 8) Fuzziness.TWO else Fuzziness.ONE)
-          .boost(if(word.length > 8) exactBoost/3f else exactBoost/2f)
+          .fuzziness(if(word.length > 5) Fuzziness.TWO else Fuzziness.ONE)
+          .boost(if(word.length > 5) exactBoost/3f else exactBoost/2f)
       else
         termQuery(field, word).boost(exactBoost)
 
@@ -246,11 +257,13 @@ object GrocerySearchRequestHandler extends Logging {
 
 
   private val searchFields2 = Map(
+    "variant_title_head" -> 1e12f,
     "variant_title" -> 1e8f,
     "brand_name" -> 1e2f,
     "categories.name" -> 1e5f)
 
   private val fullFields2 = Map(
+    "variant_title_head.exact" -> 1e12f,
     "variant_title.exact"->1e10f,
     "brand_name.exact" -> 1e2f,
     "categories.name.exact"->1e6f)
@@ -304,6 +317,23 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     // filters
     val finalFilter = boolQuery()
+    finalFilter
+      .must(termQuery("variant_status", 0))
+      .must(termQuery("product_status", 0))
+      .must(termQuery("categories.status", 1))
+
+    val itemFilter = boolQuery.must(termQuery("items.status", 1))
+    if (item_id != 0) {
+      itemFilter.must(termQuery("items.id", item_id))
+    }
+    val zoneFilter = boolQuery
+    zone_code.split( """,""").foreach { z =>
+      zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
+    }
+
+    if(zoneFilter.hasClauses)
+      itemFilter.must(zoneFilter)
+    finalFilter.must(nestedQuery("items",itemFilter))
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
@@ -313,20 +343,6 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     if (product_id != 0) {
       finalFilter.must(termQuery("product_id", product_id))
     }
-    if (item_id != 0) {
-      finalFilter.must(termQuery("items.id", item_id))
-    }
-
-    if (zone_code != "") {
-      val zoneFilter = boolQuery
-      zone_code.split( """,""").foreach { z =>
-        zoneFilter.should(termQuery("items.zone_code", z))
-      }
-
-      if(zoneFilter.hasClauses)
-        finalFilter.must(zoneFilter)
-    }
-
 
     if (category != "") {
       val b = boolQuery
@@ -356,7 +372,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w)
+    val sorters = getSort(sort, w, zone_code)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
@@ -391,6 +407,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           disMaxQuery.add(
             shinglePartitionSuggest(
               Map(
+                "variant_title_head" -> 1e14f,
                 "variant_title" -> 1e12f,
                 "categories.name" -> 1e9f,
                 "brand_name" -> 1e11f),
@@ -398,21 +415,27 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title" -> 1e6f,
-                "categories.name" -> 1e3f,
+              Map(
+                "variant_title_head" -> 1e8f,
+                "variant_title" -> 1e6f,
+                "categories.name" -> 1e4f,
                 "brand_name" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title.token_edge_ngram" -> 1e2f,
+              Map(
+                "variant_title_head.token_edge_ngram" -> 1e4f,
+                "variant_title.token_edge_ngram" -> 1e2f,
                 "categories.name.token_edge_ngram" -> 1e1f,
                 "brand_name.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title.shingle_nospace_edge_ngram" -> 1e2f,
+              Map(
+                "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
+                "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
                 "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
                 "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
@@ -428,28 +451,36 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
           val q = disMaxQuery.add(
             shinglePartitionSuggest(
-              Map("variant_title" -> 1e12f,
+              Map(
+                "variant_title_head" -> 1e14f,
+                "variant_title" -> 1e12f,
                 "categories.name" -> 1e9f,
                 "brand_name" -> 1e11f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title" -> 1e6f,
+              Map(
+                "variant_title_head" -> 1e8f,
+                "variant_title" -> 1e6f,
                 "categories.name" -> 1e3f,
                 "brand_name" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title.token_edge_ngram" -> 1e2f,
+              Map(
+                "variant_title_head.token_edge_ngram" -> 1e4f,
+                "variant_title.token_edge_ngram" -> 1e2f,
                 "categories.name.token_edge_ngram" -> 1e1f,
                 "brand_name.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
-              Map("variant_title.shingle_nospace_edge_ngram" -> 1e2f,
+              Map(
+                "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
+                "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
                 "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
                 "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
@@ -461,28 +492,36 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
             q2.must(
               disMaxQuery.add(
                 shinglePartitionSuggest(
-                  Map("variant_title" -> 1e12f,
+                  Map(
+                    "variant_title_head" -> 1e14f,
+                    "variant_title" -> 1e12f,
                     "categories.name" -> 1e9f,
                     "brand_name" -> 1e11f),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
-                  Map("variant_title" -> 1e6f,
+                  Map(
+                    "variant_title_head" -> 1e8f,
+                    "variant_title" -> 1e6f,
                     "categories.name" -> 1e3f,
                     "brand_name" -> 1e5f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
-                  Map("variant_title.token_edge_ngram" -> 1e2f,
+                  Map(
+                    "variant_title_head.token_edge_ngram" -> 1e4f,
+                    "variant_title.token_edge_ngram" -> 1e2f,
                     "categories.name.token_edge_ngram" -> 1e1f,
                     "brand_name.token_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
-                  Map("variant_title.shingle_nospace_edge_ngram" -> 1e2f,
+                  Map(
+                    "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
+                    "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
                     "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
                     "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
@@ -492,7 +531,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           }
 
           val q3 = disMaxQuery
-            .add(fuzzyOrTermQuery("variant_title.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("variant_title_head.token_edge_ngram", last_raw, 1e20f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("variant_title_head.shingle_nospace_edge_ngram", last_raw, 1e20f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("variant_title.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
             .add(fuzzyOrTermQuery("variant_title.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
 
           q3.add(fuzzyOrTermQuery("categories.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
