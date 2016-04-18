@@ -94,7 +94,13 @@
             "one => 1",
             "zero => 0",
             "hotal => hotel",
-            "smart phone,smartfone,smart fone => smartphone"
+            "smart phone,smartfone,smart fone => smartphone",
+            "ata => atta",
+            "meda => maida",
+            "khas, khash, khuss, khush => khus",
+            "tel => oil",
+            "ruh => rooh",
+            "daiper, daipar, diapar => diaper"
           ]
         },
         "plural_stem": {
