@@ -39,16 +39,16 @@ object GrocerySearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, w: Array[String], zone_code: String): List[SortBuilder] = {
+  private def getSort(sort: String, w: Array[String], zone_code: Array[String]): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
       List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))
     }
     else if(sort=="price.desc") {
       List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC)
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))
     }
     else if(sort=="alpha.asc") {
       List(fieldSort("product_name.agg").order(SortOrder.ASC))
@@ -59,9 +59,10 @@ object GrocerySearchRequestHandler extends Logging {
     else {
       (
         Some(scoreSort().order(SortOrder.DESC))::
-          Some(fieldSort("order_count").order(SortOrder.DESC))::
+          Some(fieldSort("items.gsv").setNestedPath("items").order(SortOrder.DESC)
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))::
           Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termQuery("items.zone_code", zone_code))))::
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))::
           Some(fieldSort("variant_id").order(SortOrder.DESC))::
           Nil
         ).flatten
@@ -372,7 +373,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w, zone_code)
+    val sorters = getSort(sort, w, zone_code.split(""",""")
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
