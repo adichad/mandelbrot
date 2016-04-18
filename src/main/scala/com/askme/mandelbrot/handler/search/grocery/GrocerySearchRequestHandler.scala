@@ -373,7 +373,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w, zone_code.split(""",""")
+    val sorters = getSort(sort, w, zone_code.split(""","""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
