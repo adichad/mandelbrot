@@ -384,14 +384,14 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
-      .setFetchSource(select.split("""\|"""), Array[String]())
+      .setFetchSource(select.split(""","""), Array[String]())
 
 
     if (agg) {
-      if (category == ""||category.contains("""\|"""))
+      if (category == ""||category.contains('|'))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
-      if (brand == ""||brand.contains("""\|"""))
+      if (brand == ""||brand.contains('|'))
         search.addAggregation(terms("brands").field("brand_name.agg").size(aggbuckets))
       
     }
