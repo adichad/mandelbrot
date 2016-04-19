@@ -18,6 +18,7 @@ import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
@@ -314,6 +315,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
   private def buildFilter(searchParams: GrocerySearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
+    import searchParams.view._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -334,7 +336,9 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if(zoneFilter.hasClauses)
       itemFilter.must(zoneFilter)
-    finalFilter.must(nestedQuery("items",itemFilter))
+    finalFilter
+      .must(nestedQuery("items",itemFilter)
+      .innerHit(new QueryInnerHitBuilder().setName("matched_items").addSort("customer_price", SortOrder.ASC).setFrom(0).setSize(1).setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
