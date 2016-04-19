@@ -328,7 +328,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       itemFilter.must(termQuery("items.id", item_id))
     }
     val zoneFilter = boolQuery
-    zone_code.split( """,""").foreach { z =>
+    zone_code.split( """|""").foreach { z =>
       zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
     }
 
@@ -347,7 +347,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+      category.split("""|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
         b.should(termQuery("categories.name.exact", cat))
       }
       if(b.hasClauses)
@@ -356,7 +356,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (brand != "") {
       val b = boolQuery
-      brand.split("""#""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { brand =>
+      brand.split("""|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { brand =>
         b.should(termQuery("brand_name.exact", brand))
       }
       if(b.hasClauses)
@@ -373,7 +373,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w, zone_code.split(""","""))
+    val sorters = getSort(sort, w, zone_code.split("""|"""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
@@ -384,14 +384,14 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
-      .setFetchSource(select.split(""","""), Array[String]())
+      .setFetchSource(select.split("""|"""), Array[String]())
 
 
     if (agg) {
-      if (category == ""||category.contains(""","""))
+      if (category == ""||category.contains("""|"""))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
-      if (brand == ""||brand.contains(""","""))
+      if (brand == ""||brand.contains("""|"""))
         search.addAggregation(terms("brands").field("brand_name.agg").size(aggbuckets))
       
     }
