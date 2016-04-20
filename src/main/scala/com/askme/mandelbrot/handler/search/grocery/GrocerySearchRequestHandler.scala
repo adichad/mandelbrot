@@ -81,7 +81,7 @@ object GrocerySearchRequestHandler extends Logging {
         ).flatten
     }
 
-    info(sorters.toString)
+    debug(sorters.toString)
     sorters
 
   }
@@ -687,8 +687,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           val reqBody = if(temp!=JNothing)compact(temp) else reqBodyRaw
           val timeTaken = System.currentTimeMillis - startTime
 
-          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"]")
-          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, if(explain) parse(query.toString) else JObject(), parsedResult)
+          info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + " -d "+reqBody+"] ["+w.mkString(" ")+"]")
+          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, w.mkString(" "), if(explain) parse(query.toString) else JObject(), parsedResult)
         } catch {
           case e: Throwable =>
             val reqBodyRaw = httpReq.entity.data.asString
