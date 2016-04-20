@@ -44,26 +44,38 @@ object GrocerySearchRequestHandler extends Logging {
 
     val sorters =
     if(sort=="price.asc") {
-      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))
+      val zoneFilter = boolQuery
+      zone_code.foreach { z =>
+        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
+      }
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="price.desc") {
-      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC)
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))
+      val zoneFilter = boolQuery
+      zone_code.foreach { z =>
+        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
+      }
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
+        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="alpha.asc") {
-      List(fieldSort("product_name.agg").order(SortOrder.ASC))
+      List(fieldSort("variant_title.agg").order(SortOrder.ASC))
     }
     else if(sort=="alpha.desc") {
-      List(fieldSort("product_name.agg").order(SortOrder.DESC))
+      List(fieldSort("variant_title.agg").order(SortOrder.DESC))
     }
     else {
+      val zoneFilter = boolQuery
+      zone_code.foreach { z =>
+        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
+      }
       (
         Some(scoreSort().order(SortOrder.DESC))::
-          Some(fieldSort("items.gsv").setNestedPath("items").order(SortOrder.DESC)
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))::
-          Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC)
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(termsQuery("items.zone_code", zone_code:_*))))::
+          Some(fieldSort("items.gsv").setNestedPath("items").order(SortOrder.DESC).sortMode("max")
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))::
+          Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))::
           Some(fieldSort("variant_id").order(SortOrder.DESC))::
           Nil
         ).flatten
