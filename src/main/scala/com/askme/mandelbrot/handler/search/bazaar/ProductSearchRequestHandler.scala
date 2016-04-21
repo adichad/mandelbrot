@@ -18,6 +18,7 @@ import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
@@ -313,6 +314,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
+    import searchParams.view._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -380,7 +382,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(subscriptionFilter.hasClauses)
-      finalFilter.must(nestedQuery("subscriptions", subscriptionFilter))
+      finalFilter.must(nestedQuery("subscriptions", subscriptionFilter).innerHit(new QueryInnerHitBuilder().setName("best_subscription").addSort("subscriptions.min_price", SortOrder.ASC).setFrom(0).setSize(1).setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
 
 
     if (category != "") {
@@ -435,7 +437,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         search.addAggregation(
           nested("subscriptions").path("subscriptions").subAggregation(
             nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-              terms("store_fronts").field("subscriptions.store_fronts.id").size(aggbuckets)
+              terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
+                terms("name").field("subscriptions.store_fronts.title.agg")
+              )
             )
           )
         )
