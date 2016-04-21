@@ -159,9 +159,9 @@ object GrocerySearchRequestHandler extends Logging {
   private def shingleSpan(field: String, boost: Float, w: Array[String], fuzzyprefix: Int, maxShingle: Int, minShingle: Int = 1, sloppy: Boolean = true, fuzzy: Boolean = true) = {
     val fieldQuery1 = boolQuery.minimumShouldMatch("33%")
     val terms: Array[SpanQueryBuilder] = w.map(x=>
-      if(x.length > 3 && fuzzy)
+      if(x.length > 4 && fuzzy)
         spanMultiTermQueryBuilder(
-          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 5) Fuzziness.TWO else Fuzziness.ONE))
+          fuzzyQuery(field, x).prefixLength(fuzzyprefix).fuzziness(if(x.length > 7) Fuzziness.TWO else Fuzziness.ONE))
       else
         spanTermQuery(field, x)
     )
@@ -257,10 +257,10 @@ object GrocerySearchRequestHandler extends Logging {
   }
 
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
-      if(word.length > 3 && fuzzy)
+      if(word.length > 4 && fuzzy)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
-          .fuzziness(if(word.length > 5) Fuzziness.TWO else Fuzziness.ONE)
-          .boost(if(word.length > 5) exactBoost/3f else exactBoost/2f)
+          .fuzziness(if(word.length > 7) Fuzziness.TWO else Fuzziness.ONE)
+          .boost(if(word.length > 7) exactBoost/3f else exactBoost/2f)
       else
         termQuery(field, word).boost(exactBoost)
 
