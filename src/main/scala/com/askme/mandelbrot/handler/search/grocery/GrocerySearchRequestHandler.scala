@@ -336,8 +336,12 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .must(termQuery("variant_status", 0))
       .must(termQuery("product_status", 0))
       .must(termQuery("categories.status", 1))
+      .must(termQuery("brand_status", 1))
+      .must(termQuery("categories.status", 1))
+      .must(termQuery("categories.parent_name", "fmcg"))
 
     val itemFilter = boolQuery.must(termQuery("items.status", 1))
+    itemFilter.must(termQuery("items.login_status", 1))
     if (item_id != 0) {
       itemFilter.must(termQuery("items.id", item_id))
     }
