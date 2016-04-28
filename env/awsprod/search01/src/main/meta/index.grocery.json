@@ -100,7 +100,13 @@
             "khas, khash, khuss, khush => khus",
             "tel => oil",
             "ruh => rooh",
-            "daiper, daipar, diapar => diaper"
+            "daiper, daipar, diapar => diaper",
+            "daal => dal",
+            "channa => chana",
+            "mong dal, moong daal => moong dal",
+            "masur, massur, massoor => masoor",
+            "urd dal, urd daal, urad daal=> urad dal",
+            "candom, cundom, condum, condam => condom"
           ]
         },
         "plural_stem": {
