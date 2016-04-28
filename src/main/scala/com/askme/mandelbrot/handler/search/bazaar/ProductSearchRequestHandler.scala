@@ -66,7 +66,7 @@ object ProductSearchRequestHandler extends Logging {
         ).flatten
     }
 
-    info(sorters.toString)
+    debug(sorters.toString)
     sorters
 
   }
@@ -331,7 +331,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     val subscriptionFilter =
-      boolQuery().must(termQuery("subscriptions.status", 1))
+      boolQuery()
         .must(rangeQuery("subscriptions.quantity").gt(0))
     if(grouped_id != 0) {
       subscriptionFilter.must(
@@ -342,7 +342,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       subscriptionFilter.must(
         termQuery("subscriptions.subscribed_product_id", subscribed_id)
       )
-    }
+    } else
+      subscriptionFilter.must(termQuery("subscriptions.status", 1))
 
     if(crm_seller_id !=0) {
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
