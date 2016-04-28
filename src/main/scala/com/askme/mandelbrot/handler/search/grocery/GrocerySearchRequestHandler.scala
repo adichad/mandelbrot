@@ -346,7 +346,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       itemFilter.must(termQuery("items.id", item_id))
     }
     val zoneFilter = boolQuery
-    zone_code.split( """\|""").foreach { z =>
+
+    zone_code.split( """\|""").map(_.trim).filter(_.nonEmpty).foreach { z =>
       zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
     }
 
