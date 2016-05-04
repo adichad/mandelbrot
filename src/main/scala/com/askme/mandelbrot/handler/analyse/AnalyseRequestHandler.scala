@@ -37,7 +37,7 @@ class AnalyseRequestHandler(val config: Config, serverContext: SearchContext) ex
       val result = render(map2jvalue(analyzers.map { analyzer =>
         analyzer ->
           input.map { text =>
-            new AnalyzeRequestBuilder(esClient.admin().indices, AnalyzeAction.INSTANCE, index, text).get.getTokens.map(_.getTerm).toArray.mkString(" ") -> text
+            new AnalyzeRequestBuilder(esClient.admin().indices, AnalyzeAction.INSTANCE, index, text).setAnalyzer(analyzer).get.getTokens.map(_.getTerm).toArray.mkString(" ") -> text
           }.toMultiMap
       }.toMultiMap.map(x=>(x._1, x._2.head))))
 
