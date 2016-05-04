@@ -257,14 +257,12 @@ object ProductSearchRequestHandler extends Logging {
 
   private val searchFields2 = Map(
     "name" -> 1e8f,
-    "description" -> 1e2f,
     "category.name" -> 1e5f,
     "category.description" -> 1e4f,
     "attributes_value" -> 1e7f)
 
   private val fullFields2 = Map(
     "name.exact"->1e10f,
-    "description.exact" -> 1e2f,
     "category.name.exact"->1e6f,
     "category.description.exact" -> 1e5f,
     "attributes_value.exact" -> 1e9f)
@@ -350,17 +348,18 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
     }
 
-    /*
+
     if (city != "") {
       val cityFilter = boolQuery
       city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
         cityFilter.should(termQuery("subscriptions.ndd_city.exact", c))
       }
 
-      if(cityFilter.hasClauses)
-        subscriptionFilter.must(cityFilter)
+      if(cityFilter.hasClauses) {
+        subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
+      }
     }
-    */
+
 
     if(store!="") {
       val storeNames = store.toLowerCase.trim.split(",")
