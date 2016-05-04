@@ -26,7 +26,7 @@ case object ProductSearchRouter extends Router {
               'sort.as[String]?"popularity",
               'store.as[String]?"",
               'agg.as[Boolean] ? true,
-              'suggest.as[Boolean] ? true,
+              'suggest.as[Boolean] ? false,
               'store_front_id.as[Int] ? 0,
               'mpdm_store_front_id.as[Int] ? 0,
               'crm_seller_id.as[Int]?0,
