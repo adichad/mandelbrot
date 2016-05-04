@@ -376,11 +376,29 @@
               }
             }
           },
+          "city_id": {
+            "type": "integer"
+          },
+          "city_status": {
+            "type": "integer"
+          },
+          "city_is_fmcg": {
+            "type": "integer"
+          },
+          "state_status": {
+            "type": "integer"
+          },
+          "state_is_fmcg": {
+            "type": "integer"
+          },
           "code": {
             "type": "string"
           },
           "country": {
             "type": "string"
+          },
+          "country_status": {
+            "type": "integer"
           },
           "customer_price": {
             "type": "float"
@@ -397,6 +415,12 @@
             "type": "float"
           },
           "display_price": {
+            "type": "float"
+          },
+          "transfer_price": {
+            "type": "float"
+          },
+          "billing_price": {
             "type": "float"
           },
           "gsv": {
