@@ -272,7 +272,7 @@ object ProductSearchRequestHandler extends Logging {
 
   private def superBoost(len: Int) = math.pow(10, math.min(10,len+1)).toFloat
 
-  private case class WrappedResponse(searchParams: ProductSearchParams, result: SearchResponse, query: QueryBuilder, relaxLevel: Int)
+  private case class WrappedResponse(searchParams: ProductSearchParams, result: SearchResponse, query: SearchRequestBuilder, relaxLevel: Int)
   private case class ReSearch(searchParams: ProductSearchParams, filter: BoolQueryBuilder, search: SearchRequestBuilder, query: QueryBuilder, relaxLevel: Int, response: SearchResponse)
 
   private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingle: Int = 1, tokenRelax: Int = 0)
@@ -625,7 +625,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           search.execute(new ActionListener[SearchResponse] {
             override def onResponse(response: SearchResponse): Unit = {
               if (response.getHits.totalHits() >= leastCount || isMatchAll)
-                me ! WrappedResponse(searchParams, response, qfinal, 0)
+                me ! WrappedResponse(searchParams, response, search, 0)
               else
                 me ! ReSearch(searchParams, finalFilter, search, qfinal, 1, response)
             }
@@ -657,7 +657,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         try {
 
           if (relaxLevel >= qDefs.length)
-            context.self ! WrappedResponse(searchParams, response, qfinal, relaxLevel - 1)
+            context.self ! WrappedResponse(searchParams, response, search, relaxLevel - 1)
           else {
             val query = qDefs(relaxLevel)._1(w, w.length)
             val leastCount = qDefs(relaxLevel)._2
@@ -668,7 +668,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             search.execute(new ActionListener[SearchResponse] {
               override def onResponse(response: SearchResponse): Unit = {
                 if (response.getHits.totalHits() >= leastCount || relaxLevel >= qDefs.length - 1)
-                  me ! WrappedResponse(searchParams, response, qfinal, relaxLevel)
+                  me ! WrappedResponse(searchParams, response, search, relaxLevel)
                 else
                   me ! ReSearch(searchParams, filter, search, qfinal, relaxLevel + 1, response)
               }
