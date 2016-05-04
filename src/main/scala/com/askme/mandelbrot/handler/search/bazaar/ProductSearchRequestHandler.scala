@@ -333,6 +333,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     val subscriptionFilter =
       boolQuery()
         .must(rangeQuery("subscriptions.quantity").gt(0))
+        .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
     if(grouped_id != 0) {
       subscriptionFilter.must(
         termQuery("subscriptions.product_id", grouped_id)
