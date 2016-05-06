@@ -21,6 +21,7 @@ import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -449,10 +450,12 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
                   .must(termQuery("subscriptions.store_fronts.status", 1))
+                  .mustNot(termsQuery("subscriptions.store_fronts.title", "adobefeed", "affiliate", "pla"))
               ).subAggregation(
-                terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
-                  terms("name").field("subscriptions.store_fronts.title.agg")
-                )
+                terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
+                  .subAggregation(
+                    terms("name").field("categories.name.agg").size(1).order(Terms.Order.count(false))
+                  )
               )
             )
           )
