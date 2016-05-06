@@ -446,19 +446,15 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         search.addAggregation(
           nested("subscriptions").path("subscriptions").subAggregation(
             nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-              filter("active").filter(
+              filter("store_fronts").filter(
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
                   .must(termQuery("subscriptions.store_fronts.status", 1))
                   .mustNot(termsQuery("subscriptions.store_fronts.title", "adobefeed", "affiliate", "pla"))
-              ).subAggregation(
-                terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
-                  .subAggregation(
-                    reverseNested("root").path("").subAggregation(
-                      terms("name").field("categories.name.agg").size(1).order(Terms.Order.count(false))
-                    )
-                  )
               )
+                .subAggregation(terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets))
+                .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+
             )
           )
         )
