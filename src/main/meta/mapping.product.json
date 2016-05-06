@@ -1633,6 +1633,91 @@
         "index": "not_analyzed",
         "doc_values": true
       },
+      "store_fronts_title_h1": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "norms": { "enabled": false },
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+      },
       "store_fronts_title": {
         "type": "string",
         "store": false,
@@ -1952,6 +2037,103 @@
                 "store": false,
                 "doc_values": true
               },
+              "status": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "mapping_status": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "title_h1": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "copy_to": ["store_fronts_title_h1"],
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_edge_ngram_analyzer",
+                    "search_analyzer": "token_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
               "title_dv": {
                 "type": "string",
                 "store": false,
@@ -2245,6 +2427,48 @@
                 }
               }
             }
+          },
+          "order_count": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "order_quantity": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "order_gsv": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "order_discount_amount": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "order_loyalty_earned": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "order_last_dt": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "order_discount_pct_avg": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "image": {
+            "type": "string"
+          },
+          "images": {
+            "type": "string"
           },
           "pgprice_from": {
             "type": "float",
