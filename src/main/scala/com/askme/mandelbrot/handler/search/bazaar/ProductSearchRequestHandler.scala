@@ -454,7 +454,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               ).subAggregation(
                 terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
                   .subAggregation(
-                    terms("name").field("categories.name.agg").size(1).order(Terms.Order.count(false))
+                    reverseNested("root").path("").subAggregation(
+                      terms("name").field("categories.name.agg").size(1).order(Terms.Order.count(false))
+                    )
                   )
               )
             )
