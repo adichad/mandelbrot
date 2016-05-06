@@ -62,9 +62,9 @@ object ProductSearchRequestHandler extends Logging {
             ) else None) ::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)).sortMode("max"))
+              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)).sortMode("max").missing(0))
           else
-            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max"))
+            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max").missing(0))
             ) ::
           Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
@@ -446,11 +446,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           nested("subscriptions").path("subscriptions").subAggregation(
             nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
               filter("active").filter(
-                nestedQuery("subscriptions.store_fronts",
-                  boolQuery()
-                    .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                    .must(termQuery("subscriptions.store_fronts.status", 1))
-                )
+                boolQuery()
+                  .must(termQuery("mapping_status", 1))
+                  .must(termQuery("status", 1))
               ).subAggregation(
                 terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
                   terms("name").field("subscriptions.store_fronts.title.agg")

@@ -149,7 +149,6 @@
             "position_increment_gap": 100,
             "norms": { "enabled": false },
             "similarity": "bazaar_bm25",
-            "copy_to": ["attributes_value"],
             "fields": {
               "agg": {
                 "type": "string",
