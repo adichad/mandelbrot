@@ -40,7 +40,7 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, store_front_id: Int, cities: Array[String], w: Array[String]): List[SortBuilder] = {
+  private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String]): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -51,9 +51,15 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        (if (store_front_id > 0)
+        (if (mpdm_store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").setNestedPath("subscriptions.store_fronts").order(SortOrder.DESC)
-              .setNestedFilter(termQuery("subscriptions.store_fronts.id", store_front_id))) else None) ::
+              .setNestedFilter(
+                boolQuery()
+                  .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
+                  .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+                  .must(termQuery("subscriptions.store_fronts.status", 1))
+              )
+            ) else None) ::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)).sortMode("max"))
@@ -330,7 +336,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     val subscriptionFilter =
       boolQuery()
-        .must(rangeQuery("subscriptions.quantity").gt(0))
         .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
     if(grouped_id != 0) {
       subscriptionFilter.must(
@@ -342,7 +347,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         termQuery("subscriptions.subscribed_product_id", subscribed_id)
       )
     } else
-      subscriptionFilter.must(termQuery("subscriptions.status", 1))
+      subscriptionFilter
+        .must(termQuery("subscriptions.status", 1))
+        .must(rangeQuery("subscriptions.quantity").gt(0))
 
     if(crm_seller_id !=0) {
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
@@ -416,7 +423,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w)
+    val sorters = getSort(sort, mpdm_store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
@@ -434,12 +441,20 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       if (category == ""||category.contains(""","""))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
-      if(store_front_id==0)
+      if(mpdm_store_front_id==0)
         search.addAggregation(
           nested("subscriptions").path("subscriptions").subAggregation(
             nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-              terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
-                terms("name").field("subscriptions.store_fronts.title.agg")
+              filter("active").filter(
+                nestedQuery("subscriptions.store_fronts",
+                  boolQuery()
+                    .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+                    .must(termQuery("subscriptions.store_fronts.status", 1))
+                )
+              ).subAggregation(
+                terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
+                  terms("name").field("subscriptions.store_fronts.title.agg")
+                )
               )
             )
           )
