@@ -447,8 +447,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
               filter("active").filter(
                 boolQuery()
-                  .must(termQuery("mapping_status", 1))
-                  .must(termQuery("status", 1))
+                  .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+                  .must(termQuery("subscriptions.store_fronts.status", 1))
               ).subAggregation(
                 terms("store_fronts").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).subAggregation(
                   terms("name").field("subscriptions.store_fronts.title.agg")
