@@ -63,11 +63,36 @@ object ProductSearchRequestHandler extends Logging {
             ) else None) ::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(termsQuery("subscriptions.ndd_city.exact",cities:_*)).sortMode("max").missing(0))
+              .setNestedFilter(
+                boolQuery()
+                  .must(termsQuery("subscriptions.ndd_city.exact",cities:_*))
+                  .must(termQuery("subscriptions.status", 1))
+                  .must(rangeQuery("subscriptions.quantity").gt(0))
+              ).sortMode("max").missing(0))
           else
-            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC).sortMode("max").missing(0))
+            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
+              .setNestedFilter(
+                boolQuery()
+                  .must(termQuery("subscriptions.status", 1))
+                  .must(rangeQuery("subscriptions.quantity").gt(0))
+              )
+              .sortMode("max").missing(0))
             ) ::
+          Some(fieldSort("subscriptions.order_discount_pct_avg").setNestedPath("subscriptions").order(SortOrder.DESC)
+            .setNestedFilter(
+              boolQuery()
+                .must(termQuery("subscriptions.status", 1))
+                .must(rangeQuery("subscriptions.quantity").gt(0))
+            )
+            .sortMode("max").missing(0))::
           Some(scoreSort().order(SortOrder.DESC))::
+          Some(fieldSort("subscriptions.order_gsv").setNestedPath("subscriptions").order(SortOrder.DESC)
+            .setNestedFilter(
+              boolQuery()
+                .must(termQuery("subscriptions.status", 1))
+                .must(rangeQuery("subscriptions.quantity").gt(0))
+            )
+            .sortMode("max").missing(0))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
           Nil
         ).flatten
