@@ -475,7 +475,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
                   .must(termQuery("subscriptions.store_fronts.status", 1))
-                  .mustNot(termsQuery("subscriptions.store_fronts.title", "adobefeed", "affiliate", "affilaite", "pla"))
+                  .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
               )
                 .subAggregation(
                   terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
