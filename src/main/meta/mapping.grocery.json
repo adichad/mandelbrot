@@ -405,8 +405,9 @@
           },
           "deal_count": {
             "type": "string",
-            "index": "no",
-            "store": false
+            "index": "not_analyzed",
+            "store": false,
+            "doc_values": true
           },
           "deal_text": {
             "type": "string"

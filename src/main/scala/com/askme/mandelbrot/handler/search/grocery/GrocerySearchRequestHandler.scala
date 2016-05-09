@@ -353,9 +353,18 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if(zoneFilter.hasClauses)
       itemFilter.must(zoneFilter)
+
+    
     finalFilter
-      .must(nestedQuery("items",itemFilter)
-      .innerHit(new QueryInnerHitBuilder().setName("matched_items").addSort("items.customer_price", SortOrder.ASC).setFrom(0).setSize(1).setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
+      .must(
+        nestedQuery("items",itemFilter)
+          .innerHit(
+            new QueryInnerHitBuilder().setName("matched_items")
+              .addSort("items.transfer_price", SortOrder.ASC)
+              .addSort("items.customer_price", SortOrder.ASC)
+              .setFrom(0).setSize(1)
+              .setFetchSource(select.split(""","""), Array[String]())
+              .setExplain(explain)))
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
