@@ -9,6 +9,16 @@
       "brand_status": {
         "type": "integer"
       },
+      "variant_full_description": {
+        "type": "string",
+        "index": "no",
+        "store": false
+      },
+      "variant_notes": {
+        "type": "string",
+        "index": "no",
+        "store": false
+      },
       "brand_name": {
         "type": "string",
         "store": false,
@@ -190,13 +200,25 @@
             "type": "string",
             "index": "not_analyzed",
             "doc_values": true
+          },
+          "isnav": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "integer"
+          },
+          "parent_id": {
+            "type": "integer"
           }
         }
       },
-      "items": {
+      "category_hierarchy": {
         "type": "nested",
         "properties": {
-          "areas": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
             "type": "string",
             "store": false,
             "index": "analyzed",
@@ -280,6 +302,33 @@
                 "similarity": "bazaar_bm25"
               }
             }
+          },
+          "status": {
+            "type": "integer"
+          },
+          "parent_name": {
+            "type": "string",
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "isnav": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "integer"
+          },
+          "parent_id": {
+            "type": "integer"
+          }
+        }
+      },
+
+      "items": {
+        "type": "nested",
+        "properties": {
+          "areas": {
+            "type": "integer",
+            "doc_values": true
           },
           "availability_max": {
             "type": "integer"
@@ -404,16 +453,19 @@
             "type": "float"
           },
           "deal_count": {
-            "type": "string",
-            "index": "not_analyzed",
-            "store": false,
-            "doc_values": true
+            "type": "integer"
           },
           "deal_text": {
             "type": "string"
           },
           "discount_percent": {
             "type": "float"
+          },
+          "pla_discount_percent": {
+            "type": "float"
+          },
+          "delivery_days": {
+            "type": "integer"
           },
           "display_price": {
             "type": "float"
@@ -422,6 +474,12 @@
             "type": "float"
           },
           "billing_price": {
+            "type": "float"
+          },
+          "margin": {
+            "type": "float"
+          },
+          "pla_margin": {
             "type": "float"
           },
           "gsv": {
@@ -464,7 +522,7 @@
             "type": "string"
           },
           "quantity_sold": {
-            "type": "long"
+            "type": "integer"
           },
           "sasta_offer": {
             "type": "boolean"
@@ -476,7 +534,45 @@
             "type": "string"
           },
           "status": {
-            "type": "long"
+            "type": "integer"
+          },
+          "storefronts": {
+            "type": "nested",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "code": {
+                "type": "string",
+                "index": "not_analyzed",
+                "store": false,
+                "doc_values": true
+              },
+              "title": {
+                "type": "string"
+              },
+              "deal_text": {
+                "type": "string"
+              },
+              "status": {
+                "type": "integer"
+              },
+              "mapping_status": {
+                "type": "integer"
+              },
+              "startdate": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "enddate": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              }
+            }
           },
           "vendor_id": {
             "type": "string"

@@ -360,7 +360,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("items",itemFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("matched_items")
-              .addSort("items.transfer_price", SortOrder.ASC)
+              .addSort("items.deal_count", SortOrder.DESC)
+              .addSort("items.margin", SortOrder.DESC)
               .addSort("items.customer_price", SortOrder.ASC)
               .setFrom(0).setSize(1)
               .setFetchSource(select.split(""","""), Array[String]())
