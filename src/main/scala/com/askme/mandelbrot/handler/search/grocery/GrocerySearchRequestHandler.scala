@@ -429,7 +429,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       if (category == ""||category.contains('|'))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
-      search.addAggregation(nested("categories").path("category_hierarchy")
+      search.addAggregation(nested("nav-categories").path("category_hierarchy")
         .subAggregation(
           filter("l1").filter(
             nestedQuery("category_hierarchy",
