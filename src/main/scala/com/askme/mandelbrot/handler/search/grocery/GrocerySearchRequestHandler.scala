@@ -436,33 +436,26 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               .must(termQuery("category_hierarchy.level", 1))
               .must(termQuery("category_hierarchy.isnav", 1))
 
+          ).subAggregation(
+            terms("categories").field("category_hierarchy.name.agg")
           )
-            .subAggregation(
+        )
+        .subAggregation(
+          filter("l2").filter(
+            boolQuery()
+              .must(termQuery("category_hierarchy.level", 2))
+              .must(termQuery("category_hierarchy.isnav", 1))
+          ).subAggregation(
               terms("categories").field("category_hierarchy.name.agg")
-                .subAggregation(nested("nav-categories").path("category_hierarchy")
-                  .subAggregation(
-                  filter("l2").filter(
-                    boolQuery()
-                      .must(termQuery("category_hierarchy.level", 2))
-                      .must(termQuery("category_hierarchy.isnav", 1))
-                  )
-                    .subAggregation(
-                      terms("categories").field("category_hierarchy.name.agg")
-                        .subAggregation(nested("nav-categories").path("category_hierarchy")
-                          .subAggregation(
-                          filter("l3").filter(
-                            boolQuery()
-                              .must(termQuery("category_hierarchy.level", 3))
-                              .must(termQuery("category_hierarchy.isnav", 1))
-                          ).subAggregation(
-                            terms("categories").field("category_hierarchy.name.agg")
-                          )
-                          )
-                        )
-                    )
-                  )
-                )
-            )
+          )
+        ).subAggregation(
+          filter("l3").filter(
+            boolQuery()
+              .must(termQuery("category_hierarchy.level", 3))
+              .must(termQuery("category_hierarchy.isnav", 1))
+          ).subAggregation(
+            terms("categories").field("category_hierarchy.name.agg")
+          )
         )
       )
 
