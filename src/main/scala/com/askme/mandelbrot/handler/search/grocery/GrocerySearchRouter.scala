@@ -44,7 +44,7 @@ case object GrocerySearchRouter extends Router {
                   GrocerySearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "grocery"),
-                    TextParams(kw.nonEmptyOrElse(category), suggest),
+                    TextParams(kw, suggest),
                     FilterParams(category, variant_id, product_id, item_id, storefront_id, geo_id, zone_code, brand),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
