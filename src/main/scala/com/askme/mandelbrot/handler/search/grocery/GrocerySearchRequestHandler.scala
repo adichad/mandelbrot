@@ -19,7 +19,7 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
+import org.elasticsearch.search.aggregations.{AbstractAggregationBuilder, Aggregator}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
@@ -429,32 +429,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       if (category == ""||category.contains('|'))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
 
-      search.addAggregation(nested("nav-categories").path("category_hierarchy")
-        .subAggregation(
-          filter("l1").filter(
-            boolQuery()
-              .must(termQuery("category_hierarchy.level", 1))
-              .must(termQuery("category_hierarchy.isnav", 1))
-
-          ).subAggregation(
-            terms("categories").field("category_hierarchy.name.agg")
-          )
-        )
-        .subAggregation(
-          filter("l2").filter(
-            boolQuery()
-              .must(termQuery("category_hierarchy.level", 2))
-              .must(termQuery("category_hierarchy.isnav", 1))
-          ).subAggregation(
-              terms("categories").field("category_hierarchy.name.agg")
-          )
-        ).subAggregation(
-          filter("l3").filter(
-            boolQuery()
-              .must(termQuery("category_hierarchy.level", 3))
-              .must(termQuery("category_hierarchy.isnav", 1))
-          ).subAggregation(
-            terms("categories").field("category_hierarchy.name.agg")
+      search.addAggregation(
+        terms("categories_l1").field("category_l1.name.agg").subAggregation(
+          terms("categories_l2").field("category_l2.name.agg").subAggregation(
+            terms("categories_l3").field("category_l3.name.agg")
           )
         )
       )
