@@ -354,7 +354,14 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     if(zoneFilter.hasClauses)
       itemFilter.must(zoneFilter)
 
-    
+    if(geo_id != 0) {
+      itemFilter.must(termQuery("items.areas", geo_id))
+    }
+
+    if(storefront_id != 0) {
+      itemFilter.must(termQuery("items.storefronts.id", storefront_id))
+    }
+
     finalFilter
       .must(
         nestedQuery("items",itemFilter)
@@ -379,10 +386,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     if (category != "") {
       val b = boolQuery
       category.split("""\|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
-        b.should(termQuery("categories.name.exact", cat))
+        b.should(termQuery("category_hierarchy.name.exact", cat))
       }
       if(b.hasClauses)
-        finalFilter.must(b)
+        finalFilter.must(nestedQuery("category_hierarchy", b))
     }
 
     if (brand != "") {
@@ -421,6 +428,44 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     if (agg) {
       if (category == ""||category.contains('|'))
         search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+
+      search.addAggregation(nested("categories").path("category_hierarchy")
+        .subAggregation(
+          filter("l1").filter(
+            nestedQuery("category_hierarchy",
+              boolQuery()
+                .must(termQuery("category_hierarchy.level", 1))
+                .must(termQuery("category_hierarchy.isnav", 1))
+            )
+          )
+            .subAggregation(
+              terms("categories").field("category_hierarchy.name")
+                .subAggregation(
+                  filter("l2").filter(
+                    nestedQuery("category_hierarchy",
+                      boolQuery()
+                        .must(termQuery("category_hierarchy.level", 2))
+                        .must(termQuery("category_hierarchy.isnav", 1))
+                    )
+                  )
+                    .subAggregation(
+                      terms("categories").field("category_hierarchy.name")
+                        .subAggregation(
+                          filter("l3").filter(
+                            nestedQuery("category_hierarchy",
+                              boolQuery()
+                                .must(termQuery("category_hierarchy.level", 3))
+                                .must(termQuery("category_hierarchy.isnav", 1))
+                            )
+                          ).subAggregation(
+                            terms("categories").field("category_hierarchy.name")
+                          )
+                        )
+                    )
+                )
+            )
+        )
+      )
 
       if (brand == ""||brand.contains('|'))
         search.addAggregation(terms("brands").field("brand_name.agg").size(aggbuckets))

@@ -21,6 +21,7 @@ case object GrocerySearchRouter extends Router {
           path("search" / Segment / "grocery") { (index) =>
             parameters('kw.as[String] ? "", 'zone_code ? "",
               'category ? "", 'variant_id.as[Int] ? 0, 'product_id.as[Int] ? 0, 'item_id.as[Int] ? 0,
+              'storefront_id ? 0, 'geo_id ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "variant_id,variant_title",
               'sort.as[String]?"popularity",
@@ -28,6 +29,7 @@ case object GrocerySearchRouter extends Router {
               'suggest.as[Boolean] ? true,
               'brand.as[String]?"") { (kw, zone_code,
                category, variant_id, product_id, item_id,
+               storefront_id, geo_id,
                size, offset,
                explain, select, sort,
                agg, suggest, brand) =>
@@ -43,7 +45,7 @@ case object GrocerySearchRouter extends Router {
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "grocery"),
                     TextParams(kw.nonEmptyOrElse(category), suggest),
-                    FilterParams(category, variant_id, product_id, item_id, zone_code, brand),
+                    FilterParams(category, variant_id, product_id, item_id, storefront_id, geo_id, zone_code, brand),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                     LimitParams(maxdocspershard, timeoutms),
