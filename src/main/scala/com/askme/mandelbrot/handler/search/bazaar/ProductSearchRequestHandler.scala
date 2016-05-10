@@ -290,14 +290,14 @@ object ProductSearchRequestHandler extends Logging {
   private val searchFields2 = Map(
     "name" -> 1e8f,
     "category.name" -> 1e5f,
-    "category.description" -> 1e4f,
-    "attributes_value" -> 1e7f)
+    "category.description" -> 1e4f/*,
+    "attributes_value" -> 1e7f*/)
 
   private val fullFields2 = Map(
     "name.exact"->1e10f,
     "category.name.exact"->1e6f,
-    "category.description.exact" -> 1e5f,
-    "attributes_value.exact" -> 1e9f)
+    "category.description.exact" -> 1e5f/*,
+    "attributes_value.exact" -> 1e9f*/)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -489,7 +489,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       search.addAggregation(
         nested("attributes").path("attributes")
           .subAggregation(
-            filter("filters").filter(prefixQuery("attributes.name.exact", "filter")).subAggregation(
+            filter("filters").filter(prefixQuery("attributes.name.agg", "Filter")).subAggregation(
               terms("attributes").field("attributes.name.agg").size(aggbuckets)
                 .subAggregation(terms("vals").field("attributes.value.agg").size(aggbuckets)))))
 
@@ -510,32 +510,32 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "name" -> 1e12f,
                 "category.name" -> 1e9f,
-                "category.description" -> 1e7f,
-                "attributes_value" -> 1e11f),
+                "category.description" -> 1e7f/*,
+                "attributes_value" -> 1e11f*/),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
                 "category.name" -> 1e3f,
-                "category.description" -> 1e1f,
-                "attributes_value" -> 1e5f),
+                "category.description" -> 1e1f/*,
+                "attributes_value" -> 1e5f*/),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.token_edge_ngram" -> 1e2f,
                 "category.name.token_edge_ngram" -> 1e1f,
-                "category.description.token_edge_ngram" -> 1e0f,
-                "attributes_value.token_edge_ngram" -> 1e2f),
+                "category.description.token_edge_ngram" -> 1e0f/*,
+                "attributes_value.token_edge_ngram" -> 1e2f*/),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.shingle_nospace_edge_ngram" -> 1e2f,
                 "category.name.shingle_nospace_edge_ngram" -> 1e1f,
-                "category.description.shingle_nospace_edge_ngram" -> 1e0f,
-                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+                "category.description.shingle_nospace_edge_ngram" -> 1e0f/*,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -550,29 +550,29 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val q = disMaxQuery.add(
             shinglePartitionSuggest(
               Map("name" -> 1e12f,
-                "category.name" -> 1e9f,
-                "attributes_value" -> 1e11f),
+                "category.name" -> 1e9f/*,
+                "attributes_value" -> 1e11f*/),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
-                "category.name" -> 1e3f,
-                "attributes_value" -> 1e5f),
+                "category.name" -> 1e3f/*,
+                "attributes_value" -> 1e5f*/),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.token_edge_ngram" -> 1e2f,
-                "category.name.token_edge_ngram" -> 1e1f,
-                "attributes_value.token_edge_ngram" -> 1e2f),
+                "category.name.token_edge_ngram" -> 1e1f/*,
+                "attributes_value.token_edge_ngram" -> 1e2f*/),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.shingle_nospace_edge_ngram" -> 1e2f,
-                "category.name.shingle_nospace_edge_ngram" -> 1e1f,
-                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+                "category.name.shingle_nospace_edge_ngram" -> 1e1f/*,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -583,29 +583,29 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               disMaxQuery.add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e12f,
-                    "category.name" -> 1e9f,
-                    "attributes_value" -> 1e11f),
+                    "category.name" -> 1e9f/*,
+                    "attributes_value" -> 1e11f*/),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e6f,
-                    "category.name" -> 1e3f,
-                    "attributes_value" -> 1e5f),
+                    "category.name" -> 1e3f/*,
+                    "attributes_value" -> 1e5f*/),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
                   Map("name.token_edge_ngram" -> 1e2f,
-                    "category.name.token_edge_ngram" -> 1e1f,
-                    "attributes_value.token_edge_ngram" -> 1e2f),
+                    "category.name.token_edge_ngram" -> 1e1f/*,
+                    "attributes_value.token_edge_ngram" -> 1e2f*/),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
                   Map("name.shingle_nospace_edge_ngram" -> 1e2f,
-                    "category.name.shingle_nospace_edge_ngram" -> 1e1f,
-                    "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
+                    "category.name.shingle_nospace_edge_ngram" -> 1e1f/*,
+                    "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               )
@@ -618,10 +618,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
           q3.add(fuzzyOrTermQuery("category.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
             .add(fuzzyOrTermQuery("category.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-
+/*
           q3.add(fuzzyOrTermQuery("attributes_value.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
             .add(fuzzyOrTermQuery("attributes_value.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-
+*/
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
         } else
