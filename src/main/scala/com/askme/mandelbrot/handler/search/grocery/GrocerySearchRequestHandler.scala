@@ -342,8 +342,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     val itemFilter = boolQuery.must(termQuery("items.status", 1))
     itemFilter.must(termQuery("items.login_status", 1))
-    if (item_id != 0) {
-      itemFilter.must(termQuery("items.id", item_id))
+    if (item_id != "") {
+      itemFilter.must(termsQuery("items.id", item_id.split(""",""").map(_.toInt):_*))
     }
     val zoneFilter = boolQuery
 

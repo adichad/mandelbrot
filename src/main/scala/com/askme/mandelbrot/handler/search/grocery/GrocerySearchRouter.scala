@@ -20,7 +20,7 @@ case object GrocerySearchRouter extends Router {
         jsonpWithParameter("callback") {
           path("search" / Segment / "grocery") { (index) =>
             parameters('kw.as[String] ? "", 'zone_code ? "",
-              'category ? "", 'variant_id.as[Int] ? 0, 'product_id.as[Int] ? 0, 'item_id.as[Int] ? 0,
+              'category ? "", 'variant_id.as[Int] ? 0, 'product_id.as[Int] ? 0, 'item_id.as[String] ? "",
               'storefront_id ? 0, 'geo_id ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "variant_id,variant_title",

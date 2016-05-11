@@ -46,7 +46,7 @@ case object ProductSearchRouter extends Router {
                   ProductSearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "product"),
-                    TextParams(kw.nonEmptyOrElse(category), suggest),
+                    TextParams(kw, suggest),
                     FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, store_front_id, mpdm_store_front_id, crm_seller_id, brand),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
