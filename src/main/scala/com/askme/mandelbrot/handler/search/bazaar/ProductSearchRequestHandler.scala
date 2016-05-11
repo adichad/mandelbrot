@@ -19,6 +19,8 @@ import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder
+import org.elasticsearch.script.Script
+import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -464,8 +466,13 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
+      val scoreSorter = avg("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
       if (category == ""||category.contains(""","""))
-        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+        search.addAggregation(
+          terms("categories").field("categories.name.agg").size(aggbuckets)
+            .order(Terms.Order.aggregation("score", false))
+            .subAggregation(scoreSorter)
+        )
 
       if(mpdm_store_front_id==0)
         search.addAggregation(
