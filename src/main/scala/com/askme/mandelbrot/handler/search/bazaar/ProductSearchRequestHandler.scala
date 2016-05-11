@@ -466,7 +466,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
-      val scoreSorter = avg("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val scoreSorter = sum("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
       if (category == ""||category.contains(""","""))
         search.addAggregation(
           terms("categories").field("categories.name.agg").size(aggbuckets)
