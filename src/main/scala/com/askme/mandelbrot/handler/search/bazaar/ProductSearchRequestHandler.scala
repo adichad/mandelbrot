@@ -467,7 +467,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
-      val scoreSorter = avg("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val scoreSorter = percentiles("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(80.0d)
       val priceSorter = percentiles("price").field("min_price").percentiles(80.0d)
 
       if (category == ""||category.contains(""","""))
@@ -475,8 +475,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           terms("categories").field("categories.name.agg").size(aggbuckets)
             .order(
               Terms.Order.compound(
-                Terms.Order.aggregation("price[80.0]", false),
-                Terms.Order.aggregation("score", false)
+                Terms.Order.aggregation("score[80.0]", false),
+                Terms.Order.aggregation("price[80.0]", false)
               )
             )
             .subAggregation(priceSorter)
