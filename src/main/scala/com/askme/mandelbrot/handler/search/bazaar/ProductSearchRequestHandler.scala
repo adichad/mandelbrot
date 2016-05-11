@@ -468,7 +468,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (agg) {
       val scoreSorter = percentiles("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(80.0d)
-      val priceSorter = percentiles("price").field("min_price").percentiles(80.0d)
+      val priceSorter = nested("quantity").path("subscriptions").subAggregation(sum("quantity").field("subscriptions.order_quantity"))
 
       if (category == ""||category.contains(""","""))
         search.addAggregation(
@@ -476,7 +476,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             .order(
               Terms.Order.compound(
                 Terms.Order.aggregation("score[80.0]", false),
-                Terms.Order.aggregation("price[80.0]", false)
+                Terms.Order.aggregation("quantity", false)
               )
             )
             .subAggregation(priceSorter)
@@ -525,14 +525,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             shinglePartitionSuggest(
               Map(
                 "name" -> 1e12f,
-                "categories.name" -> 1e9f/*,
+                "categories.name" -> 1e11f/*,
                 "attributes_value" -> 1e11f*/),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
-                "categories.name" -> 1e3f/*,
+                "categories.name" -> 1e5f/*,
                 "attributes_value" -> 1e5f*/),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
@@ -562,14 +562,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val q = disMaxQuery.add(
             shinglePartitionSuggest(
               Map("name" -> 1e12f,
-                "categories.name" -> 1e9f/*,
+                "categories.name" -> 1e11f/*,
                 "attributes_value" -> 1e11f*/),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
-                "categories.name" -> 1e3f/*,
+                "categories.name" -> 1e5f/*,
                 "attributes_value" -> 1e5f*/),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
@@ -595,14 +595,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               disMaxQuery.add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e12f,
-                    "categories.name" -> 1e9f/*,
+                    "categories.name" -> 1e11f/*,
                     "attributes_value" -> 1e11f*/),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e6f,
-                    "categories.name" -> 1e3f/*,
+                    "categories.name" -> 1e5f/*,
                     "attributes_value" -> 1e5f*/),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
