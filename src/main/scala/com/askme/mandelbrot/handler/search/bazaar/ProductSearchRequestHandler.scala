@@ -24,6 +24,7 @@ import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -467,14 +468,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (agg) {
       val scoreSorter = avg("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
-      val priceSorter = sum("price").field("min_price")
+      val priceSorter = percentiles("price").field("min_price").percentiles(80.0d)
 
       if (category == ""||category.contains(""","""))
         search.addAggregation(
           terms("categories").field("categories.name.agg").size(aggbuckets)
             .order(
               Terms.Order.compound(
-                Terms.Order.aggregation("price", false),
+                Terms.Order.aggregation("price[80.0]", false),
                 Terms.Order.aggregation("score", false)
               )
             )
