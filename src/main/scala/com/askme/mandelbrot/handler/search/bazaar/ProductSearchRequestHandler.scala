@@ -468,18 +468,17 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (agg) {
       val scoreSorter = percentiles("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(80.0d)
-      val priceSorter = sum("quantity").field("subscriptions.order_quantity")
 
       if (category == ""||category.contains(""","""))
         search.addAggregation(
           terms("categories").field("categories.name.agg").size(aggbuckets)
             .order(
               Terms.Order.compound(
-                Terms.Order.aggregation("score[80.0]", false),
-                Terms.Order.aggregation("quantity", false)
-              )
+                Terms.Order.count(false),
+                Terms.Order.aggregation("score[80.0]", false)
             )
-            .subAggregation(priceSorter)
+            )
+
             .subAggregation(scoreSorter)
         )
 
