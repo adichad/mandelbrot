@@ -481,7 +481,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
             )
             )
-
+            .subAggregation(priceSorter)
             .subAggregation(scoreSorter)
         )
 
