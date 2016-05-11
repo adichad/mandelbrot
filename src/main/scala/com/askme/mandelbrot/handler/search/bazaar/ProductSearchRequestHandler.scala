@@ -466,11 +466,19 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
-      val scoreSorter = sum("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val scoreSorter = avg("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val priceSorter = sum("price").field("min_price")
+
       if (category == ""||category.contains(""","""))
         search.addAggregation(
           terms("categories").field("categories.name.agg").size(aggbuckets)
-            .order(Terms.Order.aggregation("score", false))
+            .order(
+              Terms.Order.compound(
+                Terms.Order.aggregation("price", false),
+                Terms.Order.aggregation("score", false)
+              )
+            )
+            .subAggregation(priceSorter)
             .subAggregation(scoreSorter)
         )
 
