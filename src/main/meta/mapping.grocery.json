@@ -1093,7 +1093,26 @@
                 "doc_values": true
               },
               "title": {
-                "type": "string"
+                "type": "string",
+                "store": false,
+                "norms": {"enabled": false},
+                "properties": {
+                  "agg": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "doc_values": true,
+                    "store": false
+                  },
+                  "exact": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "doc_values": true,
+                    "store": false,
+                    "norms": {"enabled": false}
+                  }
+                }
               },
               "deal_text": {
                 "type": "string"

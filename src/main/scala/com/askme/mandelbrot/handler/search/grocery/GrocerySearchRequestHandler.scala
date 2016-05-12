@@ -437,6 +437,14 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
+      if (storefront_id == 0) {
+        search.addAggregation(
+          nested("items").path("items").subAggregation(
+            terms("items.storefronts.id").size(aggbuckets)
+          )
+        )
+      }
+
       if (brand == ""||brand.contains('|'))
         search.addAggregation(terms("brands").field("brand_name.agg").size(aggbuckets))
       
@@ -444,7 +452,6 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     search
   }
-
 
 
   def buildSuggestQuery(kw: String, w: Array[String]) = {
