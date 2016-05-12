@@ -33,7 +33,7 @@ case object GrocerySearchRouter extends Router {
                size, offset,
                explain, select, sort,
                agg, suggest, brand) =>
-              val maxdocspershard = 5000
+              val maxdocspershard = 10000
               val searchType = "dfs_query_then_fetch"
               val timeoutms = 600l
               val aggbuckets = 10

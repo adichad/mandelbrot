@@ -359,7 +359,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(storefront_id != 0) {
-      itemFilter.must(termQuery("items.storefronts.id", storefront_id))
+      itemFilter.must(nestedQuery("items.storefronts", termQuery("items.storefronts.id", storefront_id)))
     }
 
     finalFilter
