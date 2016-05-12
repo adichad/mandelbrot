@@ -470,25 +470,13 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       val scoreSorter = percentiles("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(50.0d)
       val priceSorter = percentiles("price").field("min_price").percentiles(50.0d)
 
-      if (category == ""||category.contains(""","""))
+      if (category == ""||category.contains(""",""")) {
         search.addAggregation(
           terms("categories").field("categories.name.agg").size(aggbuckets)
-            .order(
-              Terms.Order.compound(
-                Terms.Order.aggregation("subs_order>gsv", false),
-                Terms.Order.aggregation("price[50.0]", false),
-                Terms.Order.count(false)
-
-            )
-            )
-            .subAggregation(priceSorter)
-            .subAggregation(scoreSorter)
-            .subAggregation(
-              nested("subs_order").path("subscriptions").subAggregation(
-                sum("gsv").field("subscriptions.order_gsv")
-              )
-            )
         )
+      }
+
+
 
       if(mpdm_store_front_id==0)
         search.addAggregation(
