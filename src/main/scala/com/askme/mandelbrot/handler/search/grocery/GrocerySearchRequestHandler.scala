@@ -440,9 +440,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       if (storefront_id == 0) {
         search.addAggregation(
           nested("items").path("items").subAggregation(
-            nested("storefronts").path("items.storefronts").subAggregation(
-              terms("items.storefronts.id").size(aggbuckets)
-            )
+            terms("ids").field("items.storefronts.id").size(aggbuckets)
           )
         )
       }
