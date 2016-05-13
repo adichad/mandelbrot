@@ -1122,6 +1122,42 @@
           }
         }
       },
+      "order_count": {
+        "type": "integer",
+        "store": false,
+        "doc_values": true
+      },
+      "order_quantity": {
+        "type": "integer",
+        "store": false,
+        "doc_values": true
+      },
+      "order_gsv": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "order_discount_amount": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "order_loyalty_earned": {
+        "type": "integer",
+        "store": false,
+        "doc_values": true
+      },
+      "order_last_dt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss",
+        "store": false,
+        "doc_values": true
+      },
+      "order_discount_pct_avg": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
       "parent_categories": {
         "properties": {
           "category_id": {
