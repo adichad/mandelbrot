@@ -1119,19 +1119,28 @@
               },
               "title": {
                 "type": "string",
-                "properties": {
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "fields": {
                   "agg": {
                     "type": "string",
+                    "store": false,
                     "index": "not_analyzed",
-                    "doc_values": true,
-                    "store": false
+                    "doc_values": true
                   },
                   "exact": {
                     "type": "string",
+                    "store": false,
                     "index": "analyzed",
                     "analyzer": "keyword_analyzer",
                     "search_analyzer": "keyword_analyzer",
-                    "store": false
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    }
                   }
                 }
               },
