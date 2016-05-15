@@ -19,6 +19,26 @@
         "index": "no",
         "store": false
       },
+      "median_display_price_current": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "median_customer_price_current": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "mad_display_price_current": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "mad_customer_price_current": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
       "brand_name": {
         "type": "string",
         "store": false,
@@ -879,6 +899,11 @@
           },
           "availability_min": {
             "type": "integer"
+          },
+          "max_quantity": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
           },
           "brand_deal": {
             "type": "string",
