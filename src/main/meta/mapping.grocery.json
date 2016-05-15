@@ -1119,8 +1119,6 @@
               },
               "title": {
                 "type": "string",
-                "store": false,
-                "norms": {"enabled": false},
                 "properties": {
                   "agg": {
                     "type": "string",
