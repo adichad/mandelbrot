@@ -1133,7 +1133,6 @@
                     "index": "analyzed",
                     "analyzer": "keyword_analyzer",
                     "search_analyzer": "keyword_analyzer",
-                    "doc_values": true,
                     "store": false
                   }
                 }
