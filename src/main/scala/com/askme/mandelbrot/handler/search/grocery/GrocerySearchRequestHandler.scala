@@ -48,7 +48,7 @@ object GrocerySearchRequestHandler extends Logging {
       zone_code.foreach { z =>
         zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
       }
-      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+      List(fieldSort("items.display_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
         .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="price.desc") {
@@ -56,7 +56,7 @@ object GrocerySearchRequestHandler extends Logging {
       zone_code.foreach { z =>
         zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
       }
-      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
+      List(fieldSort("items.display_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
         .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="alpha.asc") {
@@ -377,7 +377,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
     if (variant_id != 0) {
-      finalFilter.must(termQuery("variant_id", product_id))
+      finalFilter.must(termQuery("variant_id", variant_id))
     }
     if (product_id != 0) {
       finalFilter.must(termQuery("product_id", product_id))
