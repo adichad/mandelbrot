@@ -19,22 +19,27 @@
         "index": "no",
         "store": false
       },
-      "median_display_price_current": {
+      "default_display_price": {
         "type": "float",
         "store": false,
         "doc_values": true
       },
-      "median_customer_price_current": {
+      "default_customer_price": {
         "type": "float",
         "store": false,
         "doc_values": true
       },
-      "mad_display_price_current": {
+      "default_discount_percent": {
         "type": "float",
         "store": false,
         "doc_values": true
       },
-      "mad_customer_price_current": {
+      "mad_display_price": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
+      "mad_customer_price": {
         "type": "float",
         "store": false,
         "doc_values": true
@@ -232,11 +237,26 @@
           }
         }
       },
+      "brand_priority": {
+        "type": "float",
+        "store": false,
+        "doc_values": true
+      },
       "category_hierarchy": {
         "type": "nested",
         "properties": {
           "id": {
             "type": "integer"
+          },
+          "category_brand_priority": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "category_priority": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
           },
           "name": {
             "type": "string",
@@ -908,6 +928,21 @@
           "brand_deal": {
             "type": "string",
             "index": "no"
+          },
+          "brand_zone_priority": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "category_zone_priority": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "category_brand_zone_priority": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
           },
           "city": {
             "type": "string",
