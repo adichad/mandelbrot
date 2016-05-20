@@ -40,7 +40,8 @@ object GrocerySearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, w: Array[String], zone_code: Array[String]): List[SortBuilder] = {
+  private def getSort(sort: String, w: Array[String], zone_code: Array[String],
+                      categories: Array[String], brands: Array[String]): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -70,15 +71,41 @@ object GrocerySearchRequestHandler extends Logging {
       zone_code.foreach { z =>
         zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
       }
+      val b = boolQuery
+      categories.foreach { cat =>
+        b.should(termQuery("category_hierarchy.name.exact", cat))
+      }
       (
-        Some(scoreSort().order(SortOrder.DESC))::
+        Some(scoreSort().order(SortOrder.DESC)) ::
+          (
+            if(b.hasClauses)
+              Some(
+                fieldSort("category_hierarchy.category_brand_priority").setNestedPath("category_hierarchy")
+                  .order(SortOrder.DESC).sortMode("max").setNestedFilter(b)
+              )
+            else
+              None
+            )::
+          (
+            if(b.hasClauses)
+              Some(
+                fieldSort("category_hierarchy.category_priority").setNestedPath("category_hierarchy")
+                  .order(SortOrder.DESC).sortMode("max").setNestedFilter(b)
+              )
+            else
+              Some(
+                fieldSort("category_hierarchy.category_priority").setNestedPath("category_hierarchy")
+                  .order(SortOrder.DESC).sortMode("max")
+              )
+            )::
           Some(fieldSort("items.gsv").setNestedPath("items").order(SortOrder.DESC).sortMode("max")
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))::
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter))) ::
           Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))::
-          Some(fieldSort("variant_id").order(SortOrder.DESC))::
+            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter))) ::
+          Some(fieldSort("variant_id").order(SortOrder.DESC)) ::
           Nil
         ).flatten
+
     }
 
     debug(sorters.toString)
@@ -411,7 +438,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w, zone_code.split("""\|"""))
+    val sorters = getSort(sort, w, zone_code.split("""\|"""),
+      category.split("""\|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty),
+      brand.split("""\|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty)
+    )
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
