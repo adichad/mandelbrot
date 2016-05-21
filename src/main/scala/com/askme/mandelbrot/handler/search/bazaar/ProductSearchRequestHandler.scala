@@ -470,32 +470,28 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       val scoreSorter = percentiles("score").script(new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(50.0d)
       val priceSorter = percentiles("price").field("min_price").percentiles(50.0d)
 
-      if (category == ""||category.contains(""",""")) {
-        search.addAggregation(
-          terms("categories").field("categories.name.agg").size(aggbuckets)
-        )
-      }
 
+      search.addAggregation(
+        terms("categories").field("categories.name.agg").size(aggbuckets)
+      )
 
-
-      if(mpdm_store_front_id==0)
-        search.addAggregation(
-          nested("subscriptions").path("subscriptions").subAggregation(
-            nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-              filter("store_fronts").filter(
-                boolQuery()
-                  .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                  .must(termQuery("subscriptions.store_fronts.status", 1))
-                  .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
-              )
-                .subAggregation(
-                  terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
-                    .subAggregation(
-                      terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-                )
+      search.addAggregation(
+        nested("subscriptions").path("subscriptions").subAggregation(
+          nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
+            filter("store_fronts").filter(
+              boolQuery()
+                .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+                .must(termQuery("subscriptions.store_fronts.status", 1))
+                .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
             )
+              .subAggregation(
+                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
+                  .subAggregation(
+                    terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+              )
           )
         )
+      )
 
       search.addAggregation(
         nested("attributes").path("attributes")
