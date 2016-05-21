@@ -35,7 +35,7 @@ case object ProductSearchRouter extends Router {
                size, offset,
                explain, select, sort, store,
                agg, suggest, store_front_id, mpdm_store_front_id, crm_seller_id, brand) =>
-              val maxdocspershard = 5000
+              val maxdocspershard = 50000
               val searchType = "dfs_query_then_fetch"
               val timeoutms = 600l
               val aggbuckets = 10
