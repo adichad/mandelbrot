@@ -487,7 +487,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               .subAggregation(
                 terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
                   .subAggregation(
-                    terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+                    terms("name").field("subscriptions.store_fronts.title.agg").size(2).order(Terms.Order.count(false)))
               )
           )
         )
