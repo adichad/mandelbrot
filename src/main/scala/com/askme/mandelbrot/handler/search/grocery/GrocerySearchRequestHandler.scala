@@ -395,8 +395,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           .innerHit(
             new QueryInnerHitBuilder().setName("matched_items")
               .addSort("items.deal_count", SortOrder.DESC)
-              .addSort("items.margin", SortOrder.DESC)
               .addSort("items.customer_price", SortOrder.ASC)
+              .addSort("items.margin", SortOrder.DESC)
               .setFrom(0).setSize(1)
               .setFetchSource(select.split(""","""), Array[String]())
               .setExplain(explain)))
