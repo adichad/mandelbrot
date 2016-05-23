@@ -348,6 +348,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
     import searchParams.idx._
     import searchParams.view._
+    import searchParams.text._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -408,13 +409,30 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if(store_front_id > 0) {
       subscriptionFilter.must(
-        termQuery("subscriptions.store_fronts_id", store_front_id)
+        boolQuery()
+          .must(termQuery("subscriptions.store_fronts.id", store_front_id))
+          .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+          .must(termQuery("subscriptions.store_fronts.status", 1))
       )
     }
 
     if(mpdm_store_front_id > 0) {
       subscriptionFilter.must(
-        termQuery("subscriptions.store_fronts_mpdm_id", mpdm_store_front_id)
+        boolQuery()
+          .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
+          .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+          .must(termQuery("subscriptions.store_fronts.status", 1))
+      )
+    }
+
+    if (category == "" && brand == "" && subscribed_id == 0 && city == "" &&
+      store == "" && grouped_id == 0 && product_id == 0 && base_id == 0 &&
+      crm_seller_id == 0 && store_front_id == 0 && mpdm_store_front_id == 0 && kw == "") {
+      subscriptionFilter.must(
+        boolQuery()
+          .must(existsQuery("subscriptions.store_fronts.mpdm_id"))
+          .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+          .must(termQuery("subscriptions.store_fronts.status", 1))
       )
     }
 
@@ -441,6 +459,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       if(b.hasClauses)
         finalFilter.must(nestedQuery("attributes", b))
     }
+
+
 
     finalFilter
   }
