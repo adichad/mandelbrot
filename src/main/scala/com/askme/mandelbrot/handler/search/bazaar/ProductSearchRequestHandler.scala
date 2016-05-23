@@ -471,6 +471,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.page._
     import searchParams.view._
     import searchParams.filters._
+    import searchParams.text._
 
     val sorters = getSort(sort, mpdm_store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w)
 
@@ -492,7 +493,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
       search.addAggregation(
-        terms("categories").field("categories.name.agg").size(aggbuckets).order(
+        terms("categories").field("categories.name.agg").size(if(suggest) 2 else aggbuckets).order(
           Terms.Order.compound(
             Terms.Order.aggregation("score[80.0]", false),
             Terms.Order.count(false),
