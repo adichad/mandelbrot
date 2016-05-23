@@ -495,8 +495,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         terms("categories").field("categories.name.agg").size(aggbuckets).order(
           Terms.Order.compound(
             Terms.Order.aggregation("score[80.0]", false),
-            Terms.Order.aggregation("price[50.0]", false),
-            Terms.Order.count(false)
+            Terms.Order.count(false),
+            Terms.Order.aggregation("price[50.0]", false)
           )
         )
           .subAggregation(scoreSorter)
