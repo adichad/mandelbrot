@@ -495,7 +495,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         terms("categories").field("categories.name.agg").size(aggbuckets).order(Terms.Order.aggregation("score", false))
           .subAggregation(
             max("score").script(
-              new Script("docscoreexponent", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])
+              new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])
             )
           )
       )
