@@ -213,22 +213,26 @@ object GeoSearchRequestHandler extends Logging {
         if (w.nonEmpty) {
           disMaxQuery.add(
             shinglePartition(
-              Map("synonyms" -> 1e9f, "name" -> 1e11f),
+              Map("synonyms" -> 1e9f, "name" -> 1e11f,
+                "containers_dag_name" -> 1e6f, "containers_dag_synonyms" -> 1e6f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms" -> 1f, "name" -> 1e3f),
+              Map("synonyms" -> 1f, "name" -> 1e3f,
+                "containers_dag_name" -> 1f, "containers_dag_synonyms" -> 1f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms.token_edge_ngram" -> 1e1f, "name.token_edge_ngram" -> 1e2f),
+              Map("synonyms.token_edge_ngram" -> 1e1f, "name.token_edge_ngram" -> 1e2f,
+                "containers_dag_name.token_edge_ngram" -> 1f, "containers_dag_synonyms.token_edge_ngram" -> 1f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms.shingle_nospace_edge_ngram" -> 1e0f, "name.shingle_nospace_edge_ngram" -> 1e1f),
+              Map("synonyms.shingle_nospace_edge_ngram" -> 1e0f, "name.shingle_nospace_edge_ngram" -> 1e1f,
+                "containers_dag_name.shingle_nospace_edge_ngram" -> 1f, "containers_dag_synonyms.shingle_nospace_edge_ngram" -> 1f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -242,22 +246,26 @@ object GeoSearchRequestHandler extends Logging {
 
           val q = disMaxQuery.add(
             shinglePartition(
-              Map("synonyms" -> 1e9f, "name" -> 1e11f),
+              Map("synonyms" -> 1e9f, "name" -> 1e11f,
+                "containers_dag_name" -> 1e6f, "containers_dag_synonyms" -> 1e6f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms" -> 1e3f, "name" -> 1e5f),
+              Map("synonyms" -> 1e3f, "name" -> 1e5f,
+                "containers_dag_name" -> 1f, "containers_dag_synonyms" -> 1f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f),
+              Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f,
+                "containers_dag_name.token_edge_ngram" -> 1f, "containers_dag_synonyms.token_edge_ngram" -> 1f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartition(
-              Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f),
+              Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f,
+                "containers_dag_name.shingle_nospace_edge_ngram" -> 1f, "containers_dag_synonyms.shingle_nospace_edge_ngram" -> 1f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -267,22 +275,26 @@ object GeoSearchRequestHandler extends Logging {
             q2.must(
               disMaxQuery.add(
                 shinglePartition(
-                  Map("synonyms" -> 1e9f, "name" -> 1e11f),
+                  Map("synonyms" -> 1e9f, "name" -> 1e11f,
+                    "containers_dag_name" -> 1e6f, "containers_dag_synonyms" -> 1e6f),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
               ).add(
                 shinglePartition(
-                  Map("synonyms" -> 1e3f, "name" -> 1e5f),
+                  Map("synonyms" -> 1e3f, "name" -> 1e5f,
+                    "containers_dag_name" -> 1f, "containers_dag_synonyms" -> 1f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartition(
-                  Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f),
+                  Map("synonyms.token_edge_ngram" -> 1e3f, "name.token_edge_ngram" -> 1e5f,
+                    "containers_dag_name.token_edge_ngram" -> 1f, "containers_dag_synonyms.token_edge_ngram" -> 1f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartition(
-                  Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f),
+                  Map("synonyms.shingle_nospace_edge_ngram" -> 1e1f, "name.shingle_nospace_edge_ngram" -> 1e2f,
+                    "containers_dag_name.shingle_nospace_edge_ngram" -> 1f, "containers_dag_synonyms.shingle_nospace_edge_ngram" -> 1f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               )
@@ -300,7 +312,15 @@ object GeoSearchRequestHandler extends Logging {
           if (front.isEmpty)
             q3.add(fuzzyOrTermQuery("synonyms.keyword_edge_ngram", last_raw, 1e19f, 1, fuzzy = false))
 
+          q3.add(fuzzyOrTermQuery("containers_dag_name.token_edge_ngram", last_raw, 1e10f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("containers_dag_name.shingle_nospace_edge_ngram", last_raw, 1e8f, 1, fuzzy = false))
+          if (front.isEmpty)
+            q3.add(fuzzyOrTermQuery("containers_dag_name.keyword_edge_ngram", last_raw, 1e12f, 1, fuzzy = false))
 
+          q3.add(fuzzyOrTermQuery("containers_dag_synonyms.token_edge_ngram", last_raw, 1e10f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("containers_dag_synonyms.shingle_nospace_edge_ngram", last_raw, 1e8f, 1, fuzzy = false))
+          if (front.isEmpty)
+            q3.add(fuzzyOrTermQuery("containers_dag_synonyms.keyword_edge_ngram", last_raw, 1e12f, 1, fuzzy = false))
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
         } else
