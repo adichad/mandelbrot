@@ -38,8 +38,8 @@ class FieldValueOrdinalizer extends NativeScriptFactory {
       )
       case _ => new StringFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        parse(params.get("mapper").asInstanceOf[String]).extract[Map[String,Long]],
-        params.get("missing").asInstanceOf[Long]
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[String,Int]].map(x=>(x._1, x._2.toLong)),
+        params.get("missing").asInstanceOf[Int].toLong
       )
     }
 
