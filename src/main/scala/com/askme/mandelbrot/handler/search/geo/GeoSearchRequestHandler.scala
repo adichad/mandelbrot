@@ -41,7 +41,7 @@ object GeoSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(lat: Double, lon: Double, w: Array[String]): List[SortBuilder] = {
+  private def getSort(lat: Double, lon: Double, w: Array[String], tags: Array[String]): List[SortBuilder] = {
 
     val sorters =
       if(lat==0.0d && lon==0.0d) List(scoreSort.order(SortOrder.DESC))
@@ -429,7 +429,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
     import searchParams.view._
     import searchParams.geo._
 
-    val sorters = getSort(lat, lon, w)
+    val sorters = getSort(lat, lon, w, searchParams.filters.tags.split(",").map(_.trim))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)

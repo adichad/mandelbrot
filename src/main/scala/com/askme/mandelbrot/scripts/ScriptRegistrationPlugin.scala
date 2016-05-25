@@ -27,8 +27,8 @@ class ScriptRegistrationPlugin extends Plugin {
     module.registerScript("dealchannelsort", classOf[DealChannelComparator])
     module.registerScript("dealsort", classOf[DealComparator])
     module.registerScript("dealpaysort", classOf[DealPayComparator])
-    module.registerScript("discretized", classOf[FieldValueDiscretizer])
-
+    module.registerScript("discrete", classOf[FieldValueDiscretizer])
+    module.registerScript("ordinal", classOf[FieldValueOrdinalizer])
   }
 
 }
