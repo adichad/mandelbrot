@@ -14,6 +14,7 @@ import org.json4s.jackson.JsonMethods._
 class FieldValueOrdinalizer extends NativeScriptFactory {
 
   override def newScript(params: util.Map[String, AnyRef]): ExecutableScript = {
+    implicit val formats = org.json4s.DefaultFormats
     params.getOrDefault("type", "String").asInstanceOf[String] match {
       case "Int" => new IntFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
