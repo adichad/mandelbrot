@@ -50,8 +50,8 @@ object GeoSearchRequestHandler extends Logging {
             val serviceableParams = new util.HashMap[String, AnyRef]()
             serviceableParams.put("type", "String")
             serviceableParams.put("field", "tags")
-            serviceableParams.put("mapper", Map("grocery"->0l))
-            serviceableParams.put("missing", 1l)
+            serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+            serviceableParams.put("missing", long2Long(1l))
 
             Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
           } else None)::
@@ -62,8 +62,8 @@ object GeoSearchRequestHandler extends Logging {
           val serviceableParams = new util.HashMap[String, AnyRef]()
           serviceableParams.put("type", "String")
           serviceableParams.put("field", "tags")
-          serviceableParams.put("mapper", Map("grocery"->0l))
-          serviceableParams.put("missing", 1l)
+          serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+          serviceableParams.put("missing", long2Long(1l))
 
           Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
         } else None)::
@@ -79,8 +79,8 @@ object GeoSearchRequestHandler extends Logging {
             val serviceableParams = new util.HashMap[String, AnyRef]()
             serviceableParams.put("type", "String")
             serviceableParams.put("field", "tags")
-            serviceableParams.put("mapper", Map("grocery"->0l))
-            serviceableParams.put("missing", 1l)
+            serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+            serviceableParams.put("missing", long2Long(1l))
 
             Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
           } else (None))::
