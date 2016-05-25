@@ -1,5 +1,6 @@
 package com.askme.mandelbrot.handler.search.geo
 
+import java.io.Serializable
 import java.util
 
 import akka.actor.Actor
@@ -27,6 +28,8 @@ import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+
 
 import scala.collection.JavaConversions._
 
@@ -43,6 +46,7 @@ object GeoSearchRequestHandler extends Logging {
 
   private def getSort(lat: Double, lon: Double, w: Array[String], channel: String): List[SortBuilder] = {
 
+    implicit val formats = org.json4s.DefaultFormats
     val sorters: List[SortBuilder] =
       if(lat==0.0d && lon==0.0d)
         (
@@ -50,7 +54,7 @@ object GeoSearchRequestHandler extends Logging {
             val serviceableParams = new util.HashMap[String, AnyRef]()
             serviceableParams.put("type", "String")
             serviceableParams.put("field", "tags")
-            serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+            serviceableParams.put("mapper", Serialization.write(Map("grocery"->long2Long(0l))))
             serviceableParams.put("missing", long2Long(1l))
 
             Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
@@ -62,7 +66,7 @@ object GeoSearchRequestHandler extends Logging {
           val serviceableParams = new util.HashMap[String, AnyRef]()
           serviceableParams.put("type", "String")
           serviceableParams.put("field", "tags")
-          serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+          serviceableParams.put("mapper", Serialization.write(Map("grocery"->long2Long(0l))))
           serviceableParams.put("missing", long2Long(1l))
 
           Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
@@ -79,11 +83,11 @@ object GeoSearchRequestHandler extends Logging {
             val serviceableParams = new util.HashMap[String, AnyRef]()
             serviceableParams.put("type", "String")
             serviceableParams.put("field", "tags")
-            serviceableParams.put("mapper", Map("grocery"->long2Long(0l)))
+            serviceableParams.put("mapper", Serialization.write(Map("grocery"->long2Long(0l))))
             serviceableParams.put("missing", long2Long(1l))
 
             Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
-          } else (None))::
+          } else None)::
           Some(scriptSort(new Script("geodistancebucket", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC))::
           Some(scoreSort.order(SortOrder.DESC))::Nil
         ).flatten

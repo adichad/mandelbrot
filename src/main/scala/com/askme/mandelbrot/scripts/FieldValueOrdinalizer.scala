@@ -5,6 +5,8 @@ import java.util
 import org.elasticsearch.index.fielddata.ScriptDocValues
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
 import scala.collection.JavaConversions._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 /**
   * Created by adichad on 25/05/16.
@@ -15,27 +17,27 @@ class FieldValueOrdinalizer extends NativeScriptFactory {
     params.getOrDefault("type", "String").asInstanceOf[String] match {
       case "Int" => new IntFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        params.get("mapper").asInstanceOf[PartialFunction[Int, Long]],
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[Int,Long]].map(x=>(x._1.toInt, x._2)),
         params.get("missing").asInstanceOf[Long]
       )
       case "Long" => new LongFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        params.get("mapper").asInstanceOf[PartialFunction[Long, Long]],
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[Long,Long]].map(x=>(x._1.toLong, x._2)),
         params.get("missing").asInstanceOf[Long]
       )
       case "Float" => new FloatFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        params.get("mapper").asInstanceOf[PartialFunction[Float, Long]],
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[Float,Long]].map(x=>(x._1.toFloat, x._2)),
         params.get("missing").asInstanceOf[Long]
       )
       case "Double" => new DoubleFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        params.get("mapper").asInstanceOf[PartialFunction[Double, Long]],
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[String,Long]].map(x=>(x._1.toDouble, x._2)),
         params.get("missing").asInstanceOf[Long]
       )
       case _ => new StringFieldOrdinalizerScript(
         params.get("field").asInstanceOf[String],
-        params.get("mapper").asInstanceOf[PartialFunction[String, Long]],
+        parse(params.get("mapper").asInstanceOf[String]).extract[Map[String,Long]],
         params.get("missing").asInstanceOf[Long]
       )
     }
