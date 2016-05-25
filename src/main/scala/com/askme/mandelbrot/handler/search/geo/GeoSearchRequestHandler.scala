@@ -398,8 +398,8 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
     }
     if (tags.trim != "") {
       finalFilter.must(termsQuery("tags.exact", tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
-    } else if(channel == "grocery" && kw == "") {
-      finalFilter.must(termsQuery("tags.exact", tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
+    } else if(channel == "grocery" && kw == "" && (lat!=0.0d || lon!=0.0d)) {
+      finalFilter.must(termQuery("tags.exact", "grocery"))
     }
     if (phone_prefix.trim != "") {
       finalFilter.must(termQuery("phone_prefix.exact", analyze(esClient, index, "phone_prefix.exact", phone_prefix).mkString(" ")))
