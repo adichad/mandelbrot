@@ -41,21 +41,54 @@ object GeoSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(lat: Double, lon: Double, w: Array[String], tags: Array[String]): List[SortBuilder] = {
+  private def getSort(lat: Double, lon: Double, w: Array[String], channel: String): List[SortBuilder] = {
 
-    val sorters =
-      if(lat==0.0d && lon==0.0d) List(scoreSort.order(SortOrder.DESC))
-      else if(w.isEmpty) List(geoDistanceSort("center").point(lat, lon).geoDistance(GeoDistance.PLANE).order(SortOrder.ASC).coerce(true))
+    val sorters: List[SortBuilder] =
+      if(lat==0.0d && lon==0.0d)
+        (
+          (if(channel == "grocery") {
+            val serviceableParams = new util.HashMap[String, AnyRef]()
+            serviceableParams.put("type", "String")
+            serviceableParams.put("field", "tags")
+            serviceableParams.put("mapper", Map("grocery"->0l))
+            serviceableParams.put("missing", 1l)
+
+            Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
+          } else None)::
+          Some(scoreSort.order(SortOrder.DESC))::Nil
+          ).flatten
+      else if(w.isEmpty) (
+        (if(channel == "grocery") {
+          val serviceableParams = new util.HashMap[String, AnyRef]()
+          serviceableParams.put("type", "String")
+          serviceableParams.put("field", "tags")
+          serviceableParams.put("mapper", Map("grocery"->0l))
+          serviceableParams.put("missing", 1l)
+
+          Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
+        } else None)::
+        Some(geoDistanceSort("center").point(lat, lon).geoDistance(GeoDistance.PLANE).order(SortOrder.ASC).coerce(true))::Nil
+        ).flatten
       else {
         val geoParams = new util.HashMap[String, AnyRef]
         geoParams.put("lat", double2Double(lat))
         geoParams.put("lon", double2Double(lon))
         geoParams.put("coordfield", "center")
-        List(
-          scriptSort(new Script("geodistancebucket", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC),
-          scoreSort.order(SortOrder.DESC)
-        )
+        (
+          (if(channel == "grocery") {
+            val serviceableParams = new util.HashMap[String, AnyRef]()
+            serviceableParams.put("type", "String")
+            serviceableParams.put("field", "tags")
+            serviceableParams.put("mapper", Map("grocery"->0l))
+            serviceableParams.put("missing", 1l)
+
+            Some(scriptSort(new Script("ordinal", ScriptType.INLINE, "native", serviceableParams), "number").order(SortOrder.ASC))
+          } else (None))::
+          Some(scriptSort(new Script("geodistancebucket", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC))::
+          Some(scoreSort.order(SortOrder.DESC))::Nil
+        ).flatten
       }
+
     debug(sorters.toString)
     sorters
 
@@ -343,6 +376,7 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
     import searchParams.idx._
     import searchParams._
     import searchParams.geo._
+    import searchParams.text._
 
     implicit val formats = org.json4s.DefaultFormats
 
@@ -359,6 +393,8 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
       finalFilter.must(termQuery("types", `type`.trim))
     }
     if (tags.trim != "") {
+      finalFilter.must(termsQuery("tags.exact", tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
+    } else if(channel == "grocery" && kw == "") {
       finalFilter.must(termsQuery("tags.exact", tags.split(",").map(tag=>analyze(esClient, index, "tags.exact", tag).mkString(" ")):_*))
     }
     if (phone_prefix.trim != "") {
@@ -428,8 +464,9 @@ class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) 
     import searchParams.page._
     import searchParams.view._
     import searchParams.geo._
+    import searchParams.filters._
 
-    val sorters = getSort(lat, lon, w, searchParams.filters.tags.split(",").map(_.trim))
+    val sorters = getSort(lat, lon, w, channel)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)

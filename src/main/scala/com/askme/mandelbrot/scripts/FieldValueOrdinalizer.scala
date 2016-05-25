@@ -4,6 +4,7 @@ import java.util
 
 import org.elasticsearch.index.fielddata.ScriptDocValues
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
+import scala.collection.JavaConversions._
 
 /**
   * Created by adichad on 25/05/16.
@@ -49,39 +50,49 @@ class FieldValueOrdinalizer extends NativeScriptFactory {
 class IntFieldOrdinalizerScript(field: String, mapper: PartialFunction[Int, Long], missing: Long) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Longs].getValue.toInt
-    if(mapper isDefinedAt fieldValue) mapper apply fieldValue else missing
+    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Longs].getValues.map(_.toInt).filter(mapper.isDefinedAt)
+    if(fieldValue.nonEmpty)
+      mapper apply fieldValue.head
+    else missing
   }
 }
 
 class LongFieldOrdinalizerScript(field: String, mapper: PartialFunction[Long, Long], missing: Long) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Longs].getValue
-    if(mapper isDefinedAt fieldValue) mapper apply fieldValue else missing
+    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Longs].getValues.filter(mapper isDefinedAt _)
+    if(fieldValue.nonEmpty)
+      mapper apply fieldValue.head
+    else missing
   }
 }
 
 class FloatFieldOrdinalizerScript(field: String, mapper: PartialFunction[Float, Long], missing: Long) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Doubles].getValue.toFloat
-    if(mapper isDefinedAt fieldValue) mapper apply fieldValue else missing
+    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Doubles].getValues.map(_.toFloat).filter(mapper.isDefinedAt)
+    if(fieldValue.nonEmpty)
+      mapper apply fieldValue.head
+    else missing
   }
 }
 
 class DoubleFieldOrdinalizerScript(field: String, mapper: PartialFunction[Double, Long], missing: Long) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Doubles].getValue
-    if(mapper isDefinedAt fieldValue) mapper apply fieldValue else missing
+    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Doubles].getValues.filter(mapper isDefinedAt _)
+    if(fieldValue.nonEmpty)
+      mapper apply fieldValue.head
+    else missing
   }
 }
 
 class StringFieldOrdinalizerScript(field: String, mapper: PartialFunction[String, Long], missing: Long) extends AbstractLongSearchScript {
 
   override def runAsLong: Long = {
-    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Strings].getValue
-    if(mapper isDefinedAt fieldValue) mapper apply fieldValue else missing
+    val fieldValue = doc.get(field).asInstanceOf[ScriptDocValues.Strings].getValues.filter(mapper.isDefinedAt)
+    if(fieldValue.nonEmpty)
+      mapper apply fieldValue.head
+    else missing
   }
 }

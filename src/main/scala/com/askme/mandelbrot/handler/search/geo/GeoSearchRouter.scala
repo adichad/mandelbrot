@@ -21,21 +21,22 @@ case object GeoSearchRouter extends Router {
             parameters(
               'gids.as[String] ? "", 'kw.as[String] ? "", 'type ? "", 'tag ? "", 'phone_prefix ? "",
               'container_gids.as[String] ? "", 'container ? "", 'container_type ? "", 'container_tag ? "", 'container_phone_prefix ? "",
-              'related_gids.as[String] ? "", 'related ? "", 'related_type?"", 'related_tag?"", 'related_phone_prefix ? "",
+              'related_gids.as[String] ? "", 'related ? "", 'related_type?"", 'related_tag?"",
               'lat.as[Double] ? 0.0d, 'lon.as[Double] ? 0.0d, 'to_km.as[Double] ? 0.0d,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
-              'explain.as[Boolean] ? false, 'select ? "gid,name") { (gids, kw, `type`, tag, phone_prefix,
+              'explain.as[Boolean] ? false, 'select ? "gid,name", 'channel ? "") { (gids, kw, `type`, tag, phone_prefix,
                                        container_gids, container, container_type, container_tag, container_phone_prefix,
-                                       related_gids, related, related_type, related_tag, related_phone_prefix,
+                                       related_gids, related, related_type, related_tag,
                                        lat, lon, to_km,
                                        size, offset,
-                                       explain, select) =>
+                                       explain, select, channel) =>
               val maxdocspershard = 10000
               val searchType = "query_then_fetch"
               val timeoutms = 200l
               val aggbuckets = 10
               val source = true
               val version = 1
+              val related_phone_prefix = ""
 
               respondWithMediaType(`application/json`) { ctx =>
                 context.actorOf(Props(classOf[GeoSearchRequestCompleter], config, serverContext, ctx,
@@ -44,7 +45,7 @@ case object GeoSearchRouter extends Router {
                     IndexParams(index, "geo"),
                     TextParams(kw),
                     GeoParams(lat, lon, to_km),
-                    FilterParams(gids, kw, `type`, tag, phone_prefix),
+                    FilterParams(gids, kw, `type`, tag, phone_prefix, channel),
                     ContainerParams(container_gids, container, container_type, container_tag, container_phone_prefix),
                     RelatedParams(related_gids, related, related_type, related_tag, related_phone_prefix),
                     PageParams(size, offset),

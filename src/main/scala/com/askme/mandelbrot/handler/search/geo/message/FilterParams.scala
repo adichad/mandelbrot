@@ -7,4 +7,4 @@ import com.askme.mandelbrot.handler.message.RestMessage
  */
 case class ContainerParams(gids: String, text: String, `type`: String, tags: String, phone_prefix: String) extends RestMessage
 case class RelatedParams(gids: String, text: String, `type`: String, tags: String, phone_prefix: String) extends RestMessage
-case class FilterParams(gids: String, text: String, `type`: String, tags: String, phone_prefix: String) extends RestMessage
+case class FilterParams(gids: String, text: String, `type`: String, tags: String, phone_prefix: String, channel: String) extends RestMessage
