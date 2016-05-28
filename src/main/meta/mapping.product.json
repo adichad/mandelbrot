@@ -962,7 +962,6 @@
         }
       },
       "categories": {
-        "copy_to": ["categories_nested"],
         "properties": {
           "boost": {
             "type": "float",
@@ -1872,7 +1871,6 @@
         "doc_values": true
       },
       "parent_categories": {
-        "copy_to": ["categories_nested"],
         "properties": {
           "boost": {
             "type": "float",
