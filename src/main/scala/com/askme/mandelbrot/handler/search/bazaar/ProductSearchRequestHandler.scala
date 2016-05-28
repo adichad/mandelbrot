@@ -81,21 +81,9 @@ object ProductSearchRequestHandler extends Logging {
               )
               .sortMode("max").missing(0))
             ) ::
-          Some(fieldSort("subscriptions.order_discount_pct_avg").setNestedPath("subscriptions").order(SortOrder.DESC)
-            .setNestedFilter(
-              boolQuery()
-                .must(termQuery("subscriptions.status", 1))
-                .must(rangeQuery("subscriptions.quantity").gt(0))
-            )
-            .sortMode("max").missing(0))::
           Some(scoreSort().order(SortOrder.DESC))::
-          Some(fieldSort("subscriptions.order_gsv").setNestedPath("subscriptions").order(SortOrder.DESC)
-            .setNestedFilter(
-              boolQuery()
-                .must(termQuery("subscriptions.status", 1))
-                .must(rangeQuery("subscriptions.quantity").gt(0))
-            )
-            .sortMode("max").missing(0))::
+          Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0))::
+          Some(fieldSort("order_gsv").order(SortOrder.DESC).sortMode("max").missing(0))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
           Nil
         ).flatten
