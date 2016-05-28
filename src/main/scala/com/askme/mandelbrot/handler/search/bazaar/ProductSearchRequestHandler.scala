@@ -530,9 +530,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
                   .order(
                     Terms.Order.compound(
-                      Terms.Order.aggregation("revsubscribed>order_count", false),
-                      Terms.Order.aggregation("revsubscribed>rating", false),
-                      Terms.Order.aggregation("revsubscribed>order_gsv", false)
+                      Terms.Order.aggregation("revsubscribed>order_count", false)
                     )
                   )
                   .subAggregation(
@@ -541,8 +539,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                   .subAggregation(
                     reverseNested("revsubscribed").path("")
                       .subAggregation(max("order_count").field("order_count"))
-                      .subAggregation(max("order_gsv").field("order_gsv"))
-                      .subAggregation(max("rating").field("avg_rating"))
                   )
               )
           )
