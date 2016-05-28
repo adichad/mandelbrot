@@ -428,12 +428,17 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if (category == "" && brand == "" && subscribed_id == 0 && city == "" &&
       store == "" && grouped_id == 0 && product_id == 0 && base_id == 0 &&
       crm_seller_id == 0 && store_front_id == 0 && mpdm_store_front_id == 0 && kw == "") {
-      subscriptionFilter.must(
-        nestedQuery("subscriptions.store_fronts", boolQuery()
-          .must(existsQuery("subscriptions.store_fronts.mpdm_id"))
-          .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1)))
-      )
+      subscriptionFilter
+        .must(
+          nestedQuery("subscriptions.store_fronts", boolQuery()
+            .must(existsQuery("subscriptions.store_fronts.mpdm_id"))
+            .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+            .must(termQuery("subscriptions.store_fronts.status", 1)))
+        )
+        .must(
+          rangeQuery("subscriptions.order_count").gt(0)
+        )
+
     }
 
     if(subscriptionFilter.hasClauses)
@@ -504,6 +509,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           .subAggregation(priceSorter)
       )
 
+      /*
       search.addAggregation(
         nested("subscriptions").path("subscriptions").subAggregation(
           nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
@@ -517,6 +523,39 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
                   .subAggregation(
                     terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+              )
+          )
+        )
+      )
+      */
+
+      search.addAggregation(
+        nested("subscriptions").path("subscriptions").subAggregation(
+          nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
+            filter("store_fronts").filter(
+              boolQuery()
+                .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+                .must(termQuery("subscriptions.store_fronts.status", 1))
+                .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
+            )
+              .subAggregation(
+                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
+                  .order(
+                    Terms.Order.compound(
+                      Terms.Order.aggregation("revsubscribed>order_count", false),
+                      Terms.Order.aggregation("revsubscribed>rating", false),
+                      Terms.Order.aggregation("revsubscribed>order_gsv", false)
+                    )
+                  )
+                  .subAggregation(
+                    terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false))
+                  )
+                  .subAggregation(
+                    reverseNested("revsubscribed").path("")
+                      .subAggregation(max("order_count").field("order_count"))
+                      .subAggregation(max("order_gsv").field("order_gsv"))
+                      .subAggregation(max("rating").field("avg_rating"))
+                  )
               )
           )
         )
