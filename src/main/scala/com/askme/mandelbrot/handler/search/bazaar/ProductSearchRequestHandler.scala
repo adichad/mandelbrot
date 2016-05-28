@@ -481,41 +481,22 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
-      val scoreSorter = percentiles("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef])).percentiles(80.0d)
-      val priceSorter = percentiles("price").field("min_price").percentiles(50.0d)
+      val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
+      val orderSorter = sum("order").field("order_count")
 
 
       search.addAggregation(
         terms("categories").field("categories.name.agg").size(if(suggest) 2 else aggbuckets).order(
           Terms.Order.compound(
-            Terms.Order.aggregation("score[80.0]", false),
-            Terms.Order.count(false),
-            Terms.Order.aggregation("price[50.0]", false)
+            Terms.Order.aggregation("score", false),
+            Terms.Order.aggregation("order", false),
+            Terms.Order.count(false)
           )
         )
           .subAggregation(scoreSorter)
-          .subAggregation(priceSorter)
+          .subAggregation(orderSorter)
       )
 
-      /*
-      search.addAggregation(
-        nested("subscriptions").path("subscriptions").subAggregation(
-          nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-            filter("store_fronts").filter(
-              boolQuery()
-                .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                .must(termQuery("subscriptions.store_fronts.status", 1))
-                .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
-            )
-              .subAggregation(
-                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
-                  .subAggregation(
-                    terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-              )
-          )
-        )
-      )
-      */
 
       search.addAggregation(
         nested("subscriptions").path("subscriptions").subAggregation(
@@ -527,19 +508,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
             )
               .subAggregation(
-                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets)
-                  .order(
-                    Terms.Order.compound(
-                      Terms.Order.aggregation("revsubscribed>order_count", false)
-                    )
-                  )
-                  .subAggregation(
-                    terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false))
-                  )
-                  .subAggregation(
-                    reverseNested("revsubscribed").path("")
-                      .subAggregation(max("order_count").field("order_count"))
-                  )
+                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).order(Terms.Order.aggregation("order_count", false))
+                  .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+                  .subAggregation(sum("order_count").field("order_count"))
               )
           )
         )
