@@ -532,9 +532,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
             )
               .subAggregation(
-                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).order(Terms.Order.aggregation("order_count", false))
+                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).order(
+                  Terms.Order.aggregation("rev>order", false)
+                )
                   .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-                  .subAggregation(sum("order_count").field("order_count"))
+                  .subAggregation(reverseNested("rev").subAggregation(orderSorter))
               )
           )
         )
