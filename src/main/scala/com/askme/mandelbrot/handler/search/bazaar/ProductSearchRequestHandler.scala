@@ -55,7 +55,8 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        (if (mpdm_store_front_id > 0)
+        Some(scoreSort().order(SortOrder.DESC))::
+          (if (mpdm_store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").setNestedPath("subscriptions.store_fronts").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
@@ -81,7 +82,6 @@ object ProductSearchRequestHandler extends Logging {
               )
               .sortMode("max").missing(0))
             ) ::
-          Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0))::
           Some(fieldSort("order_gsv").order(SortOrder.DESC).sortMode("max").missing(0))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
