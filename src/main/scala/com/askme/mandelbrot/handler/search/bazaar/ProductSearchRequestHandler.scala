@@ -85,6 +85,7 @@ object ProductSearchRequestHandler extends Logging {
               )
               .sortMode("max").missing(0))
             ) ::
+          Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0))::
           Some(fieldSort("order_gsv").order(SortOrder.DESC).sortMode("max").missing(0))::
           Some(fieldSort("product_id").order(SortOrder.DESC))::
