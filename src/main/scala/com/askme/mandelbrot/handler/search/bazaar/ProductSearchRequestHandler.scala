@@ -55,7 +55,10 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        Some(scoreSort().order(SortOrder.DESC))::
+        (if(cities.nonEmpty)
+          Some(scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", null), "number").order(SortOrder.DESC))
+        else
+          Some(scoreSort().order(SortOrder.DESC)))::
           (if (mpdm_store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").setNestedPath("subscriptions.store_fronts").order(SortOrder.DESC)
               .setNestedFilter(
@@ -430,7 +433,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if(subscriptionFilter.hasClauses)
-      finalFilter.must(nestedQuery("subscriptions", subscriptionFilter).innerHit(new QueryInnerHitBuilder().setName("best_subscription").addSort("subscriptions.min_price", SortOrder.ASC).setFrom(0).setSize(1).setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
+      finalFilter.must(
+        nestedQuery("subscriptions", subscriptionFilter)
+          .innerHit(
+            new QueryInnerHitBuilder().setName("best_subscription")
+              .addSort("subscriptions.min_price", SortOrder.ASC)
+              .addSort("subscriptions.order_count", SortOrder.DESC)
+              .setFrom(0).setSize(1)
+              .setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
 
 
     if (category != "") {
@@ -486,7 +496,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
       search.addAggregation(
-        terms("categories").field("categories.name.agg").size(if(suggest) 2 else aggbuckets).order(
+        terms("categories").field("categories_l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
           Terms.Order.compound(
             Terms.Order.aggregation("score", false),
             Terms.Order.aggregation("order", false),
