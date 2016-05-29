@@ -510,7 +510,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
       search.addAggregation(
         nested("categories_l2").path("categories_l2").subAggregation(
-          filter("categories_l2").filter(boolQuery().mustNot(termQuery("categories.name.exact", "root catalog"))).subAggregation(
+          filter("categories_l2").filter(boolQuery().mustNot(termQuery("categories_l2.name.exact", "root catalog"))).subAggregation(
           terms("categories").field("categories_l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
             Terms.Order.compound(
               Terms.Order.aggregation("score", false),
