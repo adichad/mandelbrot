@@ -510,14 +510,15 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
       search.addAggregation(
         nested("categories_l2").path("categories_l2").subAggregation(
-          terms("categories").field("categories.name.agg").size(if(suggest) 2 else aggbuckets).order(
+          terms("categories").field("categories_l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
             Terms.Order.compound(
               Terms.Order.aggregation("score", false),
+              Terms.Order.aggregation("rev>order", false),
               Terms.Order.count(false)
             )
           )
             .subAggregation(scoreSorter)
-            .subAggregation(reverseNested("rev").path("").subAggregation(orderSorter))
+            .subAggregation(reverseNested("rev").subAggregation(orderSorter))
         )
       )
 
