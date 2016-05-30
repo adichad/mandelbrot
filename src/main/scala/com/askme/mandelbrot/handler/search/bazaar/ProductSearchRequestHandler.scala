@@ -535,10 +535,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             )
               .subAggregation(
                 terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).order(
-                  Terms.Order.aggregation("rev>order", false)
+                  Terms.Order.aggregation("rev>filter>order", false)
                 )
                   .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-                  .subAggregation(reverseNested("rev").subAggregation(orderSorter))
+                  .subAggregation(
+                    reverseNested("rev").subAggregation(
+                      filter("filter").filter(rangeQuery("order_last_dt").gte("now-2w")).subAggregation(orderSorter)
+                    )
+                  )
               )
           )
         )
