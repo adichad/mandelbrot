@@ -618,10 +618,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
           val q3 = disMaxQuery
             .add(fuzzyOrTermQuery("variant_title_head.token_edge_ngram", last_raw, 1e20f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("variant_title_head.shingle_nospace_edge_ngram", last_raw, 1e20f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("variant_title_head.shingle_nospace_edge_ngram", last_raw, 1e20f, 1, fuzzy = false))
 
           q3.add(fuzzyOrTermQuery("variant_title.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
-            .add(fuzzyOrTermQuery("variant_title.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+            .add(fuzzyOrTermQuery("variant_title.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
 
           q3.add(fuzzyOrTermQuery("categories.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
             .add(fuzzyOrTermQuery("categories.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
