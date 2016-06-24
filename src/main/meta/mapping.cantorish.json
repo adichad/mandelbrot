@@ -3089,6 +3089,11 @@
             }
           }
         }
+      },
+      "log_id": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
       }
     }
   }

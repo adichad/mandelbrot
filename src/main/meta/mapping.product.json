@@ -3452,6 +3452,11 @@
         "type": "float",
         "store": false,
         "doc_values": true
+      },
+      "log_id": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
       }
     }
 

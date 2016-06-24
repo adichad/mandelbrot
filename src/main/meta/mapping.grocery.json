@@ -1179,6 +1179,12 @@
                   }
                 }
               },
+              "url_slug": {
+                "type": "string",
+                "index": "not_analyzed",
+                "store": false,
+                "doc_values": true
+              },
               "deal_text": {
                 "type": "string"
               },
@@ -1493,6 +1499,11 @@
             "similarity": "bazaar_bm25"
           }
         }
+      },
+      "log_id": {
+        "type": "long",
+        "store": false,
+        "doc_values": true
       }
     }
   }
