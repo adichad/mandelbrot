@@ -43,7 +43,7 @@
         },
         "stopword": {
           "type": "stop",
-          "stopwords": ["the", "and", "in", "of"]
+          "stopwords": ["the", "and", "in", "of", "product", "products"]
         },
         "word_delimiter": {
           "type": "word_delimiter"
