@@ -49,7 +49,7 @@ object GrocerySearchRequestHandler extends Logging {
       zone_code.foreach { z =>
         zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
       }
-      List(fieldSort("items.display_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
         .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="price.desc") {
@@ -57,7 +57,7 @@ object GrocerySearchRequestHandler extends Logging {
       zone_code.foreach { z =>
         zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
       }
-      List(fieldSort("items.display_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
+      List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
         .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
     }
     else if(sort=="alpha.asc") {
@@ -350,6 +350,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var itemFilter: QueryBuilder = boolQuery()
 
   private def buildFilter(searchParams: GrocerySearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -398,7 +399,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               .addSort("items.customer_price", SortOrder.ASC)
               .addSort("items.margin", SortOrder.DESC)
               .setFrom(0).setSize(1)
-              .setFetchSource(select.split(""","""), Array[String]())
+              .setFetchSource(Array("*"), Array[String]())
               .setExplain(explain)))
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
@@ -452,7 +453,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
-      .setFetchSource(select.split(""","""), Array[String]())
+      .setFetchSource(select.split(""","""), Array[String]("items"))
 
 
     if (agg) {
