@@ -365,8 +365,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .must(termQuery("product_status", 0))
       .must(termQuery("categories.status", 1))
       .must(termQuery("brand_status", 1))
-      .must(termQuery("categories.status", 1))
-      .must(termQuery("categories.parent_name", "fmcg"))
+    if(storefront_id ==0 )
+      finalFilter.must(termQuery("categories.status", 1))
+
+    finalFilter.must(termQuery("categories.parent_name", "fmcg"))
 
     val itemFilter = boolQuery.must(termQuery("items.status", 1))
     itemFilter.must(termQuery("items.login_status", 1))
@@ -453,7 +455,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .setSearchType(SearchType.fromString(searchType, ParseFieldMatcher.STRICT))
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
-      .setFetchSource(select.split(""","""), Array[String]("items"))
+      .setFetchSource(select.split(""","""), Array[String]())
 
 
     if (agg) {
