@@ -592,7 +592,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
           val search = buildSearch(searchParams)
 
-          val qfinal = query//boolQuery.must(query).filter(finalFilter)
+          val qfinal = boolQuery.must(query).filter(finalFilter)
           search.setQuery(qfinal)
 
           val me = context.self
@@ -638,7 +638,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
             val leastCount = qDefs(relaxLevel)._2
             val me = context.self
 
-            val qfinal = query//boolQuery.must(query).filter(filter)
+            val qfinal = boolQuery.must(query).filter(filter)
             search.setQuery(qfinal)
             search.execute(new ActionListener[SearchResponse] {
               override def onResponse(response: SearchResponse): Unit = {
