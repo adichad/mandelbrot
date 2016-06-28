@@ -62,7 +62,7 @@ object CantorishSearchRequestHandler extends Logging {
           else None
             ) ::
           Some(scoreSort().order(SortOrder.DESC))::
-          Some(fieldSort("product_id").order(SortOrder.DESC))::
+          Some(fieldSort("id").order(SortOrder.DESC))::
           Nil
         ).flatten
 
