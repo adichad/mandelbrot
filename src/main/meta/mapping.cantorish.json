@@ -702,6 +702,716 @@
               }
             }
           },
+          "tree": {
+            "type": "nested",
+            "properties": {
+              "tree": {
+                "type": "nested",
+                "properties": {
+                  "tree": {
+                    "type": "nested",
+                    "properties": {
+                      "tree": {
+                        "type": "nested",
+                        "properties": {
+                          "tree": {
+                            "type": "nested",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "level": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "created_dt": {
+                                "type": "date",
+                                "format": "yyyy-MM-dd HH:mm:ss",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "updated_dt": {
+                                "type": "date",
+                                "format": "yyyy-MM-dd HH:mm:ss",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "name": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "term_vector": "with_positions_offsets",
+                                "fields": {
+                                  "agg": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "not_analyzed",
+                                    "doc_values": true
+                                  },
+                                  "exact": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "keyword_analyzer",
+                                    "search_analyzer": "keyword_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    }
+                                  },
+                                  "shingle": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_analyzer",
+                                    "search_analyzer": "shingle_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_ngram_analyzer",
+                                    "search_analyzer": "shingle_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "token_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "token_edge_ngram_analyzer",
+                                    "search_analyzer": "token_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": {
+                                      "enabled": false
+                                    },
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "path": {
+                                "type": "string",
+                                "store": false,
+                                "index": "not_analyzed",
+                                "doc_values": true
+                              },
+                              "parent_id": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "is_deleted": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              }
+                            }
+                          },
+                          "id": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "level": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "created_dt": {
+                            "type": "date",
+                            "format": "yyyy-MM-dd HH:mm:ss",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "updated_dt": {
+                            "type": "date",
+                            "format": "yyyy-MM-dd HH:mm:ss",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "name": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "term_vector": "with_positions_offsets",
+                            "fields": {
+                              "agg": {
+                                "type": "string",
+                                "store": false,
+                                "index": "not_analyzed",
+                                "doc_values": true
+                              },
+                              "exact": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "keyword_analyzer",
+                                "search_analyzer": "keyword_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                }
+                              },
+                              "shingle": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_analyzer",
+                                "search_analyzer": "shingle_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_ngram_analyzer",
+                                "search_analyzer": "shingle_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "token_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "token_edge_ngram_analyzer",
+                                "search_analyzer": "token_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": {
+                                  "enabled": false
+                                },
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "path": {
+                            "type": "string",
+                            "store": false,
+                            "index": "not_analyzed",
+                            "doc_values": true
+                          },
+                          "parent_id": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "is_deleted": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          }
+                        }
+                      },
+                      "id": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "level": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "created_dt": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd HH:mm:ss",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "updated_dt": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd HH:mm:ss",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "name": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "term_vector": "with_positions_offsets",
+                        "fields": {
+                          "agg": {
+                            "type": "string",
+                            "store": false,
+                            "index": "not_analyzed",
+                            "doc_values": true
+                          },
+                          "exact": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "keyword_analyzer",
+                            "search_analyzer": "keyword_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            }
+                          },
+                          "shingle": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_analyzer",
+                            "search_analyzer": "shingle_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_ngram_analyzer",
+                            "search_analyzer": "shingle_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "token_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "token_edge_ngram_analyzer",
+                            "search_analyzer": "token_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": {
+                              "enabled": false
+                            },
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "path": {
+                        "type": "string",
+                        "store": false,
+                        "index": "not_analyzed",
+                        "doc_values": true
+                      },
+                      "parent_id": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "is_deleted": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      }
+                    }
+                  },
+                  "id": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "level": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "created_dt": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "updated_dt": {
+                    "type": "date",
+                    "format": "yyyy-MM-dd HH:mm:ss",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "agg": {
+                        "type": "string",
+                        "store": false,
+                        "index": "not_analyzed",
+                        "doc_values": true
+                      },
+                      "exact": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "keyword_analyzer",
+                        "search_analyzer": "keyword_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        }
+                      },
+                      "shingle": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_analyzer",
+                        "search_analyzer": "shingle_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_ngram_analyzer",
+                        "search_analyzer": "shingle_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "token_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "token_edge_ngram_analyzer",
+                        "search_analyzer": "token_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "path": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "parent_id": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "is_deleted": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  }
+                }
+              },
+              "id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "level": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "created_dt": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "updated_dt": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    }
+                  },
+                  "shingle": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_edge_ngram_analyzer",
+                    "search_analyzer": "token_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "path": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "parent_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "is_deleted": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
+          },
           "l0": {
             "type": "object",
             "properties": {
