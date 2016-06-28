@@ -437,14 +437,14 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
                 Terms.Order.aggregation("score", false),
                 Terms.Order.count(false)
               )
-            ).subAggregation(scoreSorter)
-          ).subAggregation(
-            terms("categories_l5").field("categories.l5.name.agg").size(if(suggest) 2 else aggbuckets).order(
-              Terms.Order.compound(
-                Terms.Order.aggregation("score", false),
-                Terms.Order.count(false)
-              )
-            ).subAggregation(scoreSorter)
+            ).subAggregation(scoreSorter).subAggregation(
+              terms("categories_l5").field("categories.l5.name.agg").size(if(suggest) 2 else aggbuckets).order(
+                Terms.Order.compound(
+                  Terms.Order.aggregation("score", false),
+                  Terms.Order.count(false)
+                )
+              ).subAggregation(scoreSorter)
+            )
           )
         )
       )
