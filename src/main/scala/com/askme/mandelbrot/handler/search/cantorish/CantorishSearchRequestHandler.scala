@@ -458,7 +458,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
                 Terms.Order.aggregation("score", false),
                 Terms.Order.count(false)
               )
-            )
+            ).subAggregation(scoreSorter)
           )
         )
       )
