@@ -52,7 +52,7 @@ object CantorishSearchRequestHandler extends Logging {
         else
           Some(scoreSort().order(SortOrder.DESC)))::
           (if (cities.nonEmpty)
-            Some(fieldSort("variants.subscriptions.is_ndd").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
+            Some(fieldSort("variants.subscriptions.id").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
                   .must(termsQuery("variants.subscriptions.name.exact",cities.map("ndd "+_):_*))
