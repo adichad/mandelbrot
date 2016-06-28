@@ -58,7 +58,6 @@ object CantorishSearchRequestHandler extends Logging {
                 boolQuery()
                   .must(termsQuery("variants.subscriptions.seller.name.exact",cities.map("ndd "+_):_*))
                   .must(termQuery("variants.subscriptions.status", 1))
-                  .must(rangeQuery("variants.subscriptions.quantity_available").gt(0))
               ).sortMode("max").missing(0))
           else None
             ) ::
