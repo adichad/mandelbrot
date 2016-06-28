@@ -362,7 +362,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "categories.all.id", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+      category.split("""#""").filter(!_.isEmpty).foreach { cat =>
         b.should(termQuery("categories.all.id", cat.toInt))
       }
       if(b.hasClauses)
