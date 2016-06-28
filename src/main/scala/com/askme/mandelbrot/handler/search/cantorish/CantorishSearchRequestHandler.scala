@@ -56,8 +56,9 @@ object CantorishSearchRequestHandler extends Logging {
             Some(fieldSort("variants.subscriptions.id").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
-                  .must(termsQuery("variants.subscriptions.seller.name.exact",cities.map("ndd "+_):_*))
+                  .must(termsQuery("variants.subscriptions.seller.name",cities.map("NDD "+_.toLowerCase.split(' ').map(_.capitalize).mkString(" ")):_*))
                   .must(termQuery("variants.subscriptions.status", 1))
+                  .must(rangeQuery("variants.subscriptions.quantity_available").gt(0))
               ).sortMode("max").missing(0))
           else None
             ) ::
