@@ -362,8 +362,8 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "categories.all.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
-        b.should(termQuery("categories.all.name.exact", cat))
+      category.split("""#""").map(analyze(esClient, index, "categories.all.id", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+        b.should(termQuery("categories.all.id", cat.toInt))
       }
       if(b.hasClauses)
         finalFilter.must(b)
@@ -420,30 +420,44 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
 
       search.addAggregation(
-        terms("categories_l2").field("categories.l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
+        nested("categories").path("categories.assigned").subAggregation(
+          filter("l2").filter(termQuery("level", 2)).subAggregation(
+            terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+              terms("name").field("categories.assigned.name.agg").size(1)
+            ).subAggregation(
+              filter("l3").filter(termQuery("level", 3)).subAggregation(
+                terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                  terms("name").field("categories.assigned.name.agg").size(1)
+                ).subAggregation(
+                  filter("l4").filter(termQuery("level", 4)).subAggregation(
+                    terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                      terms("name").field("categories.assigned.name.agg").size(1)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      search.addAggregation(
+        terms("categories_l2").field("categories.l2.id").size(if(suggest) 2 else aggbuckets).order(
           Terms.Order.compound(
             Terms.Order.aggregation("score", false),
             Terms.Order.count(false)
           )
         ).subAggregation(scoreSorter).subAggregation(
-          terms("categories_l3").field("categories.l3.name.agg").size(if(suggest) 2 else aggbuckets).order(
+          terms("categories_l3").field("categories.l3.id").size(if(suggest) 2 else aggbuckets).order(
             Terms.Order.compound(
               Terms.Order.aggregation("score", false),
               Terms.Order.count(false)
             )
           ).subAggregation(scoreSorter).subAggregation(
-            terms("categories_l4").field("categories.l4.name.agg").size(if(suggest) 2 else aggbuckets).order(
+            terms("categories_l4").field("categories.l4.id").size(if(suggest) 2 else aggbuckets).order(
               Terms.Order.compound(
                 Terms.Order.aggregation("score", false),
                 Terms.Order.count(false)
               )
-            ).subAggregation(scoreSorter).subAggregation(
-              terms("categories_l5").field("categories.l5.name.agg").size(if(suggest) 2 else aggbuckets).order(
-                Terms.Order.compound(
-                  Terms.Order.aggregation("score", false),
-                  Terms.Order.count(false)
-                )
-              ).subAggregation(scoreSorter)
             )
           )
         )
