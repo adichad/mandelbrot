@@ -351,7 +351,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
     if(subscriptionFilter.hasClauses) {
-      variantFilter.must(subscriptionFilter)
+      variantFilter.must(nestedQuery("variants.subscriptions", subscriptionFilter))
     }
     if(variantFilter.hasClauses)
       finalFilter.must(
