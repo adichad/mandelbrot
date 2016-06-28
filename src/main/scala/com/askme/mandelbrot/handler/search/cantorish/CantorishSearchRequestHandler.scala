@@ -50,7 +50,8 @@ object CantorishSearchRequestHandler extends Logging {
         (if(cities.nonEmpty)
           Some(scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", null), "number").order(SortOrder.DESC))
         else
-          Some(scoreSort().order(SortOrder.DESC)))::
+          Some(scoreSort().order(SortOrder.DESC))
+          ) ::
           (if (cities.nonEmpty)
             Some(fieldSort("variants.subscriptions.id").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
