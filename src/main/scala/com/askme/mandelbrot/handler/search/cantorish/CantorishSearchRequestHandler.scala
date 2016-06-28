@@ -182,7 +182,7 @@ object CantorishSearchRequestHandler extends Logging {
 
   val forceFuzzy = Set()
   val forceSpan = Map("name.exact"->"name", "description.exact"->"description",
-    "categories.description.exact"->"categories.description", "categories.name.exact"->"category.name")
+    "categories.description.exact"->"categories.description", "categories.name.exact"->"categories.name")
 
   private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
@@ -420,12 +420,33 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
 
       search.addAggregation(
-        terms("categories").field("categories.l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
+        terms("categories_l2").field("categories.l2.name.agg").size(if(suggest) 2 else aggbuckets).order(
           Terms.Order.compound(
             Terms.Order.aggregation("score", false),
             Terms.Order.count(false)
           )
-        ).subAggregation(scoreSorter)
+        ).subAggregation(scoreSorter).subAggregation(
+          terms("categories_l3").field("categories.l3.name.agg").size(if(suggest) 2 else aggbuckets).order(
+            Terms.Order.compound(
+              Terms.Order.aggregation("score", false),
+              Terms.Order.count(false)
+            )
+          ).subAggregation(scoreSorter).subAggregation(
+            terms("categories_l4").field("categories.l4.name.agg").size(if(suggest) 2 else aggbuckets).order(
+              Terms.Order.compound(
+                Terms.Order.aggregation("score", false),
+                Terms.Order.count(false)
+              )
+            ).subAggregation(scoreSorter)
+          ).subAggregation(
+            terms("categories_l5").field("categories.l5.name.agg").size(if(suggest) 2 else aggbuckets).order(
+              Terms.Order.compound(
+                Terms.Order.aggregation("score", false),
+                Terms.Order.count(false)
+              )
+            ).subAggregation(scoreSorter)
+          )
+        )
       )
 
       search.addAggregation(
