@@ -421,15 +421,15 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
       search.addAggregation(
         nested("categories").path("categories.assigned").subAggregation(
-          filter("l2").filter(termQuery("level", 2)).subAggregation(
+          filter("l2").filter(termQuery("categories.assigned.level", 2)).subAggregation(
             terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
               terms("name").field("categories.assigned.name.agg").size(1)
             ).subAggregation(
-              filter("l3").filter(termQuery("level", 3)).subAggregation(
+              filter("l3").filter(termQuery("categories.assigned.level", 3)).subAggregation(
                 terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
                   terms("name").field("categories.assigned.name.agg").size(1)
                 ).subAggregation(
-                  filter("l4").filter(termQuery("level", 4)).subAggregation(
+                  filter("l4").filter(termQuery("categories.assigned.level", 4)).subAggregation(
                     terms("id").field("categories.assigned.id").size(if(suggest) 2 else aggbuckets).subAggregation(
                       terms("name").field("categories.assigned.name.agg").size(1)
                     )
