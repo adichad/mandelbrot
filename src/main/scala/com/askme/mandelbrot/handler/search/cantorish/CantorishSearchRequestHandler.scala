@@ -22,7 +22,6 @@ import org.elasticsearch.script.Script
 import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
@@ -312,8 +311,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
-    import searchParams.view._
-    import searchParams.text._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -417,30 +414,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
 
     if (agg) {
-      val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
-
-      search.addAggregation(
-        terms("categories_l2").field("categories.l2.id").size(if(suggest) 2 else aggbuckets).order(
-          Terms.Order.compound(
-            Terms.Order.aggregation("score", false),
-            Terms.Order.count(false)
-          )
-        ).subAggregation(scoreSorter).subAggregation(terms("name").field("categories.l2.name.agg").size(1)).subAggregation(
-          terms("categories_l3").field("categories.l3.id").size(if(suggest) 2 else aggbuckets).order(
-            Terms.Order.compound(
-              Terms.Order.aggregation("score", false),
-              Terms.Order.count(false)
-            )
-          ).subAggregation(scoreSorter).subAggregation(terms("name").field("categories.l3.name.agg").size(1)).subAggregation(
-            terms("categories_l4").field("categories.l4.id").size(if(suggest) 2 else aggbuckets).order(
-              Terms.Order.compound(
-                Terms.Order.aggregation("score", false),
-                Terms.Order.count(false)
-              )
-            ).subAggregation(scoreSorter).subAggregation(terms("name").field("categories.l4.name.agg").size(1))
-          )
-        )
-      )
+      //val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
 
       search.addAggregation(
         nested("l2").path("categories.tree.tree.tree").subAggregation(
@@ -601,7 +575,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
   override def receive = {
       case searchParams: ProductSearchParams =>
-        import searchParams.filters._
         import searchParams.idx._
         import searchParams.req._
         import searchParams.startTime
