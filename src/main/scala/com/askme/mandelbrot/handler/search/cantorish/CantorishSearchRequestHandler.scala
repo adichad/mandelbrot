@@ -443,6 +443,26 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       )
 
       search.addAggregation(
+        nested("l2").path("categories.tree.tree.tree").subAggregation(
+          terms("id").field("categories.tree.tree.tree.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+            terms("name").field("categories.tree.tree.tree.name.agg").size(1)
+          )
+        ).subAggregation(
+          nested("l3").path("categories.tree.tree.tree.tree").subAggregation(
+            terms("id").field("categories.tree.tree.tree.tree.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+              terms("name").field("categories.tree.tree.tree.tree.name.agg").size(1)
+            )
+          ).subAggregation(
+            nested("l4").path("categories.tree.tree.tree.tree.tree").subAggregation(
+              terms("id").field("categories.tree.tree.tree.tree.tree.id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                terms("name").field("categories.tree.tree.tree.tree.tree.name.agg").size(1)
+              )
+            )
+          )
+        )
+      )
+
+      search.addAggregation(
         nested("attributes").path("attributes")
           .subAggregation(
             terms("attributes").field("attributes.name.agg").size(aggbuckets)
