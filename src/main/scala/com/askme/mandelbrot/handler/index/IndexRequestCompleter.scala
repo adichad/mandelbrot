@@ -8,15 +8,19 @@ import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
-import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse
+import org.elasticsearch.action.admin.cluster.node.stats.{NodeStats, NodesStatsResponse}
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags
 import org.elasticsearch.common.unit.TimeValue
 import spray.http.StatusCode
 import spray.http.StatusCodes._
 import spray.httpx.Json4sSupport
 import spray.routing.RequestContext
+import org.json4s.JsonAST.JValue
 import org.json4s._
+import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 
 /**
@@ -49,18 +53,17 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
 
           override def onResponse(response: NodesStatsResponse): Unit = {
             val dataNodes = response.getNodes.filter(_.getNode.dataNode())
-            if (
-              dataNodes.forall(d =>
-                d.getIndices.getSegments.getIndexWriterMemory.mb < 500l
-                  && d.getIndices.getMerge.getCurrentSize.mb() < 1000l
-                  && d.getIndices.getSearch.getOpenContexts < 20l
-                  && d.getOs.getLoadAverage<5.0d
-              )
-            ) {
+            val wobblyDataNodes = dataNodes.filter(d =>
+              d.getIndices.getSegments.getIndexWriterMemory.mb >= 500l
+                || d.getIndices.getMerge.getCurrentSize.mb() >= 3000l
+                || d.getIndices.getSearch.getOpenContexts >= 20l
+                || d.getOs.getLoadAverage>=5.0d
+            )
+            if (wobblyDataNodes.length>0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
-              warn("cluster state not conducive to indexing: "+compact(parse(response.toString)))
+                warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
               complete(NotAcceptable, "cluster state not conducive to indexing")
             }
           }
@@ -73,6 +76,16 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
     }
 
 
+  }
+
+  private def renderNodes(nodes: Array[NodeStats]): JValue = {
+    JArray(nodes.map(n=>
+      ("name"->n.getNode.getName) ~
+        ("so"->n.getIndices.getSearch.getOpenContexts) ~
+        ("siwm"->(n.getIndices.getSegments.getIndexWriterMemory.mb+"mb")) ~
+        ("mc"->(n.getIndices.getMerge.getCurrentSize.mb+"mb")) ~
+          ("l"->n.getOs.getLoadAverage)
+    ).toList)
   }
 
   override def receive = {
