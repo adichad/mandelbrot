@@ -59,7 +59,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
                 || d.getIndices.getSearch.getOpenContexts >= 20l
                 || d.getOs.getLoadAverage>=5.0d
             )
-            if (wobblyDataNodes.length>0) {
+            if (wobblyDataNodes.length==0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
