@@ -33,7 +33,15 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
   }
   else {
     try {
-      serverContext.esClient.admin().cluster().prepareNodesStats().all().setTimeout(TimeValue.timeValueSeconds(2))
+      serverContext.esClient.admin().cluster().prepareNodesStats()
+        .setIndices(
+          new CommonStatsFlags(
+            CommonStatsFlags.Flag.Segments,
+            CommonStatsFlags.Flag.Merge,
+            CommonStatsFlags.Flag.Search
+          )
+        )
+        .setTimeout(TimeValue.timeValueSeconds(2))
         .execute(new ActionListener[NodesStatsResponse] {
           override def onFailure(e: Throwable): Unit = {
             warn(s"exception occurred while getting node stats: ${e}")
@@ -45,14 +53,14 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
             if (
               dataNodes.forall(d =>
                 d.getIndices.getSegments.getIndexWriterMemory.mb < 500l
-                  && d.getIndices.getMerge.getCurrentSize.mb < 500l
+                  && d.getIndices.getMerge.getCurrentSize.mb() < 1000l
                   && d.getIndices.getSearch.getOpenContexts < 20l
               )
             ) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
-              warn("cluster state not conducive to indexing: "+response.toString)
+              warn("cluster state not conducive to indexing: "+dataNodes.toString)
               complete(NotAcceptable, "cluster state not conducive to indexing")
             }
           }
