@@ -86,7 +86,7 @@ class IndexRequestHandler(val config: Config, serverContext: SearchContext) exte
           })
         } else {
           val timeTaken = System.currentTimeMillis - indexParams.startTime
-          error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] " + charset + " [empty indexing batch: nothing to do]")
+          error("[indexing] [" + timeTaken + "] [" + reqSize + "] [" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] " + charset + " [empty indexing batch: nothing to do] "+compact(json))
           completer ! IndexFailureResult(JString("empty indexing batch: nothing to do"))
         }
       } catch {
