@@ -39,7 +39,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
             CommonStatsFlags.Flag.Merge,
             CommonStatsFlags.Flag.Search
           )
-        )
+        ).setOs(true)
         .setTimeout(TimeValue.timeValueSeconds(2))
         .execute(new ActionListener[NodesStatsResponse] {
           override def onFailure(e: Throwable): Unit = {
@@ -54,6 +54,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
                 d.getIndices.getSegments.getIndexWriterMemory.mb < 500l
                   && d.getIndices.getMerge.getCurrentSize.mb() < 1000l
                   && d.getIndices.getSearch.getOpenContexts < 20l
+                  && d.getOs.getLoadAverage<3.0d
               )
             ) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
