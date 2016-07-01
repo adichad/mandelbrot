@@ -54,7 +54,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
                 d.getIndices.getSegments.getIndexWriterMemory.mb < 500l
                   && d.getIndices.getMerge.getCurrentSize.mb() < 1000l
                   && d.getIndices.getSearch.getOpenContexts < 20l
-                  && d.getOs.getLoadAverage<3.0d
+                  && d.getOs.getLoadAverage<5.0d
               )
             ) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
