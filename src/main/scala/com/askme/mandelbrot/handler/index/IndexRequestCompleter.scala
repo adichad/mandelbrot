@@ -9,15 +9,14 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.cluster.node.stats.NodesStatsResponse
-import org.elasticsearch.action.admin.cluster.node.stats.TransportNodesStatsAction.NodeStatsRequest
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.script.Template
-import org.json4s._
 import spray.http.StatusCode
 import spray.http.StatusCodes._
 import spray.httpx.Json4sSupport
 import spray.routing.RequestContext
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 
 /**
@@ -60,7 +59,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
-              warn("cluster state not conducive to indexing: "+dataNodes.toString)
+              warn("cluster state not conducive to indexing: "+compact(parse(response.toString)))
               complete(NotAcceptable, "cluster state not conducive to indexing")
             }
           }
