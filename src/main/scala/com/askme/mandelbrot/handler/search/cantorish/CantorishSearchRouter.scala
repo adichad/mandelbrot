@@ -28,7 +28,7 @@ case object CantorishSearchRouter extends Router {
               'suggest.as[Boolean] ? false,
               'seller_id.as[Int]?0,
               'brand.as[String]?"",
-              'base_active_only?false, 'variant_active_only?false, 'subscription_active_only?false,
+              'product_active_only?false, 'variant_active_only?false, 'subscription_active_only?false,
               'seller_active_only?false) { (kw, city,
                category, product_id, variant_id, subscription_id,
                size, offset,
