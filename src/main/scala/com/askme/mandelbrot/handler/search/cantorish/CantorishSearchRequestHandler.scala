@@ -319,6 +319,8 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
     finalFilter.must(termQuery("is_deleted", 0))
+    finalFilter.mustNot(termQuery("categories.all.is_deleted", 1))
+
 
     if(base_active_only)
       finalFilter.must(termQuery("status", 1))
@@ -372,7 +374,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       finalFilter.must(
         nestedQuery("variants", variantFilter)
       )
-
 
     if (category != "") {
       val b = boolQuery
