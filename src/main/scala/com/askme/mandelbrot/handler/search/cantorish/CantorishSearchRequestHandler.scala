@@ -318,17 +318,34 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
-    finalFilter.must(termQuery("status", 1)).must(termQuery("is_deleted", 0))
+    finalFilter.must(termQuery("is_deleted", 0))
+
+    if(base_active_only)
+      finalFilter.must(termQuery("status", 1))
+
     if (base_id != 0) {
       finalFilter.must(termQuery("id", base_id))
     }
 
-    val variantFilter = boolQuery()
+    val variantFilter = boolQuery().must(termQuery("variants.is_deleted", 0))
+
+    if(variant_active_only)
+      variantFilter.must(termQuery("variants.status", 1))
 
     if(variant_id>0) {
       variantFilter.must(termQuery("variants.id", variant_id))
     }
-    val subscriptionFilter = boolQuery()
+    val subscriptionFilter =
+      boolQuery()
+        .must(termQuery("variants.subscriptions.is_deleted", 0))
+        .must(termQuery("variants.subscriptions.seller.is_deleted", 0))
+
+    if(subscription_active_only)
+      subscriptionFilter
+        .must(termQuery("variants.subscriptions.status", 1))
+    if(seller_active_only)
+      subscriptionFilter
+        .must(termQuery("variants.subscriptions.seller.status", 1))
 
     if(subscribed_id != 0) {
       subscriptionFilter.must(

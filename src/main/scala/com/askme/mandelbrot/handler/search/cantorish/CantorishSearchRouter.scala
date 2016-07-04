@@ -27,11 +27,14 @@ case object CantorishSearchRouter extends Router {
               'agg.as[Boolean] ? true,
               'suggest.as[Boolean] ? false,
               'seller_id.as[Int]?0,
-              'brand.as[String]?"") { (kw, city,
+              'brand.as[String]?"",
+              'base_active_only?false, 'variant_active_only?false, 'subscription_active_only?false,
+              'seller_active_only?false) { (kw, city,
                category, product_id, variant_id, subscription_id,
                size, offset,
                explain, select, sort, store_id,
-               agg, suggest, seller_id, brand) =>
+               agg, suggest, seller_id, brand,
+               base_active_only, variant_active_only, subscription_active_only, seller_active_only) =>
               val maxdocspershard = 200000
               val searchType = "dfs_query_then_fetch"
               val timeoutms = 1000l
@@ -44,7 +47,8 @@ case object CantorishSearchRouter extends Router {
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "cantorish"),
                     TextParams(kw, suggest),
-                    FilterParams(category, product_id, variant_id, subscription_id, store_id, city, seller_id, brand),
+                    FilterParams(category, product_id, variant_id, subscription_id, store_id, city, seller_id, brand,
+                      base_active_only, variant_active_only, subscription_active_only, seller_active_only),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                     LimitParams(maxdocspershard, timeoutms),
