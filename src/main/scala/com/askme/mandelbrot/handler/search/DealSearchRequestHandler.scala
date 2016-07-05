@@ -279,7 +279,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       if (cityFilter.hasClauses)
         finalFilter.must(cityFilter)
     }
-    if (featured == "true") {
+    if (featured) {
       finalFilter.must(termQuery("IsFeatured", 1l))
     }
     if (dealsource != "") {
@@ -296,7 +296,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.filters._
 
 
-    val sort = if(pay_type==0) "_home,_base,_channel,_score" else "_pay,_home,_base,_channel,_score"
+    val sort = if(pay_type==0) "_score,_home,_base,_channel" else "_score,_pay,_home,_base,_channel"
 
     val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
@@ -310,8 +310,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setFrom(offset).setSize(size)
     if (agg) {
       search.addAggregation(
-        terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
-          .subAggregation(sum("sum_score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))))
+        terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.count(false)))
       search.addAggregation(
         terms("areas").field("Locations.Area.AreaAggr").size(aggbuckets).order(Terms.Order.count(false)))
     }
@@ -336,7 +335,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 20) w = emptyStringArray
         w = w.take(8)
-        if (w.isEmpty && kwids.isEmpty && category == "" && area == "" && screentype == "" &&
+        if (w.isEmpty && kwids.isEmpty && category == "" && area == "" &&
             city == "" && applicableTo == "" && featured == "" && dealsource == "" && pay_merchant_id == "") {
           context.parent ! EmptyResponse("empty search criteria")
         }

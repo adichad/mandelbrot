@@ -18,12 +18,12 @@ case object DealSearchRouter extends Router {
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
           parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
-            'applicableto ? "", 'wantaggr ? "no", 'size ? 20, 'offset ? 0,
+            'applicableto ? "", 'agg ? true, 'size ? 20, 'offset ? 0,
             'select ? "", 'pay_merchant_id ? "", 'edms_outlet_id.as[Int]? 0,
             'gll_outlet_id.as[Int]? 0,
-            'screentype ? "", 'category ? "", 'featured ? "", 'dealsource ? "", 'pay_type.as[Int]?0, "explain".as[Boolean]?false)
-          { (kw, city, area, id, applicableTo, wantaggrs, size, offset, select,
-             pay_merchant_id, edms_outlet_id, gll_outlet_id, screentype, category, featured, dealsource, pay_type, explain) =>
+            'category ? "", 'featured ? false, 'dealsource ? "", 'pay_type.as[Int]?0, "explain".as[Boolean]?false)
+          { (kw, city, area, id, applicableTo, agg, size, offset, select,
+             pay_merchant_id, edms_outlet_id, gll_outlet_id, category, featured, dealsource, pay_type, explain) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
@@ -34,18 +34,14 @@ case object DealSearchRouter extends Router {
             val searchType = "query_then_fetch"
             val timeoutms = 600l
             val aggbuckets = 10
-            var aggr = false
-            if (wantaggrs == "yes") {
-              aggr = true
-            }
             respondWithMediaType(`application/json`) {
                ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
                   idx = IndexParams("askmedeal", "deal"),
                   text = TextParams(kw, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d),
-                  filters = DealFilterParams(id, applicableTo, screentype, category, featured, dealsource, pay_merchant_id, edms_outlet_id, gll_outlet_id, pay_type), page = PageParams(size, offset),
-                  view = ViewParams(source, aggr, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),
+                  filters = DealFilterParams(id, applicableTo, category, featured, dealsource, pay_merchant_id, edms_outlet_id, gll_outlet_id, pay_type), page = PageParams(size, offset),
+                  view = ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),
                   limits = LimitParams(maxdocspershard, timeoutms),
                 startTime = System.currentTimeMillis
               )))
