@@ -42,7 +42,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
       case _: Exception ⇒ Restart
     }
 
-  val fsActor = context.actorOf(Props(classOf[FileSystemWatcher], config, serverContext))
+  //val fsActor = context.actorOf(Props(classOf[FileSystemWatcher], config, serverContext))
 
   private implicit val service: MandelbrotHandler = this
   private val route = {
