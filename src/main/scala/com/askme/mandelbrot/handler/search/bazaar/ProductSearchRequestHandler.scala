@@ -417,6 +417,22 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
     }
 
+
+    if(optionFilters.nonEmpty) {
+      optionFilters.foreach { filter =>
+        val b = boolQuery().must(termQuery("subscriptions.options.name.agg", filter._1))
+        val sub = boolQuery
+        filter._2.split("""#""").map(analyze(esClient, index, "subscriptions.options.values.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("subscriptions.options.values.exact", br))
+        }
+        if(sub.hasClauses)
+          b.must(sub)
+        if(b.hasClauses)
+          subscriptionFilter.must(b)
+      }
+    }
+
+
     if (category == "" && brand == "" && subscribed_id == 0 && city == "" &&
       store == "" && grouped_id == 0 && product_id == 0 && base_id == 0 &&
       crm_seller_id == 0 && store_front_id == 0 && mpdm_store_front_id == 0 && kw == "") {
@@ -464,7 +480,19 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         finalFilter.must(nestedQuery("attributes", b))
     }
 
-
+    if(filters.nonEmpty) {
+      filters.foreach { filter =>
+        val b = boolQuery().must(termQuery("attributes.name.agg", filter._1))
+        val sub = boolQuery
+        filter._2.split("""#""").map(analyze(esClient, index, "attributes.value.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("attributes.value.exact", br))
+        }
+        if(sub.hasClauses)
+          b.must(sub)
+        if(b.hasClauses)
+          finalFilter.must(nestedQuery("attributes", b))
+      }
+    }
 
     finalFilter
   }
@@ -544,6 +572,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                     )
                   )
               )
+          )
+        ).subAggregation(
+          terms("options").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+            terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
           )
         )
       )
