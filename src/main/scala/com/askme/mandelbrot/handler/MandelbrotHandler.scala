@@ -55,7 +55,7 @@ class MandelbrotHandler(val config: Config, val serverContext: SearchContext)
               GetRouter(this)
           } ~
             post {
-              CantorishSearchRouter(this) ~ GrocerySearchRouter(this) ~ GeoSearchRouter(this) ~ ProductSearchRouter(this) ~ WatchRouter(this) ~ indexRouter(this)
+              CantorishSearchRouter(this) ~ GrocerySearchRouter(this) ~ GeoSearchRouter(this) ~ ProductSearchRouter(this) /*~ WatchRouter(this)*/ ~ indexRouter(this)
             }
         }
       }

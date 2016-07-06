@@ -336,7 +336,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         if (w.length > 20) w = emptyStringArray
         w = w.take(8)
         if (w.isEmpty && kwids.isEmpty && category == "" && area == "" &&
-            city == "" && applicableTo == "" && featured == "" && dealsource == "" && pay_merchant_id == "") {
+            city == "" && applicableTo == "" && !featured && dealsource == "" && pay_merchant_id == "") {
           context.parent ! EmptyResponse("empty search criteria")
         }
         val query =

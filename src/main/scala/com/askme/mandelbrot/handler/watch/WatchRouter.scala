@@ -15,7 +15,7 @@ case object WatchRouter extends Router {
     import service._
     path("watch") {
       anyParams('dir, 'index, 'type) { (dir, index, esType) =>
-        fsActor ! MonitorDir(Paths.get(dir), index, esType)
+        //fsActor ! MonitorDir(Paths.get(dir), index, esType)
         respondWithMediaType(`application/json`) {
           complete {
             """{"acknowledged": true}"""
