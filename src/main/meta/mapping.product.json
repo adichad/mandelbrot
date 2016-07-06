@@ -620,6 +620,2052 @@
         "doc_values": true,
         "store": false
       },
+      "categories_tree": {
+        "type": "nested",
+        "properties": {
+          "boost": {
+            "type": "float",
+            "doc_values": true,
+            "store": false
+          },
+          "category_id": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "categories_tree": {
+            "type": "nested",
+            "properties": {
+              "boost": {
+                "type": "float",
+                "doc_values": true,
+                "store": false
+              },
+              "category_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "categories_tree": {
+                "type": "nested",
+                "properties": {
+                  "boost": {
+                    "type": "float",
+                    "doc_values": true,
+                    "store": false
+                  },
+                  "category_id": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "categories_tree": {
+                    "type": "nested",
+                    "properties": {
+                      "boost": {
+                        "type": "float",
+                        "doc_values": true,
+                        "store": false
+                      },
+                      "category_id": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "categories_tree": {
+                        "type": "nested",
+                        "properties": {
+                          "boost": {
+                            "type": "float",
+                            "doc_values": true,
+                            "store": false
+                          },
+                          "category_id": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "categories_tree": {
+                            "type": "nested",
+                            "properties": {
+                              "boost": {
+                                "type": "float",
+                                "doc_values": true,
+                                "store": false
+                              },
+                              "category_id": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "column": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "description": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "term_vector": "with_positions_offsets",
+                                "fields": {
+                                  "agg": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "not_analyzed",
+                                    "doc_values": true
+                                  },
+                                  "exact": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "keyword_analyzer",
+                                    "search_analyzer": "keyword_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false }
+                                  },
+                                  "shingle": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_analyzer",
+                                    "search_analyzer": "shingle_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_ngram_analyzer",
+                                    "search_analyzer": "shingle_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "token_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "token_edge_ngram_analyzer",
+                                    "search_analyzer": "token_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "image": {
+                                "enabled": false
+                              },
+                              "language_id": {
+                                "enabled": false
+                              },
+                              "level": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "meta_description": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "fields": {
+                                  "shingle2": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle2_analyzer",
+                                    "search_analyzer": "shingle2_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle3": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle3_analyzer",
+                                    "search_analyzer": "shingle3_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "meta_keyword": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "term_vector": "with_positions_offsets",
+                                "fields": {
+                                  "shingle2": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle2_analyzer",
+                                    "search_analyzer": "shingle2_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle3": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle3_analyzer",
+                                    "search_analyzer": "shingle3_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "meta_title": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "fields": {
+                                  "shingle2": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle2_analyzer",
+                                    "search_analyzer": "shingle2_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle3": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle3_analyzer",
+                                    "search_analyzer": "shingle3_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "mpdm_category_id": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "name_dv": {
+                                "type": "string",
+                                "store": false,
+                                "index": "not_analyzed",
+                                "doc_values": true
+                              },
+                              "name": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25",
+                                "term_vector": "with_positions_offsets",
+                                "fields": {
+                                  "agg": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "not_analyzed",
+                                    "doc_values": true
+                                  },
+                                  "exact": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "keyword_analyzer",
+                                    "search_analyzer": "keyword_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false }
+                                  },
+                                  "shingle": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_analyzer",
+                                    "search_analyzer": "shingle_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_ngram_analyzer",
+                                    "search_analyzer": "shingle_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_analyzer",
+                                    "search_analyzer": "shingle_nospace_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "shingle_nospace_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  },
+                                  "token_edge_ngram": {
+                                    "type": "string",
+                                    "store": false,
+                                    "index": "analyzed",
+                                    "analyzer": "token_edge_ngram_analyzer",
+                                    "search_analyzer": "token_edge_ngram_analyzer",
+                                    "position_increment_gap": 100,
+                                    "norms": { "enabled": false },
+                                    "similarity": "bazaar_bm25"
+                                  }
+                                }
+                              },
+                              "parent_id": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "sort_order": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "status": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              },
+                              "top": {
+                                "type": "integer",
+                                "store": false,
+                                "doc_values": true
+                              }
+                            }
+                          },
+                          "column": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "term_vector": "with_positions_offsets",
+                            "fields": {
+                              "agg": {
+                                "type": "string",
+                                "store": false,
+                                "index": "not_analyzed",
+                                "doc_values": true
+                              },
+                              "exact": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "keyword_analyzer",
+                                "search_analyzer": "keyword_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false }
+                              },
+                              "shingle": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_analyzer",
+                                "search_analyzer": "shingle_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_ngram_analyzer",
+                                "search_analyzer": "shingle_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "token_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "token_edge_ngram_analyzer",
+                                "search_analyzer": "token_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "image": {
+                            "enabled": false
+                          },
+                          "language_id": {
+                            "enabled": false
+                          },
+                          "level": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "meta_description": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "fields": {
+                              "shingle2": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle2_analyzer",
+                                "search_analyzer": "shingle2_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle3": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle3_analyzer",
+                                "search_analyzer": "shingle3_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "meta_keyword": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "term_vector": "with_positions_offsets",
+                            "fields": {
+                              "shingle2": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle2_analyzer",
+                                "search_analyzer": "shingle2_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle3": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle3_analyzer",
+                                "search_analyzer": "shingle3_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "meta_title": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "fields": {
+                              "shingle2": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle2_analyzer",
+                                "search_analyzer": "shingle2_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle3": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle3_analyzer",
+                                "search_analyzer": "shingle3_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "mpdm_category_id": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "name_dv": {
+                            "type": "string",
+                            "store": false,
+                            "index": "not_analyzed",
+                            "doc_values": true
+                          },
+                          "name": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25",
+                            "term_vector": "with_positions_offsets",
+                            "fields": {
+                              "agg": {
+                                "type": "string",
+                                "store": false,
+                                "index": "not_analyzed",
+                                "doc_values": true
+                              },
+                              "exact": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "keyword_analyzer",
+                                "search_analyzer": "keyword_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false }
+                              },
+                              "shingle": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_analyzer",
+                                "search_analyzer": "shingle_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_ngram_analyzer",
+                                "search_analyzer": "shingle_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_analyzer",
+                                "search_analyzer": "shingle_nospace_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "shingle_nospace_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              },
+                              "token_edge_ngram": {
+                                "type": "string",
+                                "store": false,
+                                "index": "analyzed",
+                                "analyzer": "token_edge_ngram_analyzer",
+                                "search_analyzer": "token_edge_ngram_analyzer",
+                                "position_increment_gap": 100,
+                                "norms": { "enabled": false },
+                                "similarity": "bazaar_bm25"
+                              }
+                            }
+                          },
+                          "parent_id": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "sort_order": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "status": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "top": {
+                            "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          }
+                        }
+                      },
+                      "column": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "description": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "term_vector": "with_positions_offsets",
+                        "fields": {
+                          "agg": {
+                            "type": "string",
+                            "store": false,
+                            "index": "not_analyzed",
+                            "doc_values": true
+                          },
+                          "exact": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "keyword_analyzer",
+                            "search_analyzer": "keyword_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false }
+                          },
+                          "shingle": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_analyzer",
+                            "search_analyzer": "shingle_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_ngram_analyzer",
+                            "search_analyzer": "shingle_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "token_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "token_edge_ngram_analyzer",
+                            "search_analyzer": "token_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "image": {
+                        "enabled": false
+                      },
+                      "language_id": {
+                        "enabled": false
+                      },
+                      "level": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "meta_description": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "fields": {
+                          "shingle2": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle2_analyzer",
+                            "search_analyzer": "shingle2_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle3": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle3_analyzer",
+                            "search_analyzer": "shingle3_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "meta_keyword": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "term_vector": "with_positions_offsets",
+                        "fields": {
+                          "shingle2": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle2_analyzer",
+                            "search_analyzer": "shingle2_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle3": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle3_analyzer",
+                            "search_analyzer": "shingle3_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "meta_title": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "fields": {
+                          "shingle2": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle2_analyzer",
+                            "search_analyzer": "shingle2_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle3": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle3_analyzer",
+                            "search_analyzer": "shingle3_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "mpdm_category_id": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "name_dv": {
+                        "type": "string",
+                        "store": false,
+                        "index": "not_analyzed",
+                        "doc_values": true
+                      },
+                      "name": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25",
+                        "term_vector": "with_positions_offsets",
+                        "fields": {
+                          "agg": {
+                            "type": "string",
+                            "store": false,
+                            "index": "not_analyzed",
+                            "doc_values": true
+                          },
+                          "exact": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "keyword_analyzer",
+                            "search_analyzer": "keyword_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false }
+                          },
+                          "shingle": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_analyzer",
+                            "search_analyzer": "shingle_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_ngram_analyzer",
+                            "search_analyzer": "shingle_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_analyzer",
+                            "search_analyzer": "shingle_nospace_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "shingle_nospace_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          },
+                          "token_edge_ngram": {
+                            "type": "string",
+                            "store": false,
+                            "index": "analyzed",
+                            "analyzer": "token_edge_ngram_analyzer",
+                            "search_analyzer": "token_edge_ngram_analyzer",
+                            "position_increment_gap": 100,
+                            "norms": { "enabled": false },
+                            "similarity": "bazaar_bm25"
+                          }
+                        }
+                      },
+                      "parent_id": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "sort_order": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "status": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      },
+                      "top": {
+                        "type": "integer",
+                        "store": false,
+                        "doc_values": true
+                      }
+                    }
+                  },
+                  "column": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "description": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "agg": {
+                        "type": "string",
+                        "store": false,
+                        "index": "not_analyzed",
+                        "doc_values": true
+                      },
+                      "exact": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "keyword_analyzer",
+                        "search_analyzer": "keyword_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false }
+                      },
+                      "shingle": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_analyzer",
+                        "search_analyzer": "shingle_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_ngram_analyzer",
+                        "search_analyzer": "shingle_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "token_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "token_edge_ngram_analyzer",
+                        "search_analyzer": "token_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "image": {
+                    "enabled": false
+                  },
+                  "language_id": {
+                    "enabled": false
+                  },
+                  "level": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "meta_description": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "meta_keyword": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "meta_title": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "mpdm_category_id": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "name_dv": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "name": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "agg": {
+                        "type": "string",
+                        "store": false,
+                        "index": "not_analyzed",
+                        "doc_values": true
+                      },
+                      "exact": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "keyword_analyzer",
+                        "search_analyzer": "keyword_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false }
+                      },
+                      "shingle": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_analyzer",
+                        "search_analyzer": "shingle_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_ngram_analyzer",
+                        "search_analyzer": "shingle_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "token_edge_ngram": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "token_edge_ngram_analyzer",
+                        "search_analyzer": "token_edge_ngram_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": { "enabled": false },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "parent_id": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "sort_order": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "status": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "top": {
+                    "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  }
+                }
+              },
+              "column": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "description": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_edge_ngram_analyzer",
+                    "search_analyzer": "token_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "image": {
+                "enabled": false
+              },
+              "language_id": {
+                "enabled": false
+              },
+              "level": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "meta_description": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "fields": {
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "meta_keyword": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "meta_title": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "fields": {
+                  "shingle2": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle2_analyzer",
+                    "search_analyzer": "shingle2_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle3": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle3_analyzer",
+                    "search_analyzer": "shingle3_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "mpdm_category_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "name_dv": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25",
+                "term_vector": "with_positions_offsets",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_edge_ngram_analyzer",
+                    "search_analyzer": "token_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              },
+              "parent_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "sort_order": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "status": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "top": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
+          },
+          "column": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "image": {
+            "enabled": false
+          },
+          "language_id": {
+            "enabled": false
+          },
+          "level": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "meta_description": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_keyword": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "meta_title": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle2": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle2_analyzer",
+                "search_analyzer": "shingle2_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle3": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle3_analyzer",
+                "search_analyzer": "shingle3_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "mpdm_category_id": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "name_dv": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "term_vector": "with_positions_offsets",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "parent_id": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "sort_order": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "status": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "top": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          }
+        }
+      },
       "categories_nested": {
         "type": "nested",
         "properties": {
@@ -1632,6 +3678,7 @@
         }
       },
       "options": {
+        "type": "nested",
         "properties": {
           "id": {
             "type": "integer",
@@ -2553,6 +4600,137 @@
       "subscriptions": {
         "type": "nested",
         "properties": {
+          "attributes": {
+            "type": "nested",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "name_dv": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  }
+                }
+              },
+              "value_dv": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "value": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25",
+                "fields": {
+                  "agg": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "exact": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "keyword_analyzer",
+                    "search_analyzer": "keyword_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false }
+                  },
+                  "shingle": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_analyzer",
+                    "search_analyzer": "shingle_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_ngram_analyzer",
+                    "search_analyzer": "shingle_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_analyzer",
+                    "search_analyzer": "shingle_nospace_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "shingle_nospace_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  },
+                  "token_edge_ngram": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "analyzer": "token_edge_ngram_analyzer",
+                    "search_analyzer": "token_edge_ngram_analyzer",
+                    "position_increment_gap": 100,
+                    "norms": { "enabled": false },
+                    "similarity": "bazaar_bm25"
+                  }
+                }
+              }
+            }
+          },
           "bazaar_price": {
             "type": "float",
             "store": false,
@@ -2988,6 +5166,7 @@
             }
           },
           "options": {
+            "type": "nested",
             "properties": {
               "id": {
                 "type": "integer",
@@ -3406,6 +5585,178 @@
             "type": "integer",
             "store": false,
             "doc_values": true
+          },
+          "language_id": {
+            "enabled": false
+          },
+          "name": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "agg": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "exact": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "keyword_analyzer",
+                "search_analyzer": "keyword_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false }
+              },
+              "shingle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "meta_description": {
+            "type": "string"
+          },
+          "meta_keyword": {
+            "type": "string"
+          },
+          "tag": {
+            "type": "string"
+          },
+          "tag_title": {
+            "type": "string"
+          },
+          "key_feature": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25",
+            "fields": {
+              "shingle": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_analyzer",
+                "search_analyzer": "shingle_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_edge_ngram_analyzer",
+                "search_analyzer": "shingle_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_ngram_analyzer",
+                "search_analyzer": "shingle_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_analyzer",
+                "search_analyzer": "shingle_nospace_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "shingle_nospace_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              },
+              "token_edge_ngram": {
+                "type": "string",
+                "store": false,
+                "index": "analyzed",
+                "analyzer": "token_edge_ngram_analyzer",
+                "search_analyzer": "token_edge_ngram_analyzer",
+                "position_increment_gap": 100,
+                "norms": { "enabled": false },
+                "similarity": "bazaar_bm25"
+              }
+            }
           }
         }
       },
@@ -3457,7 +5808,92 @@
         "type": "long",
         "store": false,
         "doc_values": true
+      },
+      "seller_name": {
+        "type": "string",
+        "store": false,
+        "index": "analyzed",
+        "position_increment_gap": 100,
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       }
+
     }
 
   }
