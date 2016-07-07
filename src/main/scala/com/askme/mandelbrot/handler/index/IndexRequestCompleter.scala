@@ -54,7 +54,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
           override def onResponse(response: NodesStatsResponse): Unit = {
             val dataNodes = response.getNodes.filter(_.getNode.dataNode())
             val wobblyDataNodes = dataNodes.filter(d =>
-              d.getIndices.getSegments.getIndexWriterMemory.mb >= 1000l
+              d.getIndices.getSegments.getIndexWriterMemory.mb >= 2048l
                 || d.getIndices.getMerge.getCurrentSize.mb() >= 50000l
                 || d.getIndices.getSearch.getOpenContexts >= 10l
                 || d.getOs.getLoadAverage>=10.0d
