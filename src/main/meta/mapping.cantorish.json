@@ -3429,6 +3429,16 @@
                 "store": false,
                 "doc_values": true
               },
+              "vat_percent": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "cst_percent": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
               "is_cod": {
                 "type": "integer",
                 "store": false,
