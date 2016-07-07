@@ -24,6 +24,7 @@ case object ProductSearchRouter extends Router {
                 val kw = params.getOrElse("kw", "")
                 val city = params.getOrElse("city", "")
                 val category = params.getOrElse("category", "")
+                val category_id = params.getOrElse("category_id", "0").toInt
                 val brand = params.getOrElse("brand", "")
                 val product_id = params.getOrElse("product_id", "0").toInt
                 val grouped_id = params.getOrElse("grouped_id", "0").toInt
@@ -40,19 +41,18 @@ case object ProductSearchRouter extends Router {
                 val store_front_id = params.getOrElse("store_front_id", "0").toInt
                 val mpdm_store_front_id = params.getOrElse("mpdm_store_front_id", "0").toInt
                 val crm_seller_id = params.getOrElse("crm_seller_id", "0").toInt
+                val price_min = params.getOrElse("price_min", "0").toFloat
+                val price_max = params.getOrElse("price_max", "0").toFloat
                 val filters = params.filterKeys(_.startsWith("Filter_"))
                 val optionFilters = params.filterKeys(_.startsWith("OptionFilter_"))
                   .map(x=>(x._1.substring("OptionFilter_".length), x._2))
                   .filter(_._1.nonEmpty)
-
 
                 val maxdocspershard = 200000
                 val searchType = "dfs_query_then_fetch"
                 val timeoutms = 1000l
                 val aggbuckets = 10
                 val source = true
-
-
 
                 respondWithMediaType(`application/json`) { ctx =>
                   context.actorOf(Props(classOf[ProductSearchRequestCompleter], config, serverContext, ctx,
@@ -61,7 +61,8 @@ case object ProductSearchRouter extends Router {
                       IndexParams(index, "product"),
                       TextParams(kw, suggest),
                       FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city,
-                        store_front_id, mpdm_store_front_id, crm_seller_id, brand, filters, optionFilters),
+                        store_front_id, mpdm_store_front_id, crm_seller_id, brand, filters, optionFilters,
+                        price_min, price_max, category_id),
                       PageParams(sort, size, offset),
                       ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                       LimitParams(maxdocspershard, timeoutms),
@@ -70,7 +71,6 @@ case object ProductSearchRouter extends Router {
                   ))
                 }
             }
-            //}
           }
         }
       }

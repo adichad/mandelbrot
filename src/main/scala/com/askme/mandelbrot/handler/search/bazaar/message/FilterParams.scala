@@ -8,4 +8,5 @@ import com.askme.mandelbrot.handler.message.RestMessage
 case class FilterParams(category: String, product_id: Int, grouped_id: Int, base_id: Int, subscribed_id: Int,
                         store: String, city: String, store_front_id: Int, mpdm_store_front_id: Int,
                         crm_seller_id: Int, brand: String,
-                        filters: Map[String, String], optionFilters: Map[String, String]) extends RestMessage
+                        filters: Map[String, String], optionFilters: Map[String, String],
+                        price_min: Float, price_max: Float, category_id: Int) extends RestMessage

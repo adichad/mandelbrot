@@ -285,14 +285,14 @@ object ProductSearchRequestHandler extends Logging {
   private val searchFields2 = Map(
     "name" -> 1e8f,
     "categories.name" -> 1e5f,
-    "categories.description" -> 1e4f/*,
-    "attributes_value" -> 1e7f*/)
+    //"categories.description" -> 1e4f,
+    "attributes_value" -> 1e7f)
 
   private val fullFields2 = Map(
     "name.exact"->1e10f,
     "categories.name.exact"->1e6f,
-    "categories.description.exact" -> 1e5f/*,
-    "attributes_value.exact" -> 1e9f*/)
+    //"categories.description.exact" -> 1e5f,
+    "attributes_value.exact" -> 1e9f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -355,6 +355,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if (base_id != 0) {
       finalFilter.must(termQuery("base_product_id", base_id))
     }
+
+    if(price_min>0f)
+      if(price_max>0f)
+        finalFilter.must(rangeQuery("min_price").from(price_min).to(price_max))
+      else
+        finalFilter.must(rangeQuery("min_price").from(price_min))
+    else if(price_max>0f)
+      finalFilter.must(rangeQuery("min_price").to(price_max))
 
     val subscriptionFilter =
       boolQuery()
@@ -428,7 +436,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         if(sub.hasClauses)
           b.must(sub)
         if(b.hasClauses)
-          subscriptionFilter.must(b)
+          subscriptionFilter.must(nestedQuery("subscriptions.options", b))
       }
     }
 
@@ -456,7 +464,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             new QueryInnerHitBuilder().setName("best_subscription")
               .addSort("subscriptions.min_price", SortOrder.ASC)
               .addSort("subscriptions.order_count", SortOrder.DESC)
-              .setFrom(0).setSize(1)
+              .setFrom(0).setSize(10)
               .setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
 
 
@@ -467,6 +475,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       }
       if(b.hasClauses)
         finalFilter.must(b)
+    }
+
+    if (category_id > 0) {
+      finalFilter.must(nestedQuery("categories_nested", termQuery("categories_nested.id", category_id)))
     }
 
     if (brand != "") {
@@ -553,7 +565,27 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
 
       search.addAggregation(
-        nested("subscriptions").path("subscriptions").subAggregation(
+        nested("l3").path("categories_tree.categories_tree.categories_tree").subAggregation(
+          terms("id").field("categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+            terms("name").field("categories_tree.categories_tree.categories_tree.name.agg").size(1)
+          ).subAggregation(
+            nested("l4").path("categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
+              terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
+              ).subAggregation(
+                nested("l5").path("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
+                  terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                    terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+
+      search.addAggregation(
+        nested("subscriptions").path("subscriptions")/*.subAggregation(
           nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
             filter("store_fronts").filter(
               boolQuery()
@@ -573,9 +605,12 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                   )
               )
           )
-        ).subAggregation(
-          terms("options").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
-            terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
+
+        )*/.subAggregation(
+          nested("options").path("subscriptions.options").subAggregation(
+            terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+              terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
+            )
           )
         )
       )
@@ -603,29 +638,29 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             shinglePartitionSuggest(
               Map(
                 "name" -> 1e12f,
-                "categories.name" -> 1e11f/*,
-                "attributes_value" -> 1e11f*/),
+                "categories.name" -> 1e11f,
+                "attributes_value" -> 1e11f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           )/*.add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
-                "categories.name" -> 1e5f/*,
-                "attributes_value" -> 1e5f*/),
+                "categories.name" -> 1e5f,
+                "attributes_value" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           )*/.add(
             shinglePartitionSuggest(
               Map("name.token_edge_ngram" -> 1e2f,
-                "categories.name.token_edge_ngram" -> 1e1f/*,
-                "attributes_value.token_edge_ngram" -> 1e2f*/),
+                "categories.name.token_edge_ngram" -> 1e1f,
+                "attributes_value.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.shingle_nospace_edge_ngram" -> 1e2f,
-                "categories.name.shingle_nospace_edge_ngram" -> 1e1f/*,
-                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
+                "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -640,29 +675,29 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           val q = disMaxQuery.add(
             shinglePartitionSuggest(
               Map("name" -> 1e12f,
-                "categories.name" -> 1e11f/*,
-                "attributes_value" -> 1e11f*/),
+                "categories.name" -> 1e11f,
+                "attributes_value" -> 1e11f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
           )/*.add(
             shinglePartitionSuggest(
               Map("name" -> 1e6f,
-                "categories.name" -> 1e5f/*,
-                "attributes_value" -> 1e5f*/),
+                "categories.name" -> 1e5f,
+                "attributes_value" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
           )*/.add(
             shinglePartitionSuggest(
               Map("name.token_edge_ngram" -> 1e2f,
-                "categories.name.token_edge_ngram" -> 1e1f/*,
-                "attributes_value.token_edge_ngram" -> 1e2f*/),
+                "categories.name.token_edge_ngram" -> 1e1f,
+                "attributes_value.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           ).add(
             shinglePartitionSuggest(
               Map("name.shingle_nospace_edge_ngram" -> 1e2f,
-                "categories.name.shingle_nospace_edge_ngram" -> 1e1f/*,
-                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
+                "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
           )
@@ -673,29 +708,29 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               disMaxQuery.add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e12f,
-                    "categories.name" -> 1e11f/*,
-                    "attributes_value" -> 1e11f*/),
+                    "categories.name" -> 1e11f,
+                    "attributes_value" -> 1e11f),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
               )/*.add(
                 shinglePartitionSuggest(
                   Map("name" -> 1e6f,
-                    "categories.name" -> 1e5f/*,
-                    "attributes_value" -> 1e5f*/),
+                    "categories.name" -> 1e5f,
+                    "attributes_value" -> 1e5f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
               )*/.add(
                 shinglePartitionSuggest(
                   Map("name.token_edge_ngram" -> 1e2f,
-                    "categories.name.token_edge_ngram" -> 1e1f/*,
-                    "attributes_value.token_edge_ngram" -> 1e2f*/),
+                    "categories.name.token_edge_ngram" -> 1e1f,
+                    "attributes_value.token_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               ).add(
                 shinglePartitionSuggest(
                   Map("name.shingle_nospace_edge_ngram" -> 1e2f,
-                    "categories.name.shingle_nospace_edge_ngram" -> 1e1f/*,
-                    "attributes_value.shingle_nospace_edge_ngram" -> 1e2f*/),
+                    "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "attributes_value.shingle_nospace_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
               )
@@ -708,10 +743,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
           q3.add(fuzzyOrTermQuery("categories.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
             //.add(fuzzyOrTermQuery("categories.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-/*
+
           q3.add(fuzzyOrTermQuery("attributes_value.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
-            .add(fuzzyOrTermQuery("attributes_value.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
-*/
+            //.add(fuzzyOrTermQuery("attributes_value.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
 
           q.add(if (q2.hasClauses) q2.must(q3) else q3)
         } else
