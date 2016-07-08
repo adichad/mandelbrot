@@ -9,6 +9,7 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.cluster.node.stats.{NodeStats, NodesStatsResponse}
+import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags
 import org.elasticsearch.common.unit.TimeValue
 import spray.http.StatusCode
@@ -57,7 +58,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
               d.getIndices.getSegments.getIndexWriterMemory.mb >= 2048l
                 || d.getIndices.getMerge.getCurrentSize.mb() >= 50000l
                 || d.getIndices.getSearch.getOpenContexts >= 12l
-                || d.getOs.getLoadAverage>=12.0d
+                || d.getOs.getLoadAverage>=10.0d
             )
             if (wobblyDataNodes.length==0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
