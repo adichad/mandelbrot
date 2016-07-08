@@ -18,6 +18,7 @@ import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
+import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.script.Script
 import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
@@ -368,7 +369,13 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
     if(subscriptionFilter.hasClauses) {
-      variantFilter.must(nestedQuery("variants.subscriptions", subscriptionFilter))
+      variantFilter.must(
+        if(seller_id>0 || subscribed_id>0 || store_id>0) nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
+          new QueryInnerHitBuilder().setName("matched_subscriptions")
+            .setFrom(0).setSize(20)
+            .setFetchSource(Array("*"), Array[String]())
+        ) else nestedQuery("variants.subscriptions", subscriptionFilter)
+      )
     }
     if(variantFilter.hasClauses)
       finalFilter.must(
