@@ -310,12 +310,10 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
-  private var subscribedQuery: QueryBuilder = null
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
-    import searchParams.view._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
