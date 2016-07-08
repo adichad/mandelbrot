@@ -23,7 +23,6 @@ case object CantorishSearchRouter extends Router {
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "id,name",
               'sort.as[String]?"popularity",
-              'store_id.as[Int]?0,
               'agg.as[Boolean] ? true,
               'suggest.as[Boolean] ? false,
               'seller_id.as[Int]?0,
@@ -32,7 +31,7 @@ case object CantorishSearchRouter extends Router {
               'seller_active_only?false) { (kw, city,
                category, product_id, variant_id, subscription_id,
                size, offset,
-               explain, select, sort, store_id,
+               explain, select, sort,
                agg, suggest, seller_id, brand,
                base_active_only, variant_active_only, subscription_active_only, seller_active_only) =>
               val maxdocspershard = 200000
@@ -47,7 +46,7 @@ case object CantorishSearchRouter extends Router {
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "cantorish"),
                     TextParams(kw, suggest),
-                    FilterParams(category, product_id, variant_id, subscription_id, store_id, city, seller_id, brand,
+                    FilterParams(category, product_id, variant_id, subscription_id, city, seller_id, brand,
                       base_active_only, variant_active_only, subscription_active_only, seller_active_only),
                     PageParams(sort, size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
