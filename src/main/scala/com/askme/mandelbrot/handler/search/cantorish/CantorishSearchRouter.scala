@@ -21,7 +21,7 @@ case object CantorishSearchRouter extends Router {
             parameters('kw.as[String] ? "", 'city ? "",
               'category_id ? "", 'product_id.as[Int] ? 0, 'variant_id.as[Int] ? 0, 'subscription_id.as[Int] ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
-              'explain.as[Boolean] ? false, 'select ? "product_id,name",
+              'explain.as[Boolean] ? false, 'select ? "id,name",
               'sort.as[String]?"popularity",
               'store_id.as[Int]?0,
               'agg.as[Boolean] ? true,

@@ -18,7 +18,6 @@ import org.elasticsearch.common.ParseFieldMatcher
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
-import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.script.Script
 import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
@@ -364,31 +363,16 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
 
-    if (city != "") {
-      val cityFilter = boolQuery
-      city.split( """,""").map(c=>"ndd "+analyze(esClient, index, "variants.subscriptions.seller.name.exact", c).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termQuery("variants.subscriptions.seller.name.exact", c))
-      }
-    }
-
     if(subscriptionFilter.hasClauses) {
       variantFilter.must(
-        nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
-          new QueryInnerHitBuilder()
-            .setName("matched_subscriptions").setFetchSource("*", null)
-            .setFrom(0).setSize(20)
-        )
+        nestedQuery("variants.subscriptions", subscriptionFilter)
       )
       this.subscriptionFilter = subscriptionFilter
     }
 
     if(variantFilter.hasClauses)
       finalFilter.must(
-        nestedQuery("variants", variantFilter).innerHit(
-          new QueryInnerHitBuilder()
-            .setName("matched_variants").setFetchSource("*", null)
-            .setFrom(0).setSize(20)
-        )
+        nestedQuery("variants", variantFilter)
       )
 
     if (category != "") {
@@ -444,15 +428,29 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
-      .addInnerHit("subscriptions",
-        new InnerHitsBuilder.InnerHit()
-          .setQuery(subscriptionFilter)
-          .setPath("variants.subscriptions")
-          .setFetchSource("*", null)
-          .setFrom(0).setSize(20)
-      )
 
-
+    if(seller_id>0||subscribed_id>0||store_id>0||city!="") {
+      val cityFilter = boolQuery
+      city.split(""",""").map(c => "NDD "+c.toLowerCase.split(' ').map(_.capitalize).mkString(" ")).filter(!_.isEmpty).foreach { c =>
+        cityFilter.should(termQuery("variants.subscriptions.seller.name", c))
+      }
+      if (cityFilter.hasClauses)
+        search.addInnerHit("matched_subscriptions",
+          new InnerHitsBuilder.InnerHit()
+            .setQuery(boolQuery().must(subscriptionFilter).must(cityFilter))
+            .setPath("variants.subscriptions")
+            .setFetchSource("*", null)
+            .setFrom(0).setSize(20)
+        )
+      else
+        search.addInnerHit("matched_subscriptions",
+          new InnerHitsBuilder.InnerHit()
+            .setQuery(subscriptionFilter)
+            .setPath("variants.subscriptions")
+            .setFetchSource("*", null)
+            .setFrom(0).setSize(20)
+        )
+    }
 
     if (agg) {
       //val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
