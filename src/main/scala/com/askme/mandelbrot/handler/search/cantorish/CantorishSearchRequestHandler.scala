@@ -410,7 +410,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
         variantFilter.must(b2)
     }
 
-    this.subscribedQuery = variantFilter
 
     finalFilter
   }
@@ -435,9 +434,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
-      .addInnerHit("matched_subscriptions",
-        new InnerHitsBuilder.InnerHit().setPath("variants.subscriptions").setQuery(subscribedQuery).setFetchSource(Array("*"), Array[String]()))
-
 
 
 
