@@ -373,22 +373,14 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
     if(subscriptionFilter.hasClauses) {
       variantFilter.must(
-        nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
-          new QueryInnerHitBuilder()
-            .setName("matched_subscriptions").setFetchSource("*", null)
-            .setFrom(0).setSize(20)
-        )
+        nestedQuery("variants.subscriptions", subscriptionFilter)
       )
       this.subscriptionFilter = subscriptionFilter
     }
 
     if(variantFilter.hasClauses)
       finalFilter.must(
-        nestedQuery("variants", variantFilter).innerHit(
-          new QueryInnerHitBuilder()
-            .setName("matched_variants").setFetchSource("*", null)
-            .setFrom(0).setSize(20)
-        )
+        nestedQuery("variants", variantFilter)
       )
 
     if (category != "") {
@@ -444,7 +436,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
-      .addInnerHit("subscriptions",
+      .addInnerHit("matched_subscriptions",
         new InnerHitsBuilder.InnerHit()
           .setQuery(subscriptionFilter)
           .setPath("variants.subscriptions")
