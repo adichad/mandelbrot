@@ -363,14 +363,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       subscriptionFilter.must(termQuery("variants.subscriptions.seller.id", seller_id))
     }
 
-
-    if (city != "") {
-      val cityFilter = boolQuery
-      city.split( """,""").map(c=>"ndd "+analyze(esClient, index, "variants.subscriptions.seller.name.exact", c).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termQuery("variants.subscriptions.seller.name.exact", c))
-      }
-    }
-
     if(subscriptionFilter.hasClauses) {
       variantFilter.must(
         nestedQuery("variants.subscriptions", subscriptionFilter)
@@ -436,9 +428,22 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
-      .addInnerHit("matched_subscriptions",
+
+    val cityFilter = boolQuery
+    city.split(""",""").filter(_.trim.nonEmpty).map(c=>"NDD "+c.toLowerCase.split(' ').map(_.capitalize).mkString(" ")).foreach { c =>
+      cityFilter.should(termQuery("variants.subscriptions.seller.name", c))
+    }
+
+
+    info(cityFilter)
+    search.addInnerHit("matched_subscriptions",
         new InnerHitsBuilder.InnerHit()
-          .setQuery(subscriptionFilter)
+          .setQuery(
+            if(cityFilter.hasClauses)
+              boolQuery().must(subscriptionFilter).must(cityFilter)
+            else
+              subscriptionFilter
+          )
           .setPath("variants.subscriptions")
           .setFetchSource("*", null)
           .setFrom(0).setSize(20)
