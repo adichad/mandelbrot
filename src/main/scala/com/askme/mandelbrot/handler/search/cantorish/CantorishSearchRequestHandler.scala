@@ -312,6 +312,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
     import searchParams.idx._
+    import searchParams.view._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -373,7 +374,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
         if(seller_id>0 || subscribed_id>0 || store_id>0) nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
           new QueryInnerHitBuilder().setName("matched_subscriptions")
             .setFrom(0).setSize(20)
-            .setFetchSource(Array("*"), Array[String]())
+            .setFetchSource(Array("*"), Array[String]()).setExplain(explain)
         ) else nestedQuery("variants.subscriptions", subscriptionFilter)
       )
     }
