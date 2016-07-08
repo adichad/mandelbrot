@@ -440,23 +440,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       }
     }
 
-
-    if (category == "" && brand == "" && subscribed_id == 0 && city == "" &&
-      store == "" && grouped_id == 0 && product_id == 0 && base_id == 0 &&
-      crm_seller_id == 0 && store_front_id == 0 && mpdm_store_front_id == 0 && kw == "") {
-      subscriptionFilter
-        .must(
-          nestedQuery("subscriptions.store_fronts", boolQuery()
-            .must(existsQuery("subscriptions.store_fronts.mpdm_id"))
-            .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-            .must(termQuery("subscriptions.store_fronts.status", 1)))
-        )
-        .must(
-          rangeQuery("subscriptions.order_count").gt(0)
-        )
-
-    }
-
     if(subscriptionFilter.hasClauses)
       finalFilter.must(
         nestedQuery("subscriptions", subscriptionFilter)
@@ -478,7 +461,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     if (category_id > 0) {
-      finalFilter.must(nestedQuery("categories_nested", termQuery("categories_nested.id", category_id)))
+      finalFilter.must(nestedQuery("categories_nested", termQuery("categories_nested.category_id", category_id)))
     }
 
     if (brand != "") {
