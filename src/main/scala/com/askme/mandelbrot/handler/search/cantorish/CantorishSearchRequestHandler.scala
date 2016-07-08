@@ -401,7 +401,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       }
       b2.must(sub2)
       if(b2.hasClauses)
-        variantFilter.must(b2)
+        variantFilter.must(nestedQuery("variants.attributes", b2))
     }
 
 
