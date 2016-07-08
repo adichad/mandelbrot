@@ -393,7 +393,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       b.must(sub)
       if(b.hasClauses)
         finalFilter.must(nestedQuery("attributes", b))
-
+/*
       val b2 = boolQuery.must(termQuery("variants.attributes.name.exact", "brand"))
       val sub2 = boolQuery
       brand.split("""#""").map(analyze(esClient, index, "variants.attributes.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
@@ -402,6 +402,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       b2.must(sub2)
       if(b2.hasClauses)
         variantFilter.must(nestedQuery("variants.attributes", b2))
+*/
     }
 
 
