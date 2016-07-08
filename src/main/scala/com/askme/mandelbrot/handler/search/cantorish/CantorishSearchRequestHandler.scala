@@ -310,6 +310,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var subscriptionFilter: QueryBuilder = null
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -371,12 +372,23 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
     if(subscriptionFilter.hasClauses) {
-      variantFilter.must(nestedQuery("variants.subscriptions", subscriptionFilter))
+      variantFilter.must(
+        nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
+          new QueryInnerHitBuilder()
+            .setName("matched_subscriptions").setFetchSource("*", null)
+            .setFrom(0).setSize(20)
+        )
+      )
+      this.subscriptionFilter = subscriptionFilter
     }
 
     if(variantFilter.hasClauses)
       finalFilter.must(
-        nestedQuery("variants", variantFilter)
+        nestedQuery("variants", variantFilter).innerHit(
+          new QueryInnerHitBuilder()
+            .setName("matched_variants").setFetchSource("*", null)
+            .setFrom(0).setSize(20)
+        )
       )
 
     if (category != "") {
@@ -432,6 +444,13 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
+      .addInnerHit("subscriptions",
+        new InnerHitsBuilder.InnerHit()
+          .setQuery(subscriptionFilter)
+          .setPath("variants.subscriptions")
+          .setFetchSource("*", null)
+          .setFrom(0).setSize(20)
+      )
 
 
 
