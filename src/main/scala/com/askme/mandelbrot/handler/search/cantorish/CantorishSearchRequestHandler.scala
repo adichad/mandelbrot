@@ -24,6 +24,7 @@ import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
+import org.elasticsearch.search.fetch.innerhits.InnerHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
 import org.json4s._
@@ -41,6 +42,7 @@ object CantorishSearchRequestHandler extends Logging {
 
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
+
 
   private def getSort(sort: String, cities: Array[String], w: Array[String]): List[SortBuilder] = {
 
@@ -308,6 +310,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var subscribedQuery: QueryBuilder = null
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -370,14 +373,9 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
     if(subscriptionFilter.hasClauses) {
-      variantFilter.must(
-        if(seller_id>0 || subscribed_id>0 || store_id>0) nestedQuery("variants.subscriptions", subscriptionFilter).innerHit(
-          new QueryInnerHitBuilder().setName("matched_subscriptions")
-            .setFrom(0).setSize(20)
-            .setFetchSource(Array("*"), Array[String]()).setExplain(explain)
-        ) else nestedQuery("variants.subscriptions", subscriptionFilter)
-      )
+      nestedQuery("variants.subscriptions", subscriptionFilter)
     }
+
     if(variantFilter.hasClauses)
       finalFilter.must(
         nestedQuery("variants", variantFilter)
@@ -412,7 +410,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
         variantFilter.must(b2)
     }
 
-
+    this.subscribedQuery = variantFilter
 
     finalFilter
   }
@@ -437,6 +435,10 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
+      .addInnerHit("matched_subscriptions",
+        new InnerHitsBuilder.InnerHit().setPath("variants.subscriptions").setQuery(subscribedQuery).setFetchSource(Array("*"), Array[String]()))
+
+
 
 
     if (agg) {
