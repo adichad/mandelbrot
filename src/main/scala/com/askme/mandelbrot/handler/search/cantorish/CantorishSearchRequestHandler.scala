@@ -55,7 +55,7 @@ object CantorishSearchRequestHandler extends Logging {
           Some(scoreSort().order(SortOrder.DESC))
           ) ::
           (if (cities.nonEmpty)
-            Some(fieldSort("variants.subscriptions.id").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
+            Some(fieldSort("variants.subscriptions.status").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
                   .must(termsQuery("variants.subscriptions.seller.name",cities.map("NDD "+_.toLowerCase.split(' ').map(_.capitalize).mkString(" ")):_*))
@@ -435,7 +435,6 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
 
 
-    info(cityFilter)
     search.addInnerHit("matched_subscriptions",
         new InnerHitsBuilder.InnerHit()
           .setQuery(
