@@ -548,17 +548,17 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
 
       search.addAggregation(
-        nested("l3").path("categories_tree.categories_tree.categories_tree").subAggregation(
-          terms("id").field("categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
-            terms("name").field("categories_tree.categories_tree.categories_tree.name.agg").size(1)
+        nested("l3").path("categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
+          terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+            terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
           ).subAggregation(
-            nested("l4").path("categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
-              terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
-                terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
+            nested("l4").path("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
+              terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
               ).subAggregation(
-                nested("l5").path("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
-                  terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
-                    terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
+                nested("l5").path("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.categories_tree").subAggregation(
+                  terms("id").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.category_id").size(if(suggest) 2 else aggbuckets).subAggregation(
+                    terms("name").field("categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.categories_tree.name.agg").size(1)
                   )
                 )
               )
