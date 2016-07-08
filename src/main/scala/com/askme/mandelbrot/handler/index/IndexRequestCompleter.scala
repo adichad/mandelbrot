@@ -9,7 +9,6 @@ import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.cluster.node.stats.{NodeStats, NodesStatsResponse}
-import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse
 import org.elasticsearch.action.admin.indices.stats.CommonStatsFlags
 import org.elasticsearch.common.unit.TimeValue
 import spray.http.StatusCode
@@ -20,8 +19,6 @@ import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
 
 
 /**
@@ -56,9 +53,9 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
             val dataNodes = response.getNodes.filter(_.getNode.dataNode())
             val wobblyDataNodes = dataNodes.filter(d =>
               d.getIndices.getSegments.getIndexWriterMemory.mb >= 2048l
-                || d.getIndices.getMerge.getCurrentSize.mb() >= 50000l
+                || d.getIndices.getMerge.getCurrentSize.mb() >= 9000l
                 || d.getIndices.getSearch.getOpenContexts >= 12l
-                || d.getOs.getLoadAverage>=10.0d
+                || d.getOs.getLoadAverage>=8.0d
             )
             if (wobblyDataNodes.length==0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
@@ -75,7 +72,6 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
         warn(s"exception occurred while getting node stats: ${e}")
         complete(NotAcceptable, s"exception occurred while getting node stats: ${e}")
     }
-
 
   }
 
