@@ -46,7 +46,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
         .execute(new ActionListener[NodesStatsResponse] {
           override def onFailure(e: Throwable): Unit = {
             warn(s"exception occurred while getting node stats: ${e}")
-            complete(NotAcceptable, "cluster state not conducive to indexing")
+            complete(TooManyRequests, "cluster state not conducive to indexing")
           }
 
           override def onResponse(response: NodesStatsResponse): Unit = {
@@ -55,14 +55,14 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
               d.getIndices.getSegments.getIndexWriterMemory.mb >= 2048l
                 || d.getIndices.getMerge.getCurrentSize.mb() >= 9000l
                 || d.getIndices.getSearch.getOpenContexts >= 12l
-                || d.getOs.getLoadAverage>=8.0d
+                || d.getOs.getLoadAverage>=7.0d
             )
             if (wobblyDataNodes.length==0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
                 warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
-              complete(NotAcceptable, "cluster state not conducive to indexing")
+              complete(TooManyRequests, "cluster state not conducive to indexing")
             }
           }
         })
@@ -70,7 +70,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
     } catch {
       case e: Exception=>
         warn(s"exception occurred while getting node stats: ${e}")
-        complete(NotAcceptable, s"exception occurred while getting node stats: ${e}")
+        complete(TooManyRequests, s"exception occurred while getting node stats: ${e}")
     }
 
   }
