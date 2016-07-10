@@ -335,6 +335,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
+  private var subscriptionFilter: QueryBuilder = null
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -441,7 +442,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       }
     }
 
-    if(subscriptionFilter.hasClauses)
+    if(subscriptionFilter.hasClauses) {
       finalFilter.must(
         nestedQuery("subscriptions", subscriptionFilter)
           .innerHit(
@@ -450,6 +451,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
               .addSort("subscriptions.order_count", SortOrder.DESC)
               .setFrom(subscriptions_offset).setSize(subscriptions_size)
               .setFetchSource("*", null).setExplain(explain)))
+      this.subscriptionFilter = subscriptionFilter
+    }
 
 
     if (category != "") {
@@ -591,9 +594,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           )
 
         )*/.subAggregation(
-          nested("options").path("subscriptions.options").subAggregation(
-            terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
-              terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
+          filter("matched").filter(subscriptionFilter).subAggregation(
+            nested("options").path("subscriptions.options").subAggregation(
+              terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+                terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
+              )
             )
           )
         )
