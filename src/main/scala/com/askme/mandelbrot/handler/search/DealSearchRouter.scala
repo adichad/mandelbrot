@@ -17,12 +17,12 @@ case object DealSearchRouter extends Router {
     clientIP { (clip: RemoteAddress) =>
       requestInstance { (httpReq: HttpRequest) =>
         path("search" / "deal") {
-          parameters('what.as[String] ? "", 'city ? "", 'area ? "", 'id ? "",
+          parameters('what.as[String] ? "", 'suggest ? false, 'city ? "", 'area ? "", 'id ? "",
             'applicableto ? "", 'agg ? true, 'size ? 20, 'offset ? 0,
             'select ? "", 'pay_merchant_id ? "", 'edms_outlet_id.as[Int]? 0,
             'gll_outlet_id.as[Int]? 0,
             'category ? "", 'featured ? false, 'dealsource ? "", 'pay_type.as[Int]?0, "explain".as[Boolean]?false)
-          { (kw, city, area, id, applicableTo, agg, size, offset, select,
+          { (kw, suggest, city, area, id, applicableTo, agg, size, offset, select,
              pay_merchant_id, edms_outlet_id, gll_outlet_id, category, featured, dealsource, pay_type, explain) =>
             val source = true
             val version = 1
@@ -38,7 +38,7 @@ case object DealSearchRouter extends Router {
                ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
                   req = RequestParams(httpReq, clip, clip.toString()),
                   idx = IndexParams("askmedeal", "deal"),
-                  text = TextParams(kw, fuzzyprefix, fuzzysim),
+                  text = TextParams(kw, suggest, fuzzyprefix, fuzzysim),
                   geo = GeoParams(city, area, "", 0.0d, 0.0d),
                   filters = DealFilterParams(id, applicableTo, category, featured, dealsource, pay_merchant_id, edms_outlet_id, gll_outlet_id, pay_type), page = PageParams(size, offset),
                   view = ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),

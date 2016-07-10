@@ -48,7 +48,7 @@ case object SearchRouter extends Router {
                   context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, esType),
-                    TextParams(kw.nonEmptyOrElse(category), fuzzyprefix, fuzzysim),
+                    TextParams(kw.nonEmptyOrElse(category), false, fuzzyprefix, fuzzysim),
                     GeoParams(city, area, pin, lat, lon),
                     FilterParams(category, id, userid, locid, pay_type), PageParams(size, offset),
                     ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, collapse, goldcollapse, randomize, version),

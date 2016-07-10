@@ -33,6 +33,8 @@ import scala.collection.JavaConversions._
 
 object DealSearchRequestHandler extends Logging {
 
+  val pat = """(?U)[^\p{alnum}]+"""
+
   private def getSort(sort: String) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
@@ -195,6 +197,31 @@ object DealSearchRequestHandler extends Logging {
       boolQuery
   }
 
+
+  def currQuerySuggest(tokenFields: Map[String, Float],
+                       w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, tokenRelax: Int = 0) = {
+
+    disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+  }
+
+  def shinglePartitionSuggest(tokenFields: Map[String, Float], w: Array[String],
+                              maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                              tokenRelax: Int = 0): BoolQueryBuilder = {
+
+    if(w.length>0)
+      boolQuery.minimumNumberShouldMatch(1).shouldAll(
+        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+          if (x._2.length > 0)
+            shinglePartitionSuggest(tokenFields, x._2, maxShingle, minShingle, fuzzy, sloppy, tokenRelax)
+              .must(currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax))
+          else
+            currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax)
+        }
+      )
+    else
+      boolQuery
+  }
+
   private def queryBuilder(tokenFields: Map[String, Float], recomFields: Map[String, Float], fuzzy: Boolean = false, sloppy: Boolean = false, span: Boolean = false, minShingle: Int = 1, tokenRelax: Int = 0)
                           (w: Array[String], maxShingle: Int) = {
     shinglePartition(tokenFields, recomFields, w, maxShingle, minShingle, fuzzy, sloppy, span, tokenRelax)
@@ -221,6 +248,155 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   private val esClient: Client = serverContext.esClient
   private var kwids: Array[String] = emptyStringArray
   private var w = emptyStringArray
+
+
+  def buildSuggestQuery(kw: String, w: Array[String]) = {
+    val query =
+      if(kw.endsWith(" ")) {
+        if (w.nonEmpty) {
+          disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map(
+                "Title" -> 1e12f,
+                "Headline"->1e11f,
+                "Categories.Name" -> 1e11f,
+                "Offers.Name" -> 1e11f,
+                "DealTags" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          )/*.add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "categories.name" -> 1e5f/*,
+                "attributes_value" -> 1e5f*/),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          )*/.add(
+            shinglePartitionSuggest(
+              Map("Title.token_edge_ngram" -> 1e2f,
+                "Headline.token_edge_ngram" -> 1e1f,
+                "Categories.Name.token_edge_ngram" -> 1e1f,
+                "Offers.Name.token_edge_ngram" -> 1e2f,
+                "DealTags.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("Title.shingle_nospace_edge_ngram" -> 1e2f,
+                "Headline.shingle_nospace_edge_ngram" -> 1e1f,
+                "Categories.Name.shingle_nospace_edge_ngram" -> 1e1f,
+                "Offers.Name.shingle_nospace_edge_ngram" -> 1e2f,
+                "DealTags.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+        }
+        else
+          matchAllQuery
+      } else {
+        if (w.nonEmpty) {
+          val front = w.take(w.length - 1)
+          val last_raw = kw.split(pat).last.toLowerCase.trim
+
+          val q = disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map("Title" -> 1e12f,
+                "Headline" -> 1e11f,
+                "Categories.Name" -> 1e11f,
+                "Offers.Name" -> 1e11f,
+                "DealTags" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          )/*.add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "categories.name" -> 1e5f/*,
+                "Offers.Name" -> 1e5f*/),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          )*/.add(
+            shinglePartitionSuggest(
+              Map("Title.token_edge_ngram" -> 1e2f,
+                "Headline.token_edge_ngram" -> 1e1f,
+                "Categories.Name.token_edge_ngram" -> 1e1f,
+                "Offers.Name.token_edge_ngram" -> 1e2f,
+                "DealTags.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("Title.shingle_nospace_edge_ngram" -> 1e2f,
+                "Headline.shingle_nospace_edge_ngram" -> 1e1f,
+                "Categories.Name.shingle_nospace_edge_ngram" -> 1e1f,
+                "Offers.Name.shingle_nospace_edge_ngram" -> 1e2f,
+                "DealTags.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+
+          val q2 = boolQuery
+          if (front.nonEmpty) {
+            q2.must(
+              disMaxQuery.add(
+                shinglePartitionSuggest(
+                  Map("Title" -> 1e12f,
+                    "Headline" -> 1e11f,
+                    "Categories.Name" -> 1e11f,
+                    "Offers.Name" -> 1e11f,
+                    "DealTags" -> 1e11f),
+                  front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+                )
+              )/*.add(
+                shinglePartitionSuggest(
+                  Map("name" -> 1e6f,
+                    "categories.name" -> 1e5f/*,
+                    "attributes_value" -> 1e5f*/),
+                  front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+                )
+              )*/.add(
+                shinglePartitionSuggest(
+                  Map("Title.token_edge_ngram" -> 1e2f,
+                    "Headline.token_edge_ngram" -> 1e1f,
+                    "Categories.Name.token_edge_ngram" -> 1e1f,
+                    "Offers.Name.token_edge_ngram" -> 1e2f,
+                    "DealTags.token_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartitionSuggest(
+                  Map("Title.shingle_nospace_edge_ngram" -> 1e2f,
+                    "Headline.shingle_nospace_edge_ngram" -> 1e1f,
+                    "Categories.Name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "Offers.Name.shingle_nospace_edge_ngram" -> 1e2f,
+                    "DealTags.shingle_nospace_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              )
+            )
+          }
+
+          val q3 = disMaxQuery
+            .add(fuzzyOrTermQuery("Title.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+          //.add(fuzzyOrTermQuery("Title.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("Headline.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("Headline.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("Categories.Name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("Categories.Name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("Offers.Name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("Offers.Name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("DealTags.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("DealTags.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q.add(if (q2.hasClauses) q2.must(q3) else q3)
+        } else
+          matchAllQuery
+      }
+    query
+  }
 
   private def buildFilter(searchParams: DealSearchParams): BoolQueryBuilder = {
     import searchParams.filters._
@@ -294,6 +470,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.page._
     import searchParams.view._
     import searchParams.filters._
+    import searchParams.text._
 
 
     val sort = if(pay_type==0) "_score,_home,_base,_channel" else "_score,_pay,_home,_base,_channel"
@@ -310,9 +487,12 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       .setFrom(offset).setSize(size)
     if (agg) {
       search.addAggregation(
-        terms("categories").field("Categories.Name.NameAggr").size(aggbuckets).order(Terms.Order.count(false)))
+        terms("categories").field("Categories.Name.NameAggr").size(if(suggest) 3 else aggbuckets).order(Terms.Order.count(false)))
+      if(!suggest)
       search.addAggregation(
         terms("areas").field("Locations.Area.AreaAggr").size(aggbuckets).order(Terms.Order.count(false)))
+      search.addAggregation(
+        terms("tags").field("DealTags.DealTagsAggr").size(if(suggest) 3 else aggbuckets).order(Terms.Order.count(false)))
     }
     if(select == "") {
       search.setFetchSource(source)
@@ -339,9 +519,10 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
             city == "" && applicableTo == "" && !featured && dealsource == "" && pay_merchant_id == "") {
           context.parent ! EmptyResponse("empty search criteria")
         }
-        val query =
+        val query = if(suggest) buildSuggestQuery(kw, w) else {
           if (w.length > 0) qDefs.head._1(w, w.length)
           else matchAllQuery()
+        }
         val leastCount = qDefs.head._2
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
         val finalFilter = buildFilter(searchParams)
