@@ -32,6 +32,8 @@ case object ProductSearchRouter extends Router {
                 val subscribed_id = params.getOrElse("subscribed_id", "0").toInt
                 val size = params.getOrElse("size", "20").toInt
                 val offset = params.getOrElse("offset", "0").toInt
+                val subscriptions_size = params.getOrElse("subscriptions_size", "20").toInt
+                val subscriptions_offset = params.getOrElse("subscriptions_offset", "0").toInt
                 val explain = params.getOrElse("explain", "false").toBoolean
                 val select = params.getOrElse("select", "product_id,name")
                 val sort = params.getOrElse("sort", "popularity")
@@ -63,7 +65,7 @@ case object ProductSearchRouter extends Router {
                       FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city,
                         store_front_id, mpdm_store_front_id, crm_seller_id, brand, filters, optionFilters,
                         price_min, price_max, category_id),
-                      PageParams(sort, size, offset),
+                      PageParams(sort, size, offset, subscriptions_size, subscriptions_offset),
                       ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                       LimitParams(maxdocspershard, timeoutms),
                       System.currentTimeMillis

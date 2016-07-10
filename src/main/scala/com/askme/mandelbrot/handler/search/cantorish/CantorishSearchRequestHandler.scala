@@ -452,7 +452,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
           )
           .setPath("variants.subscriptions")
           .setFetchSource("*", null)
-          .setFrom(0).setSize(20)
+          .setFrom(subscriptions_offset).setSize(subscriptions_size)
       )
 
 

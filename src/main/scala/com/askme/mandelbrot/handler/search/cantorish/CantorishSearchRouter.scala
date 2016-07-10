@@ -21,6 +21,7 @@ case object CantorishSearchRouter extends Router {
             parameters('kw.as[String] ? "", 'city ? "",
               'category_id ? "", 'product_id.as[Int] ? 0, 'variant_id.as[Int] ? 0, 'subscription_id.as[Int] ? 0,
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
+              'subscriptions_size.as[Int] ? 20, 'subscriptions_offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "id,name",
               'sort.as[String]?"popularity",
               'agg.as[Boolean] ? true,
@@ -31,6 +32,7 @@ case object CantorishSearchRouter extends Router {
               'seller_active_only?false) { (kw, city,
                category, product_id, variant_id, subscription_id,
                size, offset,
+               subscriptions_size, subscriptions_offset,
                explain, select, sort,
                agg, suggest, seller_id, brand,
                base_active_only, variant_active_only, subscription_active_only, seller_active_only) =>
@@ -48,7 +50,7 @@ case object CantorishSearchRouter extends Router {
                     TextParams(kw, suggest),
                     FilterParams(category, product_id, variant_id, subscription_id, city, seller_id, brand,
                       base_active_only, variant_active_only, subscription_active_only, seller_active_only),
-                    PageParams(sort, size, offset),
+                    PageParams(sort, size, offset, subscriptions_size, subscriptions_offset),
                     ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
                     LimitParams(maxdocspershard, timeoutms),
                     System.currentTimeMillis

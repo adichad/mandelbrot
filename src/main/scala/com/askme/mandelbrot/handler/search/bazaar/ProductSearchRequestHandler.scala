@@ -341,6 +341,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.idx._
     import searchParams.view._
     import searchParams.text._
+    import searchParams.page._
     implicit val formats = org.json4s.DefaultFormats
 
     // filters
@@ -447,8 +448,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             new QueryInnerHitBuilder().setName("best_subscription")
               .addSort("subscriptions.min_price", SortOrder.ASC)
               .addSort("subscriptions.order_count", SortOrder.DESC)
-              .setFrom(0).setSize(10)
-              .setFetchSource(select.split(""","""), Array[String]()).setExplain(explain)))
+              .setFrom(subscriptions_offset).setSize(subscriptions_size)
+              .setFetchSource("*", null).setExplain(explain)))
 
 
     if (category != "") {
