@@ -44,7 +44,8 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String], subscriptionFilter: QueryBuilder): List[SortBuilder] = {
+  private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String],
+                      subscriptionFilter: QueryBuilder, category_id: Int = 0, brands: String=""): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -68,6 +69,18 @@ object ProductSearchRequestHandler extends Logging {
                   .must(termQuery("subscriptions.store_fronts.status", 1))
               )
             ) else None) ::
+          (if(category_id>0)
+            Some(fieldSort("categories_nested.boost").setNestedPath("categories_nested").order(SortOrder.DESC)
+              .setNestedFilter(termQuery("categories_nested.category_id", category_id))
+              .sortMode("max").missing(0)
+            )
+          else None)::
+          (if(brands.trim.nonEmpty)
+            Some(fieldSort("brand_boost").order(SortOrder.DESC).sortMode("max").missing(0))
+          else None)::
+          Some(fieldSort("subscriptions.boost").setNestedPath("subscriptions").order(SortOrder.DESC)
+            .setNestedFilter(subscriptionFilter)
+            .sortMode("max").missing(0))::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
@@ -78,7 +91,8 @@ object ProductSearchRequestHandler extends Logging {
           else
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(subscriptionFilter)
-              .sortMode("max").missing(0))
+              .sortMode("max").missing(0)
+            )
             ) ::
           Some(scoreSort().order(SortOrder.DESC))::
           Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0))::
@@ -336,7 +350,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
     import searchParams.idx._
     import searchParams.view._
-    import searchParams.text._
     import searchParams.page._
     implicit val formats = org.json4s.DefaultFormats
 
@@ -445,6 +458,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions", subscriptionFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("best_subscription")
+              .addSort("subscriptions.boost", SortOrder.DESC)
               .addSort("subscriptions.is_ndd", SortOrder.DESC)
               .addSort("subscriptions.min_price", SortOrder.ASC)
               .addSort("subscriptions.order_count", SortOrder.DESC)
@@ -503,7 +517,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
     import searchParams.text._
 
-    val sorters = getSort(sort, mpdm_store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w, subscriptionFilter)
+    val sorters = getSort(
+      sort, mpdm_store_front_id,
+      city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty),
+      w, subscriptionFilter, category_id, if(brand.nonEmpty)brand else filters.getOrDefault("Filter_Brand", ""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
