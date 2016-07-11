@@ -44,7 +44,7 @@ object ProductSearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String]): List[SortBuilder] = {
+  private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String], subscriptionFilter: QueryBuilder): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -72,17 +72,12 @@ object ProductSearchRequestHandler extends Logging {
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
+                  .must(subscriptionFilter)
                   .must(termsQuery("subscriptions.ndd_city.exact",cities:_*))
-                  .must(termQuery("subscriptions.status", 1))
-                  .must(rangeQuery("subscriptions.quantity").gt(0))
               ).sortMode("max").missing(0))
           else
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(
-                boolQuery()
-                  .must(termQuery("subscriptions.status", 1))
-                  .must(rangeQuery("subscriptions.quantity").gt(0))
-              )
+              .setNestedFilter(subscriptionFilter)
               .sortMode("max").missing(0))
             ) ::
           Some(scoreSort().order(SortOrder.DESC))::
@@ -508,7 +503,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
     import searchParams.text._
 
-    val sorters = getSort(sort, mpdm_store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w)
+    val sorters = getSort(sort, mpdm_store_front_id, city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty), w, subscriptionFilter)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
