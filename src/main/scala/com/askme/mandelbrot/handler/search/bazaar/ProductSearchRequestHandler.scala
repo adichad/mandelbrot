@@ -45,7 +45,7 @@ object ProductSearchRequestHandler extends Logging {
   randomParams.put("buckets", int2Integer(5))
 
   private def getSort(sort: String, mpdm_store_front_id: Int, cities: Array[String], w: Array[String],
-                      subscriptionFilter: QueryBuilder, category_id: Int = 0, brands: String=""): List[SortBuilder] = {
+                      subscriptionFilter: QueryBuilder, suggest: Boolean, category_id: Int = 0, brands: String=""): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
@@ -56,7 +56,7 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        (if(cities.nonEmpty)
+        (if(cities.nonEmpty && !suggest)
           Some(scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", null), "number").order(SortOrder.DESC))
         else
           Some(scoreSort().order(SortOrder.DESC)))::
@@ -520,7 +520,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     val sorters = getSort(
       sort, mpdm_store_front_id,
       city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty),
-      w, subscriptionFilter, category_id, if(brand.nonEmpty)brand else filters.getOrDefault("Filter_Brand", ""))
+      w, subscriptionFilter, suggest, category_id, if(brand.nonEmpty)brand else filters.getOrDefault("Filter_Brand", ""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
