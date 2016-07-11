@@ -387,6 +387,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
     }
 
+    if (national_only) {
+      subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
+    }
 
     if (city != "") {
       val cityFilter = boolQuery
@@ -447,6 +450,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions", subscriptionFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("best_subscription")
+              .addSort("subscriptions.is_ndd", SortOrder.DESC)
               .addSort("subscriptions.min_price", SortOrder.ASC)
               .addSort("subscriptions.order_count", SortOrder.DESC)
               .setFrom(subscriptions_offset).setSize(subscriptions_size)

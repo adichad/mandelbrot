@@ -23,6 +23,7 @@ case object ProductSearchRouter extends Router {
               params =>
                 val kw = params.getOrElse("kw", "")
                 val city = params.getOrElse("city", "")
+                val national_only = params.getOrElse("national_only", "false").toBoolean
                 val category = params.getOrElse("category", "")
                 val category_id = params.getOrElse("category_id", "0").toInt
                 val brand = params.getOrElse("brand", "")
@@ -62,7 +63,7 @@ case object ProductSearchRouter extends Router {
                       RequestParams(httpReq, clip, ""),
                       IndexParams(index, "product"),
                       TextParams(kw, suggest),
-                      FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city,
+                      FilterParams(category, product_id, grouped_id, base_id, subscribed_id, store, city, national_only,
                         store_front_id, mpdm_store_front_id, crm_seller_id, brand, filters, optionFilters,
                         price_min, price_max, category_id),
                       PageParams(sort, size, offset, subscriptions_size, subscriptions_offset),
