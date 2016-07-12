@@ -345,8 +345,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var subscriptionFilter: BoolQueryBuilder = null
-  private var optionFilter: BoolQueryBuilder = null
-  private var storeFrontFilter: BoolQueryBuilder = null
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -391,13 +389,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         termQuery("subscriptions.product_id", grouped_id)
       )
     }
-    if(subscribed_id != 0) {
-      subscriptionFilter.must(
-        termQuery("subscriptions.subscribed_product_id", subscribed_id)
-      )
-      this.subscriptionFilter.must(
-        termQuery("subscriptions.subscribed_product_id", subscribed_id)
-      )
+    if(subscribed_id.nonEmpty ) {
+      val q = boolQuery().shouldAll(subscribed_id.map(termQuery("subscriptions.subscribed_product_id", _)))
+      subscriptionFilter.must(q)
+      this.subscriptionFilter.must(q)
     } else {
       subscriptionFilter
         .must(termQuery("subscriptions.status", 1))
@@ -464,8 +459,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
-
-        this.storeFrontFilter = f
       }
       else {
         val f = boolQuery()
@@ -474,8 +467,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
-
-        this.storeFrontFilter = f
       }
 
     }
@@ -492,7 +483,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           b.must(sub)
         if(b.hasClauses) {
           subscriptionFilter.must(nestedQuery("subscriptions.options", b))
-          this.optionFilter = b
         }
       }
     }
@@ -649,7 +639,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                     .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
                     .must(termQuery("subscriptions.store_fronts.status", 1)))
                     .subAggregation(
-                      terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(100).order(
+                      terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(if(mpdm_store_front_id<0) 100 else 10).order(
                         Terms.Order.aggregation("rev>filter>order", false)
                       )
                         .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))

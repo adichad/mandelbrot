@@ -31,7 +31,7 @@ case object ProductSearchRouter extends Router {
                 val product_id = params.getOrElse("product_id", "0").toInt
                 val grouped_id = params.getOrElse("grouped_id", "0").toInt
                 val base_id = params.getOrElse("base_id", "0").toInt
-                val subscribed_id = params.getOrElse("subscribed_id", "0").toInt
+                val subscribed_id = params.getOrElse("subscribed_id", "0").split(""",""").map(_.toInt).filter(_>0)
                 val size = params.getOrElse("size", "20").toInt
                 val offset = params.getOrElse("offset", "0").toInt
                 val subscriptions_size = params.getOrElse("subscriptions_size", "20").toInt

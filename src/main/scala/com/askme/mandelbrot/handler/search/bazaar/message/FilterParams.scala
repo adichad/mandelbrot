@@ -5,7 +5,8 @@ import com.askme.mandelbrot.handler.message.RestMessage
 /**
  * Created by adichad on 31/03/15.
  */
-case class FilterParams(category: String, product_id: Int, grouped_id: Int, base_id: Int, subscribed_id: Int,
+case class FilterParams(category: String, product_id: Int, grouped_id: Int, base_id: Int,
+                        subscribed_id: Array[Int],
                         store: String, city: String, national_only: Boolean, ndd_only: Boolean,
                         store_front_id: Int, mpdm_store_front_id: Int,
                         crm_seller_id: Int, brand: String,
