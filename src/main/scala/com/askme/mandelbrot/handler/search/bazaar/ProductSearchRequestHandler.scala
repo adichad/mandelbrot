@@ -596,16 +596,13 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
-      val subscriptionAgg = filter("matched").filter(subscriptionFilter)
-      subscriptionAgg.subAggregation(
+      val subscriptionAgg = filter("matched").filter(subscriptionFilter).subAggregation(
         nested("options").path("subscriptions.options").subAggregation(
           terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
             terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
           )
         )
-      )
-
-      subscriptionAgg.subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
+      ).subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
 
       if(mpdm_store_front_id<0)
         subscriptionAgg.subAggregation(
