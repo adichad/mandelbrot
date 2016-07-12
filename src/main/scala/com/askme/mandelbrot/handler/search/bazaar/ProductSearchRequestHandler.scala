@@ -397,7 +397,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (national_only) {
       subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
-    }
+    } else if (ndd_only)
+      subscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
 
     if (city != "") {
       val cityFilter = boolQuery
@@ -604,6 +605,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
+      subscriptionAgg.subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
 
       if(mpdm_store_front_id<0)
         subscriptionAgg.subAggregation(
