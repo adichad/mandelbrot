@@ -429,13 +429,19 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
     }
 
-    if(mpdm_store_front_id > 0) {
-      subscriptionFilter.must(
+    if(mpdm_store_front_id != 0) {
+      if(mpdm_store_front_id>0)
+        subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", boolQuery()
+            .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
+            .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+            .must(termQuery("subscriptions.store_fronts.status", 1)))
+        )
+      else
         nestedQuery("subscriptions.store_fronts", boolQuery()
-          .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
           .must(termQuery("subscriptions.store_fronts.status", 1)))
-      )
+
     }
 
 
@@ -587,8 +593,19 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
-      search.addAggregation(
-        nested("subscriptions").path("subscriptions")/*.subAggregation(
+      val subscriptionAgg =
+        nested("subscriptions").path("subscriptions").subAggregation(
+          filter("matched").filter(subscriptionFilter).subAggregation(
+            nested("options").path("subscriptions.options").subAggregation(
+              terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+                terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
+              )
+            )
+          )
+        )
+
+      if(mpdm_store_front_id<0)
+        subscriptionAgg.subAggregation(
           nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
             filter("store_fronts").filter(
               boolQuery()
@@ -608,17 +625,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                   )
               )
           )
-
-        )*/.subAggregation(
-          filter("matched").filter(subscriptionFilter).subAggregation(
-            nested("options").path("subscriptions.options").subAggregation(
-              terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
-                terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
-              )
-            )
-          )
         )
-      )
+      search.addAggregation(subscriptionAgg)
 
       search.addAggregation(
         nested("attributes").path("attributes")
