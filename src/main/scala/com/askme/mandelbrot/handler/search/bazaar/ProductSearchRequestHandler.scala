@@ -438,9 +438,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
             .must(termQuery("subscriptions.store_fronts.status", 1)))
         )
       else
-        nestedQuery("subscriptions.store_fronts", boolQuery()
-          .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1)))
+        subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", boolQuery()
+            .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
+            .must(termQuery("subscriptions.store_fronts.status", 1)))
+        )
 
     }
 
@@ -593,40 +595,31 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
-      val subscriptionAgg =
-        nested("subscriptions").path("subscriptions").subAggregation(
-          filter("matched").filter(subscriptionFilter).subAggregation(
-            nested("options").path("subscriptions.options").subAggregation(
-              terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
-                terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
-              )
-            )
+      val subscriptionAgg = filter("matched").filter(subscriptionFilter)
+      subscriptionAgg.subAggregation(
+        nested("options").path("subscriptions.options").subAggregation(
+          terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+            terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
           )
         )
+      )
+
 
       if(mpdm_store_front_id<0)
         subscriptionAgg.subAggregation(
           nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-            filter("store_fronts").filter(
-              boolQuery()
-                .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                .must(termQuery("subscriptions.store_fronts.status", 1))
-                .mustNot(termsQuery("subscriptions.store_fronts.title", "mpl", "ib", "adobefeed", "affiliate", "affilaite", "pla"))
+            terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(100).order(
+              Terms.Order.aggregation("rev>filter>order", false)
             )
+              .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
               .subAggregation(
-                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(aggbuckets).order(
-                  Terms.Order.aggregation("rev>filter>order", false)
+                reverseNested("rev").subAggregation(
+                  filter("filter").filter(rangeQuery("order_last_dt").gte("now-2w")).subAggregation(orderSorter)
                 )
-                  .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-                  .subAggregation(
-                    reverseNested("rev").subAggregation(
-                      filter("filter").filter(rangeQuery("order_last_dt").gte("now-2w")).subAggregation(orderSorter)
-                    )
-                  )
               )
           )
         )
-      search.addAggregation(subscriptionAgg)
+      search.addAggregation(nested("subscriptions").path("subscriptions").subAggregation(subscriptionAgg))
 
       search.addAggregation(
         nested("attributes").path("attributes")
