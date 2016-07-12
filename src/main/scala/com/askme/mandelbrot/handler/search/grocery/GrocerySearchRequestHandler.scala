@@ -409,7 +409,13 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       orderFilter.must(rangeQuery("items.orders.updated_on").format("yyyy-MM-dd").from(order_updated_since))
 
     if(orderFilter.hasClauses)
-      itemFilter.must(nestedQuery("items.orders", orderFilter))
+      itemFilter.must(
+        nestedQuery("items.orders", orderFilter).innerHit(
+          new QueryInnerHitBuilder().setName("matched_orders")
+            .setFrom(0).setSize(100)
+            .setFetchSource(Array("*"), Array[String]())
+        )
+      )
 
     finalFilter
       .must(
