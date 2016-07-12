@@ -910,6 +910,65 @@
       "items": {
         "type": "nested",
         "properties": {
+          "orders": {
+            "type": "nested",
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "index": "not_analyzed",
+                "store": false,
+                "doc_values": true
+              },
+              "parent_order_id": {
+                "type": "string",
+                "index": "not_analyzed",
+                "store": false,
+                "doc_values": true
+              },
+              "user_id": {
+                "type": "string",
+                "index": "not_analyzed",
+                "store": false,
+                "doc_values": true
+              },
+              "updated_on": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "quantity": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "geo_id": {
+                "type": "long",
+                "store": false,
+                "doc_values": true
+              },
+              "offer_price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "total_offer_price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "total_order_value": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "item_set": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              }
+            }
+          },
           "areas": {
             "type": "integer",
             "doc_values": true
