@@ -596,29 +596,32 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         )
       )
 
-      val subscriptionAgg = filter("matched").filter(subscriptionFilter).subAggregation(
-        nested("options").path("subscriptions.options").subAggregation(
-          terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
-            terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
-          )
-        )
-      ).subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
-
-      if(mpdm_store_front_id<0)
-        subscriptionAgg.subAggregation(
-          nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
-            terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(100).order(
-              Terms.Order.aggregation("rev>filter>order", false)
-            )
-              .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
-              .subAggregation(
-                reverseNested("rev").subAggregation(
-                  filter("filter").filter(rangeQuery("order_last_dt").gte("now-2w")).subAggregation(orderSorter)
+      search.addAggregation(nested("subscriptions").path("subscriptions")
+        .subAggregation(
+          filter("matched").filter(subscriptionFilter)
+            .subAggregation(
+              nested("options").path("subscriptions.options").subAggregation(
+                terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
+                  terms("values").field("subscriptions.options.values.agg").size(aggbuckets).order(Terms.Order.term(true))
                 )
               )
-          )
+            )
+            .subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
+            .subAggregation(
+              nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
+                terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(100).order(
+                  Terms.Order.aggregation("rev>filter>order", false)
+                )
+                  .subAggregation(terms("name").field("subscriptions.store_fronts.title.agg").size(1).order(Terms.Order.count(false)))
+                  .subAggregation(
+                    reverseNested("rev").subAggregation(
+                      filter("filter").filter(rangeQuery("order_last_dt").gte("now-2w")).subAggregation(orderSorter)
+                    )
+                  )
+              )
+            )
         )
-      search.addAggregation(nested("subscriptions").path("subscriptions").subAggregation(subscriptionAgg))
+      )
 
       search.addAggregation(
         nested("attributes").path("attributes")
