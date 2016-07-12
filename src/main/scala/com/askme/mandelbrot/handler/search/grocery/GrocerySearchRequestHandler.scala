@@ -22,6 +22,7 @@ import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.search.aggregations.{AbstractAggregationBuilder, Aggregator}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
+import org.elasticsearch.search.fetch.innerhits.InnerHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
 import org.json4s._
@@ -351,6 +352,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var itemFilter: QueryBuilder = boolQuery()
+  private var orderFilter: BoolQueryBuilder = null
 
   private def buildFilter(searchParams: GrocerySearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -410,15 +412,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if(order_geo_id>0l)
       orderFilter.must(termQuery("items.orders.geo_id", order_geo_id))
-    
-    if(orderFilter.hasClauses)
-      itemFilter.must(
-        nestedQuery("items.orders", orderFilter).innerHit(
-          new QueryInnerHitBuilder().setName("matched_orders")
-            .setFrom(0).setSize(100)
-            .setFetchSource(Array("*"), Array[String]())
-        )
-      )
+
+    if(orderFilter.hasClauses) {
+      itemFilter.must(nestedQuery("items.orders", orderFilter))
+      this.orderFilter = orderFilter
+    }
 
     finalFilter
       .must(
@@ -484,6 +482,15 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .addSorts(sorters)
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
+
+    if(orderFilter!=null && orderFilter.hasClauses)
+    search.addInnerHit("matched_orders",
+      new InnerHitsBuilder.InnerHit()
+        .setQuery(orderFilter)
+        .setPath("items.orders")
+        .setFetchSource("*", null)
+        .setFrom(0).setSize(100)
+    )
 
 
     if (agg) {
