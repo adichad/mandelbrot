@@ -392,6 +392,25 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       itemFilter.must(nestedQuery("items.storefronts", termQuery("items.storefronts.id", storefront_id)))
     }
 
+    val orderFilter = boolQuery()
+    if(user_id!="")
+      orderFilter.must(termQuery("items.orders.user_id", user_id))
+
+    if(order_id!="")
+      orderFilter.must(termQuery("items.orders.order_id", order_id))
+
+    if(parent_order_id!="")
+      orderFilter.must(termQuery("items.orders.parent_order_id", parent_order_id))
+
+    if(order_status!="")
+      orderFilter.must(termQuery("items.orders.status_code", order_status.trim.toLowerCase()))
+
+    if(order_updated_since!="")
+      orderFilter.must(rangeQuery("items.orders.updated_on").format("yyyy-MM-dd").from(order_updated_since))
+
+    if(orderFilter.hasClauses)
+      itemFilter.must(nestedQuery("items.orders", orderFilter))
+
     finalFilter
       .must(
         nestedQuery("items",itemFilter)
