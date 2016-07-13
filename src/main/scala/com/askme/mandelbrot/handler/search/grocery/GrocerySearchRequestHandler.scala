@@ -351,7 +351,6 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
-  private var itemFilter: QueryBuilder = boolQuery()
   private var orderFilter: BoolQueryBuilder = null
 
   private def buildFilter(searchParams: GrocerySearchParams, externalFilter: JValue): BoolQueryBuilder = {
@@ -372,8 +371,12 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     finalFilter.must(termQuery("categories.parent_name", "fmcg"))
 
-    val itemFilter = boolQuery.must(termQuery("items.status", 1))
-    itemFilter.must(termQuery("items.login_status", 1))
+    val itemFilter = boolQuery()
+    if(!include_inactive_items)
+      itemFilter.must(termQuery("items.status", 1))
+    if(!include_inactive_items)
+      itemFilter.must(termQuery("items.login_status", 1))
+
     if (item_id != "") {
       itemFilter.must(termsQuery("items.id", item_id.split(""",""").map(_.toInt):_*))
     }
