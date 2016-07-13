@@ -44,6 +44,7 @@ case object GrocerySearchRouter extends Router {
                 val order_updated_since = params.getOrElse("order_updated_since", "")
                 val order_geo_id = params.getOrElse("order_geo_id", "0").toLong
                 val include_inactive_items = params.getOrElse("include_inactive_items", "false").toBoolean
+                val extended_agg = params.getOrElse("extended_agg", "false").toBoolean
 
                 val maxdocspershard = 10000
                 val searchType = "dfs_query_then_fetch"
@@ -60,7 +61,7 @@ case object GrocerySearchRouter extends Router {
                       FilterParams(category, variant_id, product_id, item_id, storefront_id, geo_id, zone_code, brand,
                         user_id, order_id, parent_order_id, order_status, order_updated_since, order_geo_id, include_inactive_items),
                       PageParams(sort, size, offset),
-                      ViewParams(source, agg, aggbuckets, explain, select, searchType, 1),
+                      ViewParams(source, agg, aggbuckets, extended_agg, explain, select, searchType, 1),
                       LimitParams(maxdocspershard, timeoutms),
                       System.currentTimeMillis
                     )

@@ -21,6 +21,7 @@ import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.support.QueryInnerHitBuilder
 import org.elasticsearch.search.aggregations.{AbstractAggregationBuilder, Aggregator}
 import org.elasticsearch.search.aggregations.AggregationBuilders._
+import org.elasticsearch.search.aggregations.bucket.significant.heuristics.{SignificanceHeuristic, SignificanceHeuristicBuilder}
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.search.fetch.innerhits.InnerHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
@@ -521,6 +522,20 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       if (brand == ""||brand.contains('|'))
         search.addAggregation(terms("brands").field("brand_name.agg").size(aggbuckets))
       
+    }
+
+    if(extended_agg) {
+      search.addAggregation(
+        nested("items_extended").path("items").subAggregation(
+          nested("orders").path("items.orders").subAggregation(
+            significantTerms("interesting sold items")
+              .backgroundFilter(
+                existsQuery("items.orders.item_set")
+              )
+              .field("items.orders.item_set").size(aggbuckets)
+          )
+        )
+      )
     }
 
     search
