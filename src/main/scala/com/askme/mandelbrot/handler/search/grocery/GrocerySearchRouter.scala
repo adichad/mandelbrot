@@ -42,7 +42,7 @@ case object GrocerySearchRouter extends Router {
                 val parent_order_id = params.getOrElse("parent_order_id", "")
                 val order_status = params.getOrElse("order_status", "")
                 val order_updated_since = params.getOrElse("order_updated_since", "")
-                val order_geo_id = params.getOrElse("order_geo_id", "0l").toLong
+                val order_geo_id = params.getOrElse("order_geo_id", "0").toLong
                 val include_inactive_items = params.getOrElse("include_inactive_items", "false").toBoolean
 
                 val maxdocspershard = 10000
