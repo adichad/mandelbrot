@@ -27,7 +27,7 @@ case object GrocerySearchRouter extends Router {
                 val brand = params.getOrElse("brand", "")
                 val product_id = params.getOrElse("product_id", "0").toInt
                 val variant_id = params.getOrElse("variant_id", "0").toInt
-                val geo_id = params.getOrElse("geo_id", "0l").toLong
+                val geo_id = params.getOrElse("geo_id", "0").toLong
                 val item_id = params.getOrElse("item_id", "")
                 val size = params.getOrElse("size", "20").toInt
                 val offset = params.getOrElse("offset", "0").toInt
