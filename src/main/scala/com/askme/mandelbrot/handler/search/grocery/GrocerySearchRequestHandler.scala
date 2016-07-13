@@ -533,6 +533,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
                 existsQuery("items.orders.item_set")
               )
               .field("items.orders.item_set").size(aggbuckets)
+              .minDocCount(1).
           )
         )
       )
