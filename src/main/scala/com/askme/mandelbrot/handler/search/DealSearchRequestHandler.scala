@@ -413,7 +413,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     finalFilter.must(rangeQuery("EndDate").gt("now-1d")).must(rangeQuery("StartDate").lte("now"))
     finalFilter.must(rangeQuery("Offers.EndDate").gt("now-1d"))
     if (applicableTo != "" && pay_type==0) {
-      finalFilter.must(termQuery("ApplicableTo", applicableTo))
+      finalFilter.must(termsQuery("ApplicableTo", applicableTo.split( ""","""):_*))
     }
 
     if(pay_merchant_id!="") {
