@@ -26,6 +26,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
+import org.elasticsearch.search.fetch.innerhits.InnerHitsBuilder
 import org.elasticsearch.search.sort.SortBuilders._
 import org.elasticsearch.search.sort._
 import org.json4s._
@@ -345,6 +346,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var subscriptionFilter: BoolQueryBuilder = null
+  private val matchedSubscriptionFilter =
+    boolQuery()
+      .must(termQuery("subscriptions.status", 1))
+      .must(rangeQuery("subscriptions.quantity").gt(0))
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -389,6 +394,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         termQuery("subscriptions.product_id", grouped_id)
       )
     }
+
     if(subscribed_id.nonEmpty ) {
       val q = boolQuery().shouldAll(subscribed_id.map(termQuery("subscriptions.subscribed_product_id", _)))
       subscriptionFilter.must(q)
@@ -401,6 +407,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         .must(termQuery("subscriptions.status", 1))
         .must(rangeQuery("subscriptions.quantity").gt(0))
     }
+
 
     if(crm_seller_id !=0) {
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
@@ -424,6 +431,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       if(cityFilter.hasClauses) {
         subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
         this.subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
+        matchedSubscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
       }
     }
 
@@ -492,9 +500,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions", subscriptionFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("best_subscription")
-              .addSort("subscriptions.boost", SortOrder.DESC)
-              .addSort("subscriptions.is_ndd", SortOrder.DESC)
               .addSort("subscriptions.min_price", SortOrder.ASC)
+              .addSort("subscriptions.is_ndd", SortOrder.DESC)
+              .addSort("subscriptions.boost", SortOrder.DESC)
               .addSort("subscriptions.order_count", SortOrder.DESC)
               .setFrom(subscriptions_offset).setSize(subscriptions_size)
               .setFetchSource("*", null).setExplain(explain)))
@@ -566,6 +574,16 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       .setFrom(offset).setSize(size)
       .setFetchSource(select.split(""","""), Array[String]())
 
+    if(subscribed_id.nonEmpty) {
+
+      search.addInnerHit("matched_subscriptions",
+        new InnerHitsBuilder.InnerHit()
+          .setQuery(matchedSubscriptionFilter)
+          .setPath("subscriptions")
+          .setFetchSource("*", null)
+          .setFrom(subscriptions_offset).setSize(subscriptions_size)
+      )
+    }
 
     if (agg) {
       val scoreSorter = max("score").script(new Script("docscore", ScriptType.INLINE, "native", new util.HashMap[String, AnyRef]))
