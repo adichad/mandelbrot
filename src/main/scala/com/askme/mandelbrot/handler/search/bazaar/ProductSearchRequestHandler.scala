@@ -615,6 +615,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           )
             .subAggregation(scoreSorter)
             .subAggregation(reverseNested("rev").subAggregation(orderSorter))
+            .subAggregation(terms("id").field("categories_l5.category_id").size(1))
         )
         )
       )
