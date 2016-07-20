@@ -512,11 +512,11 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
-        b.should(termQuery("categories.name.exact", cat))
+      category.split("""#""").map(analyze(esClient, index, "categories_nested.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+        b.should(termQuery("categories_nested.name.exact", cat))
       }
       if(b.hasClauses)
-        finalFilter.must(b)
+        finalFilter.must(nestedQuery("categories_nested", b))
     }
 
     if (category_id > 0) {
