@@ -454,7 +454,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions.store_fronts", boolQuery()
           .must(termQuery("subscriptions.store_fronts.id", store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          //.must(termQuery("subscriptions.store_fronts.status", 1)))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
+          )
       )
     }
 
