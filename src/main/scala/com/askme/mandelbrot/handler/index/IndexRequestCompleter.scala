@@ -61,7 +61,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
               target ! indexParams
             } else {
-                warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
+              warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
               complete(TooManyRequests, "cluster state not conducive to indexing")
             }
           }

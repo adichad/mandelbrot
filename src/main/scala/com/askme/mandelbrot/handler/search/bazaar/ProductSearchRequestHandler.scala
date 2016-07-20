@@ -67,7 +67,7 @@ object ProductSearchRequestHandler extends Logging {
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                  .must(termQuery("subscriptions.store_fronts.status", 1))
+                  //.must(termQuery("subscriptions.store_fronts.status", 1))
               )
             ) else None) ::
           (if(category_id>0)
@@ -454,7 +454,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions.store_fronts", boolQuery()
           .must(termQuery("subscriptions.store_fronts.id", store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1)))
+          //.must(termQuery("subscriptions.store_fronts.status", 1)))
       )
     }
 
@@ -463,7 +463,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         val f = boolQuery()
           .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
         subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
@@ -471,7 +471,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       else {
         val f = boolQuery()
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
         subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
@@ -655,7 +655,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                 nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
                   filter("store_fronts").filter(boolQuery()
                     .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                    .must(termQuery("subscriptions.store_fronts.status", 1)))
+                    //.must(termQuery("subscriptions.store_fronts.status", 1))
+                    )
                     .subAggregation(
                       terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(if(mpdm_store_front_id<0) 100 else 10).order(
                         Terms.Order.aggregation("rev>filter>order", false)
