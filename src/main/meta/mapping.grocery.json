@@ -947,6 +947,11 @@
                 "store": false,
                 "doc_values": true
               },
+              "zone_gid": {
+                "type": "long",
+                "store": false,
+                "doc_values": true
+              },
               "offer_price": {
                 "type": "float",
                 "store": false,
