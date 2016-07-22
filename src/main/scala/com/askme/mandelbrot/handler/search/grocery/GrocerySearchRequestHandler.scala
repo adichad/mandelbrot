@@ -399,8 +399,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     }
 
     val orderFilter = boolQuery()
-    if(user_id!="")
-      orderFilter.must(termQuery("items.orders.user_id", user_id))
+    if(order_user_id!="")
+      orderFilter.must(termQuery("items.orders.user_id", order_user_id))
 
     if(order_id!="")
       orderFilter.must(termQuery("items.orders.order_id", order_id))
