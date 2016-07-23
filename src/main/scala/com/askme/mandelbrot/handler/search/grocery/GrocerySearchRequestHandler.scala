@@ -394,6 +394,14 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       itemFilter.must(termQuery("items.areas", geo_id))
     }
 
+    if(pla) {
+      itemFilter.must(termQuery("items.pla_status", 1))
+    }
+
+    if(city_id>0) {
+      itemFilter.must(termQuery("items.city_id", city_id))
+    }
+
     if(storefront_id != 0) {
       itemFilter.must(nestedQuery("items.storefronts", termQuery("items.storefronts.id", storefront_id)))
     }
@@ -427,9 +435,9 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("items",itemFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("matched_items")
-              .addSort("items.deal_count", SortOrder.DESC)
-              .addSort("items.customer_price", SortOrder.ASC)
-              .addSort("items.margin", SortOrder.DESC)
+              .addSort(if(pla) "items.pla_status" else "items.deal_count", SortOrder.DESC)
+              .addSort(if(pla) "items.pla_customer_price" else "items.customer_price", SortOrder.ASC)
+              .addSort(if(pla) "items.pla_margin" else "items.margin", SortOrder.DESC)
               .setFrom(0).setSize(1)
               .setFetchSource(Array("*"), Array[String]())
               .setExplain(explain)))
