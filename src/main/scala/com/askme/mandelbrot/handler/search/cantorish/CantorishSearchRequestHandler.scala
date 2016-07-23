@@ -55,12 +55,12 @@ object CantorishSearchRequestHandler extends Logging {
           Some(scoreSort().order(SortOrder.DESC))
           ) ::
           (if (cities.nonEmpty)
-            Some(fieldSort("variants.subscriptions.status").setNestedPath("variants.subscriptions").order(SortOrder.DESC)
+            Some(fieldSort("subscriptions.status").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
-                  .must(termsQuery("variants.subscriptions.seller.name",cities.map("NDD "+_.toLowerCase.split(' ').map(_.capitalize).mkString(" ")):_*))
-                  .must(termQuery("variants.subscriptions.status", 1))
-                  .must(rangeQuery("variants.subscriptions.quantity_available").gt(0))
+                  .must(termsQuery("subscriptions.seller.name",cities.map("NDD "+_.toLowerCase.split(' ').map(_.capitalize).mkString(" ")):_*))
+                  .must(termQuery("subscriptions.status", 1))
+                  .must(rangeQuery("subscriptions.quantity_available").gt(0))
               ).sortMode("max").missing(0))
           else None
             ) ::
@@ -343,29 +343,29 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
     }
     val subscriptionFilter =
       boolQuery()
-        .must(termQuery("variants.subscriptions.is_deleted", 0))
-        .must(termQuery("variants.subscriptions.seller.is_deleted", 0))
+        .must(termQuery("subscriptions.is_deleted", 0))
+        .must(termQuery("subscriptions.seller.is_deleted", 0))
 
     if(subscription_active_only)
       subscriptionFilter
-        .must(termQuery("variants.subscriptions.status", 1))
+        .must(termQuery("subscriptions.status", 1))
     if(seller_active_only)
       subscriptionFilter
-        .must(termQuery("variants.subscriptions.seller.status", 1))
+        .must(termQuery("subscriptions.seller.status", 1))
 
     if(subscribed_id != 0) {
       subscriptionFilter.must(
-        termQuery("variants.subscriptions.id", subscribed_id)
+        termQuery("subscriptions.id", subscribed_id)
       )
     }
 
     if(seller_id !=0) {
-      subscriptionFilter.must(termQuery("variants.subscriptions.seller.id", seller_id))
+      subscriptionFilter.must(termQuery("subscriptions.seller.id", seller_id))
     }
 
     if(subscriptionFilter.hasClauses) {
-      variantFilter.must(
-        nestedQuery("variants.subscriptions", subscriptionFilter)
+      finalFilter.must(
+        nestedQuery("subscriptions", subscriptionFilter)
       )
       this.subscriptionFilter = subscriptionFilter
     }
@@ -438,7 +438,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
     val cityFilter = boolQuery
     city.split(""",""").filter(_.trim.nonEmpty).map(c=>"NDD "+c.toLowerCase.split(' ').map(_.capitalize).mkString(" ")).foreach { c =>
-      cityFilter.should(termQuery("variants.subscriptions.seller.name", c))
+      cityFilter.should(termQuery("subscriptions.seller.name", c))
     }
 
 
@@ -450,7 +450,7 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
             else
               subscriptionFilter
           )
-          .setPath("variants.subscriptions")
+          .setPath("subscriptions")
           .setFetchSource("*", null)
           .setFrom(subscriptions_offset).setSize(subscriptions_size)
       )
