@@ -50,10 +50,18 @@ object ProductSearchRequestHandler extends Logging {
 
     val sorters =
     if(sort=="price.asc") {
-      List(fieldSort("min_price").order(SortOrder.ASC))
+      List(
+        fieldSort("subscriptions.min_price").setNestedPath("subscriptions").order(SortOrder.ASC)
+          .setNestedFilter(subscriptionFilter)
+          .sortMode("min").missing(9999999)
+      )
     }
     else if(sort=="price.desc") {
-      List(fieldSort("min_price").order(SortOrder.DESC))
+      List(
+        fieldSort("subscriptions.min_price").setNestedPath("subscriptions").order(SortOrder.DESC)
+          .setNestedFilter(subscriptionFilter)
+          .sortMode("min").missing(0)
+      )
     }
     else {
       (
@@ -371,14 +379,6 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       finalFilter.must(termQuery("base_product_id", base_id))
     }
 
-    if(price_min>0f)
-      if(price_max>0f)
-        finalFilter.must(rangeQuery("min_price").from(price_min).to(price_max))
-      else
-        finalFilter.must(rangeQuery("min_price").from(price_min))
-    else if(price_max>0f)
-      finalFilter.must(rangeQuery("min_price").to(price_max))
-
     val subscriptionFilter =
       boolQuery()
         .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
@@ -468,12 +468,18 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
+        this.subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", f)
+        )
       }
       else {
         val f = boolQuery()
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
           //.must(termQuery("subscriptions.store_fronts.status", 1))
         subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", f)
+        )
+        this.subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
       }
@@ -492,9 +498,31 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           b.must(sub)
         if(b.hasClauses) {
           subscriptionFilter.must(nestedQuery("subscriptions.options", b))
+          this.subscriptionFilter.must(nestedQuery("subscriptions.options", b))
+          matchedSubscriptionFilter.must(nestedQuery("subscriptions.options", b))
         }
       }
     }
+
+    val priceRangeFilter = if(price_min>0f) {
+      if (price_max > 0f) {
+        rangeQuery("subscriptions.min_price").from(price_min).to(price_max)
+      }
+      else {
+        rangeQuery("subscriptions.min_price").from(price_min)
+      }
+    }
+    else if(price_max>0f) {
+      rangeQuery("subscriptions.min_price").to(price_max)
+    } else
+      null
+
+    if(priceRangeFilter!=null) {
+      subscriptionFilter.must(priceRangeFilter)
+      matchedSubscriptionFilter.must(priceRangeFilter)
+      this.subscriptionFilter.must(priceRangeFilter)
+    }
+
 
     if(subscriptionFilter.hasClauses) {
       finalFilter.must(
