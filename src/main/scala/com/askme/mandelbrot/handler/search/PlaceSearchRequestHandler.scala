@@ -177,8 +177,7 @@ object PlaceSearchRequestHandler extends Logging {
     nestIfNeeded(field, fieldQuery)
   }
 
-  val forceFuzzy = Set("LocationName","LocationNameExact"/*, "CompanyAliases", "CompanyAliasesExact",
-  "product_stringattribute_answerexact", "product_stringattribute_answer", "tags.exact", "Address", "AddressExact"*/)
+  val forceFuzzy = Set("LocationName","LocationNameExact")
   val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
     "product_l3categoryexact"->"product_l3category", "product_brandexact"->"product_brand",
     "product_stringattribute_answerexact"->"product_stringattribute_answer") 
@@ -227,15 +226,6 @@ object PlaceSearchRequestHandler extends Logging {
 
   }
 
-  private def matchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
-    if(keywords.isEmpty) false else analyze(esClient, index, field, text).deep == keywords.deep
-  }
-
-  private def weakMatchAnalyzed(esClient: Client, index: String, field: String, text: String, keywords: Array[String]): Boolean = {
-    val textWords = analyze(esClient, index, field, text)
-    if(keywords.length > textWords.length) false else textWords.zip(keywords).forall(x=>x._1==x._2)
-  }
-
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray
 
@@ -256,7 +246,9 @@ object PlaceSearchRequestHandler extends Logging {
     "product_stringattribute_answer" -> 100f,
     "tags" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
-    "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"Address"->1f)
+    "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"Address"->1f,
+    "LocationMobile"->1f, "LocationLandLine"->1f, "LocationDIDNumber"->1f, "TollFreeNumber"->1f,
+    "PayMerchantContactNo"->1f, "PayMerchantUser"->1f)
 
   private val fullFields2 = Map(
     "LocationNameExact"->100000000000f, "CompanyAliasesExact"->100000000000f,
@@ -275,7 +267,9 @@ object PlaceSearchRequestHandler extends Logging {
     "product_stringattribute_answerexact"->100000f,
     "tags.exact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
-    "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"AddressExact"->1f)
+    "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"AddressExact"->1f,
+    "LocationMobile"->1f, "LocationLandLine"->1f, "LocationDIDNumber"->1f, "TollFreeNumber"->1f,
+    "PayMerchantContactNo"->1f, "PayMerchantUser"->1f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -543,7 +537,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       if (city == ""||city.contains(""","""))
         search.addAggregation(terms("city").field("CityAggr").size(100))
 
-      //search.addAggregation(terms("pincodes").field("PinCode").size(aggbuckets))
       search.addAggregation(terms("area").field("AreaAggr").size(aggbuckets))
       search.addAggregation(
         terms("categories").field("product_l3categoryaggr").size(aggbuckets).order(Terms.Order.aggregation("sum_score", false))
@@ -663,20 +656,11 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       case response: WrappedResponse =>
         try {
           import response.result
-          import response.searchParams.filters._
-          import response.searchParams.geo._
-          import response.searchParams.idx._
           import response.searchParams.limits._
           import response.searchParams.req._
           import response.searchParams.startTime
-          import response.searchParams.view._
           import response.relaxLevel
           val parsedResult = parse(result.toString)
-
-          /*.transformField {
-            case JField("aggregations", obj: JValue) => JField("aggregations", obj.removeField(_._1=="areasyns").removeField(_._1=="products"))
-          }.removeField(_._1=="_shards")*/
-
 
           val endTime = System.currentTimeMillis
           val timeTaken = endTime - startTime
