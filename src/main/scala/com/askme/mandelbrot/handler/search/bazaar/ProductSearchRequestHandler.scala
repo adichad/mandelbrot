@@ -491,8 +491,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       optionFilters.foreach { filter =>
         val b = boolQuery().must(termQuery("subscriptions.options.name.agg", filter._1))
         val sub = boolQuery
-        filter._2.split("""#""").map(analyze(esClient, index, "subscriptions.options.values.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
-          sub.should(termQuery("subscriptions.options.values.exact", br))
+        filter._2.split("""#""").filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("subscriptions.options.values.agg", br))
         }
         if(sub.hasClauses)
           b.must(sub)
@@ -554,8 +554,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if (brand != "") {
       val b = boolQuery.must(termQuery("attributes.name.agg", "Filter_Brand"))
       val sub = boolQuery
-      brand.split("""#""").map(analyze(esClient, index, "attributes.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
-        sub.should(termQuery("attributes.value.exact", br))
+      brand.split("""#""").filter(!_.isEmpty).foreach { br =>
+        sub.should(termQuery("attributes.value.agg", br))
       }
       b.must(sub)
       if(b.hasClauses)
@@ -566,8 +566,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       filters.foreach { filter =>
         val b = boolQuery().must(termQuery("attributes.name.agg", filter._1))
         val sub = boolQuery
-        filter._2.split("""#""").map(analyze(esClient, index, "attributes.value.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
-          sub.should(termQuery("attributes.value.exact", br))
+        filter._2.split("""#""").filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("attributes.value.agg", br))
         }
         if(sub.hasClauses)
           b.must(sub)
