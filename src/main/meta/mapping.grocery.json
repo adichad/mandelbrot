@@ -971,6 +971,12 @@
                 "type": "integer",
                 "store": false,
                 "doc_values": true
+              },
+              "status_code": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
               }
             }
           },

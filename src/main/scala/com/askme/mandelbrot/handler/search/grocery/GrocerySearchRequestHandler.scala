@@ -417,7 +417,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       orderFilter.must(termQuery("items.orders.parent_order_id", parent_order_id))
 
     if(order_status!="")
-      orderFilter.must(termQuery("items.orders.status_code", order_status.trim.toLowerCase()))
+      orderFilter.must(termQuery("items.orders.status_code", order_status.trim))
 
     if(order_updated_since!="")
       orderFilter.must(rangeQuery("items.orders.updated_on").format("yyyy-MM-dd").from(order_updated_since))
@@ -522,6 +522,10 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           nested("items").path("items").subAggregation(
             nested("storefronts").path("items.storefronts").subAggregation(
               terms("ids").field("items.storefronts.id").size(aggbuckets)
+            )
+          ).subAggregation(
+            nested("orders").path("items.orders").subAggregation(
+              terms("status").field("items.orders.status_code").size(aggbuckets)
             )
           )
         )
