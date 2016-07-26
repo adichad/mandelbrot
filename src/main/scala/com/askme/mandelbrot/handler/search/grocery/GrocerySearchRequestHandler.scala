@@ -506,13 +506,25 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
 
     if (agg) {
-      if (category == ""||category.contains('|'))
-        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+      if (category == ""||category.contains('|')) {
+        val clevel = Math.min(Math.max(1, cat_level), 3)
+        search.addAggregation(
+          terms("categories").field(s"category_l${clevel.toString}.name.agg").size(aggbuckets).subAggregation(
+            terms("id").field(s"category_l${clevel.toString}.id").size(1)
+          )
+        )
+      }
 
       search.addAggregation(
-        terms("categories_l1").field("category_l1.name.agg").subAggregation(
-          terms("categories_l2").field("category_l2.name.agg").subAggregation(
-            terms("categories_l3").field("category_l3.name.agg")
+        terms("categories_l1").field("category_l1.name.agg").size(aggbuckets).subAggregation(
+          terms("id").field("category_l1.id").size(1)
+        ).subAggregation(
+          terms("categories_l2").field("category_l2.name.agg").size(aggbuckets).subAggregation(
+            terms("id").field("category_l2.id").size(1)
+          ).subAggregation(
+            terms("categories_l3").field("category_l3.name.agg").size(aggbuckets).subAggregation(
+              terms("id").field("category_l3.id").size(1)
+            )
           )
         )
       )

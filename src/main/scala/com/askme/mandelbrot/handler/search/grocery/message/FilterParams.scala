@@ -9,4 +9,4 @@ case class FilterParams(category: String, variant_id: Int, product_id: Int, item
                         storefront_id: Int, geo_id: Long, zone_code: String, brand: String,
                         order_user_id: String, order_id: String, parent_order_id: String, order_status: String,
                         order_updated_since: String, order_geo_id: Long, include_inactive_items: Boolean,
-                        pla: Boolean, city_id: Int) extends RestMessage
+                        pla: Boolean, city_id: Int, cat_level: Int) extends RestMessage
