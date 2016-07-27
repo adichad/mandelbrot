@@ -99,6 +99,7 @@ dependencies {
   compile     group: 'org.scalaz',                 name: "scalaz-effect_${scala_base_version}",               version: '7.1.0'
 
   compile     group: 'org.elasticsearch',          name: "elasticsearch",                                     version: es_version         // elasticsearch
+  compile     group: 'org.elasticsearch.module',   name: "reindex",                                           version: es_version
   compile     group: 'org.apache.lucene',          name: "lucene-expressions",                                version: lucene_version     // lucene stuff not already included in elasticsearch
   compile     group: 'com.vividsolutions',         name: "jts",                                               version: '1.13'             // geo_shape type support for elasticsearch
   compile     group: 'com.spatial4j',              name: "spatial4j",                                         version: '0.5'              // geo_shape type support for elasticsearch
