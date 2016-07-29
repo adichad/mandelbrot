@@ -358,6 +358,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     boolQuery()
       .must(termQuery("subscriptions.status", 1))
       .must(rangeQuery("subscriptions.quantity").gt(0))
+      .mustNot(termQuery("subscriptions.is_deleted", true))
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -371,7 +372,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
-    finalFilter.must(termQuery("status", 1))
+    finalFilter.must(termQuery("status", 1)).mustNot(termQuery("is_deleted", true))
     if (product_id != 0) {
       finalFilter.must(termQuery("product_id", product_id))
     }
@@ -381,10 +382,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
 
     val subscriptionFilter =
       boolQuery()
-        .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+        .must(rangeQuery("subscriptions.subscribed_product_id").gt(0)).mustNot(termQuery("subscriptions.is_deleted", true))
 
     this.subscriptionFilter =  boolQuery()
-      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0)).mustNot(termQuery("subscriptions.is_deleted", true))
 
     if(grouped_id != 0) {
       subscriptionFilter.must(
@@ -554,8 +555,8 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if (brand != "") {
       val b = boolQuery.must(termQuery("attributes.name.agg", "Filter_Brand"))
       val sub = boolQuery
-      brand.split("""#""").filter(!_.isEmpty).foreach { br =>
-        sub.should(termQuery("attributes.value.agg", br))
+      brand.split("""#""").map(analyze(esClient, index, "attributes.value.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
+        sub.should(termQuery("attributes.value.exact", br))
       }
       b.must(sub)
       if(b.hasClauses)
