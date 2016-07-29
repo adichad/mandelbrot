@@ -13,7 +13,7 @@ import spray.http.MediaTypes._
 /**
  * Created by adichad on 31/03/15.
  */
-case class AggregateRouter(val config: Config) extends Router with Configurable {
+case class AggregateRouter(val parentPath: String) extends Router with Configurable {
 
 
   override def apply(implicit service: MandelbrotHandler) = {
@@ -45,7 +45,7 @@ case class AggregateRouter(val config: Config) extends Router with Configurable 
                             agg.split(",").map(_.trim)
                           ).map(x=>AggSpec(x._2, x._1._2, x._1._1))
 
-                        context.actorOf(Props(classOf[AggregateRequestCompleter], service.config, serverContext, ctx, AggregateParams(
+                        context.actorOf(Props(classOf[AggregateRequestCompleter], service.parentPath, serverContext, ctx, AggregateParams(
                           RequestParams(httpReq, clip, trueClient),
                           IndexParams(index, esType),
                           FilterParams(city, area, category, question, answer),

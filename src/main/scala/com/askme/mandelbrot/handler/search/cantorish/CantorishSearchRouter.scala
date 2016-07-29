@@ -43,7 +43,7 @@ case object CantorishSearchRouter extends Router {
               val source = true
 
               respondWithMediaType(`application/json`) { ctx =>
-                context.actorOf(Props(classOf[CantorishSearchRequestCompleter], config, serverContext, ctx,
+                context.actorOf(Props(classOf[CantorishSearchRequestCompleter], parentPath, serverContext, ctx,
                   ProductSearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "cantorish"),

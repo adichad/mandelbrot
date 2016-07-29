@@ -23,7 +23,7 @@ import org.json4s.jackson.Serialization
  */
 
 
-class GetRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class GetRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   private val esClient: Client = serverContext.esClient
 
   implicit val formats = Serialization.formats(NoTypeHints)

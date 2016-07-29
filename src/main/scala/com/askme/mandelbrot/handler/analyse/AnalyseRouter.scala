@@ -33,7 +33,7 @@ case object AnalyseRouter extends Router {
               val charset = params.getOrElse("charset", List("utf-8"))(0)
               extract(_.request.entity.data.asString(Charset.forName(charset))) { data =>
                 respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[AnalyseRequestCompleter], config, serverContext, ctx,
+                  context.actorOf(Props(classOf[AnalyseRequestCompleter], parentPath, serverContext, ctx,
                     AnalyseParams(
                       RequestParams(httpReq, clip, trueClient),
                       IndexParams(index, esType),

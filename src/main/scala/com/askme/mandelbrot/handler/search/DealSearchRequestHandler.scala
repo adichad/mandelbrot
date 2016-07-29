@@ -241,7 +241,7 @@ object DealSearchRequestHandler extends Logging {
   )
 }
 
-class DealSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class DealSearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
 
   import DealSearchRequestHandler._
 

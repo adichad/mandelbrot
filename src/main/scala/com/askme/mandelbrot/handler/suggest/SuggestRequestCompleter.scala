@@ -17,7 +17,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, suggestParams: SuggestParams) extends Actor with Configurable with Json4sSupport with Logging {
+class SuggestRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, suggestParams: SuggestParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
   private val blockedIPs = list[String]("search.block.ip")
@@ -54,7 +54,7 @@ class SuggestRequestCompleter(val config: Config, serverContext: SearchContext, 
   }
   else {
     val target =
-      context.actorOf (Props (classOf[SuggestRequestHandler], config, serverContext))
+      context.actorOf (Props (classOf[SuggestRequestHandler], parentPath, serverContext))
 
     context.setReceiveTimeout(Duration(suggestParams.limits.timeoutms * 10, MILLISECONDS))
     target ! suggestParams

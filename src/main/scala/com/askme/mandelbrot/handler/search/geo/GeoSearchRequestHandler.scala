@@ -369,7 +369,7 @@ object GeoSearchRequestHandler extends Logging {
 }
 
 
-class GeoSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class GeoSearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import GeoSearchRequestHandler._
 
   private val esClient: Client = serverContext.esClient

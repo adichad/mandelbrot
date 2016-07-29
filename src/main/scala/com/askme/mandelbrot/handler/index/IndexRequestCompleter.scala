@@ -26,7 +26,7 @@ import org.json4s.jackson.JsonMethods._
  */
 
 
-class IndexRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, indexParams: IndexingParams) extends Actor with Configurable with Json4sSupport with Logging {
+class IndexRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, indexParams: IndexingParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
   if(indexParams.req.trueClient.startsWith("42.120.")) {
     warn("[" + indexParams.req.clip.toString + "]->[" + indexParams.req.httpReq.uri + "] [invalid request source]")
@@ -58,7 +58,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
                 || d.getOs.getLoadAverage>=7.0d
             )
             if (wobblyDataNodes.length==0) {
-              val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
+              val target = context.actorOf(Props(classOf[IndexRequestHandler], parentPath, serverContext))
               target ! indexParams
             } else {
                 warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))

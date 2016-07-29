@@ -17,7 +17,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-class CantorishSearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: ProductSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
+class CantorishSearchRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, searchParams: ProductSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
   private val blockedIPs = list[String]("search.block.ip")
@@ -49,7 +49,7 @@ class CantorishSearchRequestCompleter(val config: Config, serverContext: SearchC
     complete(BadRequest, "invalid kw parameter: " + searchParams.text.kw)
   }
   else {
-    val target = context.actorOf (Props (classOf[CantorishSearchRequestHandler], config, serverContext))
+    val target = context.actorOf (Props (classOf[CantorishSearchRequestHandler], parentPath, serverContext))
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 3, MILLISECONDS))
     target ! searchParams
   }

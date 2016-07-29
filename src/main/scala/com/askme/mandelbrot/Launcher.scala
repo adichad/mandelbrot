@@ -4,11 +4,16 @@ import java.io.{Closeable, File, PrintWriter}
 import java.lang.management.ManagementFactory
 
 import com.askme.mandelbrot.server.Server
+import com.askme.mandelbrot.util.GlobalDynamicConfiguration
 import grizzled.slf4j.Logging
 
-object Launcher extends App with Logging with Configurable {
+override object Launcher extends App with Logging with Configurable {
+
 
   protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
+  protected[this]  val parentPath = ""
+  //Get Dynamic Configuration initialized
+  GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig(config))
 
   try {
     // hack to make configuration parameters available in logback.xml
@@ -19,7 +24,7 @@ object Launcher extends App with Logging with Configurable {
     writePID(string("daemon.pidfile"))
     if (boolean("sysout.detach")) System.out.close()
     if (boolean("syserr.detach")) System.err.close()
-    
+
     val servers = map[Server]("server").values.toList
 
     closeOnExit(servers)

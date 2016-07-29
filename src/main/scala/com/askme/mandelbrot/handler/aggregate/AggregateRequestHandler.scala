@@ -29,7 +29,7 @@ import scala.collection.JavaConversions._
 
 
 
-class AggregateRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class AggregateRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   private val esClient: Client = serverContext.esClient
   private def analyze(esClient: Client, index: String, field: String, text: String): Array[String] =
     new AnalyzeRequestBuilder(esClient.admin.indices, AnalyzeAction.INSTANCE, index, text).setField(field).get().getTokens.map(_.getTerm).toArray

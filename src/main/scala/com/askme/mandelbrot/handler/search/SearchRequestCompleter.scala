@@ -18,7 +18,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-class SearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
+class SearchRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, searchParams: SearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
   private val blockedIPs = list[String]("search.block.ip")
@@ -57,9 +57,9 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
 
     val target =
         searchParams.idx.esType match {
-          case "list" => context.actorOf (Props (classOf[ListSearchRequestHandler], config, serverContext) )
-          case "place" => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
-          case _ => context.actorOf (Props (classOf[PlaceSearchRequestHandler], config, serverContext) )
+          case "list" => context.actorOf (Props (classOf[ListSearchRequestHandler], parentPath, serverContext) )
+          case "place" => context.actorOf (Props (classOf[PlaceSearchRequestHandler], parentPath, serverContext) )
+          case _ => context.actorOf (Props (classOf[PlaceSearchRequestHandler], parentPath, serverContext) )
         }
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
     target ! searchParams
@@ -98,7 +98,7 @@ class SearchRequestCompleter(val config: Config, serverContext: SearchContext, r
     }
 }
 
-class DealSearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: DealSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
+class DealSearchRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, searchParams: DealSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
   private val blockedIPs = list[String]("search.block.ip")
@@ -133,7 +133,7 @@ class DealSearchRequestCompleter(val config: Config, serverContext: SearchContex
 
     val target =
       searchParams.idx.esType match {
-        case "deal" => context.actorOf (Props (classOf[DealSearchRequestHandler], config, serverContext) )
+        case "deal" => context.actorOf (Props (classOf[DealSearchRequestHandler], parentPath, serverContext) )
       }
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
     target ! searchParams

@@ -36,7 +36,7 @@ case object DealSearchRouter extends Router {
             val timeoutms = 600l
             val aggbuckets = 10
             respondWithMediaType(`application/json`) {
-              ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], config, serverContext, ctx, DealSearchParams(
+              ctx => context.actorOf(Props(classOf[DealSearchRequestCompleter], parentPath, serverContext, ctx, DealSearchParams(
                 req = RequestParams(httpReq, clip, clip.toString()),
                 idx = IndexParams("askmedeal", "deal"),
                 text = TextParams(kw, suggest, fuzzyprefix, fuzzysim),

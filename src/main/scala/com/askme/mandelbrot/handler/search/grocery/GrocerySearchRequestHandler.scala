@@ -347,7 +347,7 @@ object GrocerySearchRequestHandler extends Logging {
 
 
 
-class GrocerySearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import GrocerySearchRequestHandler._
 
   private val esClient: Client = serverContext.esClient

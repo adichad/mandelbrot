@@ -22,7 +22,7 @@ case class Modified(fileOrDir: File, origPath: Path) extends FileSystemChange
 case class MonitorDir(path: Path, index: String, esType: String)
 
 
-class FileSystemWatcher(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class FileSystemWatcher(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   val watchServiceTask = new WatchServiceTask(self)
   val watchThread = new Thread(watchServiceTask, "WatchService")
   val registry = new java.util.HashMap[Path, ActorRef]
@@ -53,7 +53,7 @@ class FileSystemWatcher(val config: Config, serverContext: SearchContext) extend
     if(!registry.containsKey(path)) {
       val name = "loader-" + path.toString.replace("/", "=")
       registry.put(path, context.actorOf(Props(classOf[CSVLoader],
-        config, index, esType, serverContext), name))
+        parentPath, index, esType, serverContext), name))
       info("watching path ["+path+"] for index ["+index+"], type ["+esType+"]")
     }
   }

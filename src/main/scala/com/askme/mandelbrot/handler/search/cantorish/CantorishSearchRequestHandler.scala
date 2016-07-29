@@ -305,7 +305,7 @@ object CantorishSearchRequestHandler extends Logging {
 
 
 
-class CantorishSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class CantorishSearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import CantorishSearchRequestHandler._
 
   private val esClient: Client = serverContext.esClient

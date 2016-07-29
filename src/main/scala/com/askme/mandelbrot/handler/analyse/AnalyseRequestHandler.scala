@@ -18,7 +18,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 05/06/15.
  */
-class AnalyseRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class AnalyseRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   private val esClient: Client = serverContext.esClient
 
   implicit class ListOfTuplePimp[K, V](l: List[(K, V)]) {
