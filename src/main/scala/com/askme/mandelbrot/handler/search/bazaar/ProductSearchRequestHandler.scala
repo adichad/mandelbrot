@@ -588,9 +588,10 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
     import searchParams.text._
 
+    val cities = city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty)
     val sorters = getSort(
       sort, mpdm_store_front_id,
-      city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty),
+      cities,
       w, subscriptionFilter, suggest, category_id, if(brand.nonEmpty)brand else filters.getOrDefault("Filter_Brand", ""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
@@ -681,7 +682,16 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
                   )
                 )
               )
-              .subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
+              .subAggregation(
+                filter("ndd").filter(
+                  if(cities.isEmpty)
+                    termQuery("subscriptions.is_ndd", 1)
+                  else {
+                    val cityFilter = boolQuery().shouldAll(cities.map(termQuery("subscriptions.ndd_city.exact", _)))
+                    boolQuery().must(cityFilter).must(termQuery("subscriptions.is_ndd", 1))
+                  }
+                )
+              )
               .subAggregation(
                 nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
                   filter("store_fronts").filter(boolQuery()
