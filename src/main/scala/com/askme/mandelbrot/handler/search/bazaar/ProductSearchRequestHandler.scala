@@ -359,6 +359,14 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       .must(termQuery("subscriptions.status", 1))
       .must(rangeQuery("subscriptions.quantity").gt(0))
       .mustNot(termQuery("subscriptions.is_deleted", true))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+
+  private val aggregationSubscriptionFilter =
+    boolQuery()
+      .must(termQuery("subscriptions.status", 1))
+      .must(rangeQuery("subscriptions.quantity").gt(0))
+      .mustNot(termQuery("subscriptions.is_deleted", true))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -400,6 +408,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       val q = boolQuery().shouldAll(subscribed_id.map(termQuery("subscriptions.subscribed_product_id", _)))
       subscriptionFilter.must(q)
       this.subscriptionFilter.must(q)
+      aggregationSubscriptionFilter.must(q)
     } else {
       subscriptionFilter
         .must(termQuery("subscriptions.status", 1))
@@ -413,14 +422,18 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if(crm_seller_id !=0) {
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
       this.subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
+
     }
 
     if (national_only) {
       subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
       this.subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
     } else if (ndd_only) {
       subscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
       this.subscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
     }
 
     if (city != "") {
@@ -433,6 +446,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
         this.subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
         matchedSubscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
+        aggregationSubscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
       }
     }
 
@@ -521,7 +535,9 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
     if(priceRangeFilter!=null) {
       subscriptionFilter.must(priceRangeFilter)
       matchedSubscriptionFilter.must(priceRangeFilter)
+      aggregationSubscriptionFilter.must(priceRangeFilter)
       this.subscriptionFilter.must(priceRangeFilter)
+
     }
 
 
@@ -674,7 +690,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       search.addAggregation(
         nested("subscriptions").path("subscriptions")
           .subAggregation(
-            filter("matched").filter(subscriptionFilter)
+            filter("matched").filter(aggregationSubscriptionFilter)
               .subAggregation(
                 nested("options").path("subscriptions.options").subAggregation(
                   terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
