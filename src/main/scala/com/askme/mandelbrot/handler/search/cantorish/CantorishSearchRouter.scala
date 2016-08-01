@@ -19,7 +19,7 @@ case object CantorishSearchRouter extends Router {
         jsonpWithParameter("callback") {
           path("search" / Segment / "cantorish") { (index) =>
             parameters('kw.as[String] ? "", 'city ? "",
-              'category_id ? "", 'product_id.as[Int] ? 0, 'variant_id.as[Int] ? 0, 'subscription_id.as[Int] ? 0,
+              'category_id ? "", 'product_id.as[Int] ? 0, 'variant_id.as[Int] ? 0, 'subscription_id.as[String] ? "",
               'size.as[Int] ? 20, 'offset.as[Int] ? 0,
               'subscriptions_size.as[Int] ? 20, 'subscriptions_offset.as[Int] ? 0,
               'explain.as[Boolean] ? false, 'select ? "id,name",

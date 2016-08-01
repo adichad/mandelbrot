@@ -353,10 +353,11 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
       subscriptionFilter
         .must(termQuery("subscriptions.seller.status", 1))
 
-    if(subscribed_id != 0) {
-      subscriptionFilter.must(
-        termQuery("subscriptions.id", subscribed_id)
-      )
+
+    if(subscribed_id.nonEmpty) {
+      subscribed_id.split(""",""").filter(_.trim.nonEmpty).map(_.trim.toInt).foreach { sid =>
+        subscriptionFilter.must(termQuery("subscriptions.id", sid))
+      }
     }
 
     if(seller_id !=0) {
