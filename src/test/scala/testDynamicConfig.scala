@@ -1,7 +1,10 @@
 import com.askme.mandelbrot.Configurable
-import com.askme.mandelbrot.server.Server
 import com.askme.mandelbrot.util.GlobalDynamicConfiguration
+import com.typesafe.config.ConfigFactory
+import org.apache.curator.framework.api.GetDataBuilder
 import org.scalatest.FlatSpec
+import org.easymock.EasyMock._
+
 /**
   * Created by Nihal on 20/07/16.
   */
@@ -32,12 +35,18 @@ class testDynamicConfig extends FlatSpec with Configurable{
   }
 
   "Config" should "read custom data types " in {
-    val servers = map[Server]("server").values.toList
-    assert(servers.size==1)
-    assert(obj[Server]("server.root").isInstanceOf[Server])
+    //val servers = map[Server]("server").values.toList
+    //assert(servers.size==1)
+    //assert(obj[Server]("server.root").isInstanceOf[Server])
     assert(conf("test-nested[0]").getString("test-name") == "nihal")
     assert(confs("test-nested").get(0).getString("test-name") == "nihal")
     assert(keys("test-nested[0]").size()==7 && keys("test-nested[0]").contains("test-name"))
     assert(vals("test-nested[0]").size()==7 && vals("test-nested[0]").contains("nihal"))
+  }
+  "Config" should "obviously get updated configuration" in {
+    GlobalDynamicConfiguration.polledConfig = ConfigFactory.load(ConfigFactory.parseString("{}").withFallback(config))
+    assert(string("test-name") == "nihal")
+    GlobalDynamicConfiguration.polledConfig = ConfigFactory.load(ConfigFactory.parseString("{test-name=nihal2}").withFallback(config))
+    assert(string("test-name") == "nihal2")
   }
 }

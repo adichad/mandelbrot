@@ -19,27 +19,24 @@ class ConfigWrapper(val configuration:Config) extends TypesafeConfigurationSourc
   protected [this] var configrtn:Config = null
   protected[this] var confString = ""
   override protected def config():Config= {
-      val polledConfig = ConfigFactory.load(ConfigFactory.parseFile( new File("/Users/Nihal/search/mandelbrot/src/main/resources/environment_defaults.conf")).withFallback(configuration))
-      GlobalDynamicConfiguration.polledConfig = polledConfig
-      polledConfig
-//    try {
-//      val connectionString = "127.0.0.1:2181"
-//      val CONFIG_ROOT_PATH = "/test"
-//      client = CuratorFrameworkFactory.newClient(connectionString, new ExponentialBackoffRetry(1000, 3))
-//      client.start()
-//      confString = new String(client.getData.forPath("/test"))
-//    } catch {
-//      case ae:Exception=>{
-//        error(ae.getMessage)
-//      }
-//    } finally {
-//      configrtn =ConfigFactory.load(ConfigFactory.parseString(confString).withFallback(configuration))
-//      this.synchronized {
-//        GlobalDynamicConfiguration.polledConfig = configrtn
-//      }
-//      client.close()
-//    }
-//    return configrtn
+    try {
+      val connectionString = configuration getString "zkConString"
+      val CONFIG_ROOT_PATH = configuration getString "zkRootPath"
+      client = CuratorFrameworkFactory.newClient(connectionString, new ExponentialBackoffRetry(1000, 3))
+      client.start()
+      confString = new String(client.getData.forPath(CONFIG_ROOT_PATH))
+    } catch {
+      case ae:Exception=>{
+        error(ae.getMessage)
+      }
+    } finally {
+      configrtn =ConfigFactory.load(ConfigFactory.parseString(confString).withFallback(configuration))
+      this.synchronized {
+        GlobalDynamicConfiguration.polledConfig = configrtn
+      }
+      client.close()
+    }
+    return configrtn
   }
 }
 
