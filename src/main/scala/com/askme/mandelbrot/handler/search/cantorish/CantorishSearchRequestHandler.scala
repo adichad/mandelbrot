@@ -355,9 +355,12 @@ class CantorishSearchRequestHandler(val config: Config, serverContext: SearchCon
 
 
     if(subscribed_id.nonEmpty) {
+      val subFilter = boolQuery()
       subscribed_id.split(""",""").filter(_.trim.nonEmpty).map(_.trim.toInt).foreach { sid =>
-        subscriptionFilter.must(termQuery("subscriptions.id", sid))
+        subFilter.should(termQuery("subscriptions.id", sid))
       }
+      if(subFilter.hasClauses)
+        subscriptionFilter.must(subFilter)
     }
 
     if(seller_id !=0) {
