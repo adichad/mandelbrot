@@ -5238,6 +5238,11 @@
                 "store": false,
                 "doc_values": true
               },
+              "base_product_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
               "name": {
                 "type": "string",
                 "store": false,
