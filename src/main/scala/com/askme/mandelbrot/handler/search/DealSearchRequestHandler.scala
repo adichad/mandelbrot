@@ -39,6 +39,7 @@ object DealSearchRequestHandler extends Logging {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
       case "_pay" => scriptSort(new Script("dealpaysort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
+      case "_featured" => new FieldSortBuilder("IsFeatured").order(SortOrder.DESC)
       case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
       case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
       case "_channel" => scriptSort(new Script("dealchannelsort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
@@ -473,7 +474,7 @@ class DealSearchRequestHandler(val parentPath: String, serverContext: SearchCont
     import searchParams.text._
 
 
-    val sort = if(pay_type==0) "_score,_home,_base,_channel" else "_score,_pay,_home,_base,_channel"
+    val sort = if(pay_type==0) "_score,_featured,_home,_base,_channel" else "_score,_featured,_pay,_home,_base,_channel"
 
     val sorters = getSort(sort)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)

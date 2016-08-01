@@ -373,6 +373,11 @@
                 "store": false,
                 "doc_values": true
               },
+              "is_deleted": {
+                "type": "boolean",
+                "store": false,
+                "doc_values": true
+              },
               "top": {
                 "type": "integer",
                 "store": false,
@@ -1019,6 +1024,11 @@
                                 "store": false,
                                 "doc_values": true
                               },
+                              "is_deleted": {
+                                "type": "boolean",
+                                "store": false,
+                                "doc_values": true
+                              },
                               "top": {
                                 "type": "integer",
                                 "store": false,
@@ -1344,6 +1354,11 @@
                           },
                           "status": {
                             "type": "integer",
+                            "store": false,
+                            "doc_values": true
+                          },
+                          "is_deleted": {
+                            "type": "boolean",
                             "store": false,
                             "doc_values": true
                           },
@@ -1675,6 +1690,11 @@
                         "store": false,
                         "doc_values": true
                       },
+                      "is_deleted": {
+                        "type": "boolean",
+                        "store": false,
+                        "doc_values": true
+                      },
                       "top": {
                         "type": "integer",
                         "store": false,
@@ -2000,6 +2020,11 @@
                   },
                   "status": {
                     "type": "integer",
+                    "store": false,
+                    "doc_values": true
+                  },
+                  "is_deleted": {
+                    "type": "boolean",
                     "store": false,
                     "doc_values": true
                   },
@@ -2331,6 +2356,11 @@
                 "store": false,
                 "doc_values": true
               },
+              "is_deleted": {
+                "type": "boolean",
+                "store": false,
+                "doc_values": true
+              },
               "top": {
                 "type": "integer",
                 "store": false,
@@ -2656,6 +2686,11 @@
           },
           "status": {
             "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "is_deleted": {
+            "type": "boolean",
             "store": false,
             "doc_values": true
           },
@@ -3000,6 +3035,11 @@
             "store": false,
             "doc_values": true
           },
+          "is_deleted": {
+            "type": "boolean",
+            "store": false,
+            "doc_values": true
+          },
           "top": {
             "type": "integer",
             "store": false,
@@ -3337,6 +3377,11 @@
           },
           "status": {
             "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "is_deleted": {
+            "type": "boolean",
             "store": false,
             "doc_values": true
           },
@@ -4294,6 +4339,11 @@
             "store": false,
             "doc_values": true
           },
+          "is_deleted": {
+            "type": "boolean",
+            "store": false,
+            "doc_values": true
+          },
           "top": {
             "type": "integer",
             "store": false,
@@ -4390,6 +4440,11 @@
       },
       "status": {
         "type": "integer",
+        "store": false,
+        "doc_values": true
+      },
+      "is_deleted": {
+        "type": "boolean",
         "store": false,
         "doc_values": true
       },
@@ -4977,6 +5032,11 @@
                 "store": false,
                 "doc_values": true
               },
+              "is_deleted": {
+                "type": "boolean",
+                "store": false,
+                "doc_values": true
+              },
               "mapping_status": {
                 "type": "integer",
                 "store": false,
@@ -5555,6 +5615,11 @@
           },
           "status": {
             "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "is_deleted": {
+            "type": "boolean",
             "store": false,
             "doc_values": true
           },

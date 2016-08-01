@@ -93,11 +93,11 @@
       },
       "PayMerchantContactNo": {
         "type": "string",
-        "index": "no"
+        "index": "analyzed"
       },
       "PayMerchantUser": {
         "type": "string",
-        "index": "no"
+        "index": "analyzed"
       },
       "CustomerType": {
         "type": "string",
@@ -114,7 +114,70 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "copy_to": ["LocationNameExact", "LocationNameAggr", "LocationNameShingle"]
+        "copy_to": ["LocationNameExact", "LocationNameAggr", "LocationNameShingle"],
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "LocationNameExact": {
         "type": "string",
@@ -414,7 +477,85 @@
       "CompanyName": {
         "type": "string",
         "store": false,
-        "index": "analyzed"
+        "index": "analyzed",
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "CompanyAliases": {
         "type": "string",
@@ -422,7 +563,71 @@
         "index": "analyzed",
         "position_increment_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle"]
+        "copy_to": ["CompanyAliasesExact", "CompanyAliasesShingle"],
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
+
       },
       "CompanyAliasesExact": {
         "type": "string",
@@ -454,7 +659,85 @@
         "index": "analyzed",
         "position_increment_gap": 100,
         "norms": {"enabled": false},
-        "copy_to": ["CuratedTagsExact", "CuratedTagsShingle", "CuratedTagsAggr"]
+        "copy_to": ["CuratedTagsExact", "CuratedTagsShingle", "CuratedTagsAggr"],
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "agg": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "exact": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "keyword_analyzer",
+            "search_analyzer": "keyword_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false }
+          },
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "CuratedTagsExact": {
         "type": "string",
@@ -494,7 +777,70 @@
         "type": "string",
         "store": false,
         "index": "analyzed",
-        "copy_to": ["CompanyKeywordsExact"]
+        "copy_to": ["CompanyKeywordsExact"],
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "CompanyKeywordsExact": {
         "type": "string",
@@ -595,13 +941,16 @@
       },
       "tags": {
         "type": "string",
+        "similarity": "bazaar_bm25",
         "fields": {
           "tags": {
             "type": "string",
             "store": false,
             "index": "analyzed",
             "position_increment_gap": 100,
-            "norms": { "enabled": false }
+            "norms": {
+              "enabled": false
+            }
           },
           "exact": {
             "type": "string",
@@ -610,13 +959,87 @@
             "analyzer": "keyword_analyzer",
             "search_analyzer": "keyword_analyzer",
             "position_increment_gap": 100,
-            "norms": {"enabled": false}
+            "norms": {
+              "enabled": false
+            }
           },
           "aggr": {
             "type": "string",
             "store": false,
             "index": "not_analyzed",
             "doc_values": true
+          },
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": {
+              "enabled": false
+            },
+            "similarity": "bazaar_bm25"
           }
         }
       },
@@ -744,7 +1167,70 @@
         "store": false,
         "index": "analyzed",
         "norms": {"enabled": false},
-        "position_increment_gap": 100
+        "position_increment_gap": 100,
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "product_l3categoryaggr": {
         "type": "string",
@@ -781,7 +1267,70 @@
         "store": false,
         "index": "analyzed",
         "position_increment_gap": 100,
-        "norms": {"enabled": false}
+        "norms": {"enabled": false},
+        "similarity": "bazaar_bm25",
+        "fields": {
+          "shingle": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_analyzer",
+            "search_analyzer": "shingle_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_edge_ngram_analyzer",
+            "search_analyzer": "shingle_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_ngram_analyzer",
+            "search_analyzer": "shingle_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_analyzer",
+            "search_analyzer": "shingle_nospace_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "shingle_nospace_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "search_analyzer": "shingle_nospace_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          },
+          "token_edge_ngram": {
+            "type": "string",
+            "store": false,
+            "index": "analyzed",
+            "analyzer": "token_edge_ngram_analyzer",
+            "search_analyzer": "token_edge_ngram_analyzer",
+            "position_increment_gap": 100,
+            "norms": { "enabled": false },
+            "similarity": "bazaar_bm25"
+          }
+        }
       },
       "product_categorykeywordsexact": {
         "type": "string",

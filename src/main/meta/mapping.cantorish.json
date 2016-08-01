@@ -3814,6 +3814,471 @@
         "type": "long",
         "store": false,
         "doc_values": true
+      },
+      "subscriptions": {
+        "type": "nested",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "store": true,
+            "doc_values": true
+          },
+          "created_dt": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "updated_dt": {
+            "type": "date",
+            "format": "yyyy-MM-dd HH:mm:ss",
+            "store": false,
+            "doc_values": true
+          },
+          "status": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "is_deleted": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "length": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "width": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "height": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "weight": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "sku": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "quantity_available": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "seller_indicated_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "store_offer_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "bazaar_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "transfer_price": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "take_rate": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "vat_percent": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "cst_percent": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "is_cod": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "subscribe_shipping_charge": {
+            "type": "float",
+            "store": false,
+            "doc_values": true
+          },
+          "campaign_flag": {
+            "type": "integer",
+            "store": false,
+            "doc_values": true
+          },
+          "campaign_to": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "campaign_from": {
+            "type": "string",
+            "store": false,
+            "index": "not_analyzed",
+            "doc_values": true
+          },
+          "offers": {
+            "type": "nested",
+            "properties": {
+              "price": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "valid_from": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "valid_thru": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "discount_percent": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              }
+            }
+          },
+          "seller": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "is_active_valid": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "seller_mailer_flag": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "vtiger_account_id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "shipping_charge": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "visible": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "meta": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  },
+                  "keywords": {
+                    "type": "string",
+                    "store": false,
+                    "index": "analyzed",
+                    "position_increment_gap": 100,
+                    "norms": {
+                      "enabled": false
+                    },
+                    "similarity": "bazaar_bm25",
+                    "term_vector": "with_positions_offsets",
+                    "fields": {
+                      "shingle2": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle2_analyzer",
+                        "search_analyzer": "shingle2_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle3": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle3_analyzer",
+                        "search_analyzer": "shingle3_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      },
+                      "shingle_nospace": {
+                        "type": "string",
+                        "store": false,
+                        "index": "analyzed",
+                        "analyzer": "shingle_nospace_analyzer",
+                        "search_analyzer": "shingle_nospace_analyzer",
+                        "position_increment_gap": 100,
+                        "norms": {
+                          "enabled": false
+                        },
+                        "similarity": "bazaar_bm25"
+                      }
+                    }
+                  }
+                }
+              },
+              "id": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "tagline": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "vtiger_status": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "seller": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "created_dt": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "api_key": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "email": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "mobiles": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "customer_rating": {
+                "type": "float",
+                "store": false,
+                "doc_values": true
+              },
+              "status": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "updated_dt": {
+                "type": "date",
+                "format": "yyyy-MM-dd HH:mm:ss",
+                "store": false,
+                "doc_values": true
+              },
+              "description": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "buyer_mailer_flag": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "chat_id": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "address": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "is_deleted": {
+                "type": "integer",
+                "store": false,
+                "doc_values": true
+              },
+              "name": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "telephones": {
+                "type": "string",
+                "store": false,
+                "index": "not_analyzed",
+                "doc_values": true
+              },
+              "media": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  },
+                  "type": {
+                    "type": "string",
+                    "store": false,
+                    "index": "not_analyzed",
+                    "doc_values": true
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

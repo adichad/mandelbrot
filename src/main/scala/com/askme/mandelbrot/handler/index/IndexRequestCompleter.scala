@@ -53,7 +53,9 @@ class IndexRequestCompleter(val parentPath: String, serverContext: SearchContext
             val dataNodes = response.getNodes.filter(_.getNode.dataNode())
             val wobblyDataNodes = dataNodes.filter(d =>
               d.getIndices.getSegments.getIndexWriterMemory.mb >= 2048l
-                || d.getIndices.getMerge.getCurrentSize.mb() >= 9000l
+                || d.getIndices.getMerge.getCurrentSize.mb() >= 15000l
+                || d.getIndices.getMerge.getCurrent >= 5l
+                || d.getIndices.getMerge.getCurrentSize.mb() * d.getIndices.getMerge.getCurrent >= 20000l
                 || d.getIndices.getSearch.getOpenContexts >= 12l
                 || d.getOs.getLoadAverage>=7.0d
             )
@@ -61,7 +63,7 @@ class IndexRequestCompleter(val parentPath: String, serverContext: SearchContext
               val target = context.actorOf(Props(classOf[IndexRequestHandler], parentPath, serverContext))
               target ! indexParams
             } else {
-                warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
+              warn("cluster state not conducive to indexing: "+compact(renderNodes(wobblyDataNodes)))
               complete(TooManyRequests, "cluster state not conducive to indexing")
             }
           }
@@ -80,7 +82,9 @@ class IndexRequestCompleter(val parentPath: String, serverContext: SearchContext
       ("name"->n.getNode.getName) ~
         ("so"->n.getIndices.getSearch.getOpenContexts) ~
         ("siwm"->(n.getIndices.getSegments.getIndexWriterMemory.mb+"mb")) ~
-        ("mc"->(n.getIndices.getMerge.getCurrentSize.mb+"mb")) ~
+        ("mc"->n.getIndices.getMerge.getCurrent) ~
+        ("mcs"->(n.getIndices.getMerge.getCurrentSize.mb+"mb")) ~
+        ("mc*mcs"->(n.getIndices.getMerge.getCurrentSize.mb*n.getIndices.getMerge.getCurrent)) ~
           ("l"->n.getOs.getLoadAverage)
     ).toList)
   }

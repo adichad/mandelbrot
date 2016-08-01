@@ -50,10 +50,18 @@ object ProductSearchRequestHandler extends Logging {
 
     val sorters =
     if(sort=="price.asc") {
-      List(fieldSort("min_price").order(SortOrder.ASC))
+      List(
+        fieldSort("subscriptions.min_price").setNestedPath("subscriptions").order(SortOrder.ASC)
+          .setNestedFilter(subscriptionFilter)
+          .sortMode("min").missing(9999999)
+      )
     }
     else if(sort=="price.desc") {
-      List(fieldSort("min_price").order(SortOrder.DESC))
+      List(
+        fieldSort("subscriptions.min_price").setNestedPath("subscriptions").order(SortOrder.DESC)
+          .setNestedFilter(subscriptionFilter)
+          .sortMode("min").missing(0)
+      )
     }
     else {
       (
@@ -67,7 +75,7 @@ object ProductSearchRequestHandler extends Logging {
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                  .must(termQuery("subscriptions.store_fronts.status", 1))
+                  //.must(termQuery("subscriptions.store_fronts.status", 1))
               )
             ) else None) ::
           (if(category_id>0)
@@ -350,6 +358,15 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
     boolQuery()
       .must(termQuery("subscriptions.status", 1))
       .must(rangeQuery("subscriptions.quantity").gt(0))
+      .mustNot(termQuery("subscriptions.is_deleted", true))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+
+  private val aggregationSubscriptionFilter =
+    boolQuery()
+      .must(termQuery("subscriptions.status", 1))
+      .must(rangeQuery("subscriptions.quantity").gt(0))
+      .mustNot(termQuery("subscriptions.is_deleted", true))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
 
   private def buildFilter(searchParams: ProductSearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -363,7 +380,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
     if(externalFilter!=JNothing)
       finalFilter.must(QueryBuilders.wrapperQuery(compact(externalFilter)))
 
-    finalFilter.must(termQuery("status", 1))
+    finalFilter.must(termQuery("status", 1)).mustNot(termQuery("is_deleted", true))
     if (product_id != 0) {
       finalFilter.must(termQuery("product_id", product_id))
     }
@@ -371,20 +388,12 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
       finalFilter.must(termQuery("base_product_id", base_id))
     }
 
-    if(price_min>0f)
-      if(price_max>0f)
-        finalFilter.must(rangeQuery("min_price").from(price_min).to(price_max))
-      else
-        finalFilter.must(rangeQuery("min_price").from(price_min))
-    else if(price_max>0f)
-      finalFilter.must(rangeQuery("min_price").to(price_max))
-
     val subscriptionFilter =
       boolQuery()
-        .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+        .must(rangeQuery("subscriptions.subscribed_product_id").gt(0)).mustNot(termQuery("subscriptions.is_deleted", true))
 
     this.subscriptionFilter =  boolQuery()
-      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0))
+      .must(rangeQuery("subscriptions.subscribed_product_id").gt(0)).mustNot(termQuery("subscriptions.is_deleted", true))
 
     if(grouped_id != 0) {
       subscriptionFilter.must(
@@ -399,6 +408,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
       val q = boolQuery().shouldAll(subscribed_id.map(termQuery("subscriptions.subscribed_product_id", _)))
       subscriptionFilter.must(q)
       this.subscriptionFilter.must(q)
+      aggregationSubscriptionFilter.must(q)
     } else {
       subscriptionFilter
         .must(termQuery("subscriptions.status", 1))
@@ -412,14 +422,18 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
     if(crm_seller_id !=0) {
       subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
       this.subscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.crm_seller_id", crm_seller_id))
+
     }
 
     if (national_only) {
       subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
       this.subscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.is_ndd", 0))
     } else if (ndd_only) {
       subscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
       this.subscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
+      this.aggregationSubscriptionFilter.must(termQuery("subscriptions.is_ndd", 1))
     }
 
     if (city != "") {
@@ -432,6 +446,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
         subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
         this.subscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
         matchedSubscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
+        aggregationSubscriptionFilter.must(boolQuery().should(cityFilter).should(termQuery("subscriptions.is_ndd", 0)))
       }
     }
 
@@ -454,7 +469,8 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
         nestedQuery("subscriptions.store_fronts", boolQuery()
           .must(termQuery("subscriptions.store_fronts.id", store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1)))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
+          )
       )
     }
 
@@ -463,16 +479,22 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
         val f = boolQuery()
           .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
         subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", f)
+        )
+        this.subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
       }
       else {
         val f = boolQuery()
           .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-          .must(termQuery("subscriptions.store_fronts.status", 1))
+          //.must(termQuery("subscriptions.store_fronts.status", 1))
         subscriptionFilter.must(
+          nestedQuery("subscriptions.store_fronts", f)
+        )
+        this.subscriptionFilter.must(
           nestedQuery("subscriptions.store_fronts", f)
         )
       }
@@ -484,16 +506,40 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
       optionFilters.foreach { filter =>
         val b = boolQuery().must(termQuery("subscriptions.options.name.agg", filter._1))
         val sub = boolQuery
-        filter._2.split("""#""").map(analyze(esClient, index, "subscriptions.options.values.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
-          sub.should(termQuery("subscriptions.options.values.exact", br))
+        filter._2.split("""#""").filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("subscriptions.options.values.agg", br))
         }
         if(sub.hasClauses)
           b.must(sub)
         if(b.hasClauses) {
           subscriptionFilter.must(nestedQuery("subscriptions.options", b))
+          this.subscriptionFilter.must(nestedQuery("subscriptions.options", b))
+          matchedSubscriptionFilter.must(nestedQuery("subscriptions.options", b))
         }
       }
     }
+
+    val priceRangeFilter = if(price_min>0f) {
+      if (price_max > 0f) {
+        rangeQuery("subscriptions.min_price").from(price_min).to(price_max)
+      }
+      else {
+        rangeQuery("subscriptions.min_price").from(price_min)
+      }
+    }
+    else if(price_max>0f) {
+      rangeQuery("subscriptions.min_price").to(price_max)
+    } else
+      null
+
+    if(priceRangeFilter!=null) {
+      subscriptionFilter.must(priceRangeFilter)
+      matchedSubscriptionFilter.must(priceRangeFilter)
+      aggregationSubscriptionFilter.must(priceRangeFilter)
+      this.subscriptionFilter.must(priceRangeFilter)
+
+    }
+
 
     if(subscriptionFilter.hasClauses) {
       finalFilter.must(
@@ -511,11 +557,11 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
 
     if (category != "") {
       val b = boolQuery
-      category.split("""#""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
-        b.should(termQuery("categories.name.exact", cat))
+      category.split("""#""").map(analyze(esClient, index, "categories_nested.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+        b.should(termQuery("categories_nested.name.exact", cat))
       }
       if(b.hasClauses)
-        finalFilter.must(b)
+        finalFilter.must(nestedQuery("categories_nested", b))
     }
 
     if (category_id > 0) {
@@ -525,7 +571,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
     if (brand != "") {
       val b = boolQuery.must(termQuery("attributes.name.agg", "Filter_Brand"))
       val sub = boolQuery
-      brand.split("""#""").map(analyze(esClient, index, "attributes.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
+      brand.split("""#""").map(analyze(esClient, index, "attributes.value.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
         sub.should(termQuery("attributes.value.exact", br))
       }
       b.must(sub)
@@ -537,8 +583,8 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
       filters.foreach { filter =>
         val b = boolQuery().must(termQuery("attributes.name.agg", filter._1))
         val sub = boolQuery
-        filter._2.split("""#""").map(analyze(esClient, index, "attributes.value.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { br =>
-          sub.should(termQuery("attributes.value.exact", br))
+        filter._2.split("""#""").filter(!_.isEmpty).foreach { br =>
+          sub.should(termQuery("attributes.value.agg", br))
         }
         if(sub.hasClauses)
           b.must(sub)
@@ -558,9 +604,10 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
     import searchParams.filters._
     import searchParams.text._
 
+    val cities = city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty)
     val sorters = getSort(
       sort, mpdm_store_front_id,
-      city.split( """,""").map(analyze(esClient, index, "subscriptions.ndd_city.exact", _).mkString(" ")).filter(!_.isEmpty),
+      cities,
       w, subscriptionFilter, suggest, category_id, if(brand.nonEmpty)brand else filters.getOrDefault("Filter_Brand", ""))
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
@@ -614,6 +661,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
           )
             .subAggregation(scoreSorter)
             .subAggregation(reverseNested("rev").subAggregation(orderSorter))
+            .subAggregation(terms("id").field("categories_l5.category_id").size(1))
         )
         )
       )
@@ -642,7 +690,7 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
       search.addAggregation(
         nested("subscriptions").path("subscriptions")
           .subAggregation(
-            filter("matched").filter(subscriptionFilter)
+            filter("matched").filter(aggregationSubscriptionFilter)
               .subAggregation(
                 nested("options").path("subscriptions.options").subAggregation(
                   terms("name").field("subscriptions.options.name.agg").size(aggbuckets).subAggregation(
@@ -650,12 +698,22 @@ class ProductSearchRequestHandler(val parentPath: String, serverContext: SearchC
                   )
                 )
               )
-              .subAggregation(filter("ndd").filter(termQuery("subscriptions.is_ndd", 1)))
+              .subAggregation(
+                filter("ndd").filter(
+                  if(cities.isEmpty)
+                    termQuery("subscriptions.is_ndd", 1)
+                  else {
+                    val cityFilter = boolQuery().shouldAll(cities.map(termQuery("subscriptions.ndd_city.exact", _)))
+                    boolQuery().must(cityFilter).must(termQuery("subscriptions.is_ndd", 1))
+                  }
+                )
+              )
               .subAggregation(
                 nested("store_fronts").path("subscriptions.store_fronts").subAggregation(
                   filter("store_fronts").filter(boolQuery()
                     .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                    .must(termQuery("subscriptions.store_fronts.status", 1)))
+                    //.must(termQuery("subscriptions.store_fronts.status", 1))
+                    )
                     .subAggregation(
                       terms("mpdm_id").field("subscriptions.store_fronts.mpdm_id").size(if(mpdm_store_front_id<0) 100 else 10).order(
                         Terms.Order.aggregation("rev>filter>order", false)

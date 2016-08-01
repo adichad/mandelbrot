@@ -42,37 +42,29 @@ object GrocerySearchRequestHandler extends Logging {
   private val randomParams = new util.HashMap[String, AnyRef]
   randomParams.put("buckets", int2Integer(5))
 
-  private def getSort(sort: String, w: Array[String], zone_code: Array[String],
-                      categories: Array[String], brands: Array[String]): List[SortBuilder] = {
+  private def getSort(sort: String, w: Array[String], categories: Array[String], brands: Array[String],
+                      itemFilter: QueryBuilder, pla: Boolean): List[SortBuilder] = {
 
     val sorters =
     if(sort=="price.asc") {
-      val zoneFilter = boolQuery
-      zone_code.foreach { z =>
-        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
-      }
       List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
+        .setNestedFilter(itemFilter))
     }
     else if(sort=="price.desc") {
-      val zoneFilter = boolQuery
-      zone_code.foreach { z =>
-        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
-      }
       List(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.DESC).sortMode("min")
-        .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter)))
+        .setNestedFilter(itemFilter))
     }
     else if(sort=="alpha.asc") {
-      List(fieldSort("variant_title.agg").order(SortOrder.ASC))
+      List(fieldSort("variant_title.agg").order(SortOrder.ASC),
+        fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+          .setNestedFilter(itemFilter))
     }
     else if(sort=="alpha.desc") {
-      List(fieldSort("variant_title.agg").order(SortOrder.DESC))
+      List(fieldSort("variant_title.agg").order(SortOrder.DESC),
+        fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
+          .setNestedFilter(itemFilter))
     }
     else {
-      val zoneFilter = boolQuery
-      zone_code.foreach { z =>
-        zoneFilter.should(boolQuery.must(termQuery("items.zone_code", z)).must(termQuery("items.zone_status",0)))
-      }
       val b = boolQuery
       categories.foreach { cat =>
         b.should(termQuery("category_hierarchy.name.exact", cat))
@@ -101,9 +93,9 @@ object GrocerySearchRequestHandler extends Logging {
               )
             )::
           Some(fieldSort("items.gsv").setNestedPath("items").order(SortOrder.DESC).sortMode("max")
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter))) ::
+            .setNestedFilter(itemFilter)) ::
           Some(fieldSort("items.customer_price").setNestedPath("items").order(SortOrder.ASC).sortMode("min")
-            .setNestedFilter(boolQuery.must(termQuery("items.status", 1)).must(zoneFilter))) ::
+            .setNestedFilter(itemFilter)) ::
           Some(fieldSort("variant_id").order(SortOrder.DESC)) ::
           Nil
         ).flatten
@@ -353,6 +345,8 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray
   private var orderFilter: BoolQueryBuilder = null
+  private var itemFilter: QueryBuilder = null
+
 
   private def buildFilter(searchParams: GrocerySearchParams, externalFilter: JValue): BoolQueryBuilder = {
     import searchParams.filters._
@@ -394,13 +388,21 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
       itemFilter.must(termQuery("items.areas", geo_id))
     }
 
+    if(pla) {
+      itemFilter.must(termQuery("items.pla_status", 1))
+    }
+
+    if(city_id>0) {
+      itemFilter.must(termQuery("items.city_id", city_id))
+    }
+
     if(storefront_id != 0) {
       itemFilter.must(nestedQuery("items.storefronts", termQuery("items.storefronts.id", storefront_id)))
     }
 
     val orderFilter = boolQuery()
-    if(user_id!="")
-      orderFilter.must(termQuery("items.orders.user_id", user_id))
+    if(order_user_id!="")
+      orderFilter.must(termQuery("items.orders.user_id", order_user_id))
 
     if(order_id!="")
       orderFilter.must(termQuery("items.orders.order_id", order_id))
@@ -409,7 +411,7 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
       orderFilter.must(termQuery("items.orders.parent_order_id", parent_order_id))
 
     if(order_status!="")
-      orderFilter.must(termQuery("items.orders.status_code", order_status.trim.toLowerCase()))
+      orderFilter.must(termQuery("items.orders.status_code", order_status.trim))
 
     if(order_updated_since!="")
       orderFilter.must(rangeQuery("items.orders.updated_on").format("yyyy-MM-dd").from(order_updated_since))
@@ -422,14 +424,16 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
       this.orderFilter = orderFilter
     }
 
+    this.itemFilter = QueryBuilders.wrapperQuery(itemFilter.buildAsBytes())
+
     finalFilter
       .must(
         nestedQuery("items",itemFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("matched_items")
-              .addSort("items.deal_count", SortOrder.DESC)
-              .addSort("items.customer_price", SortOrder.ASC)
-              .addSort("items.margin", SortOrder.DESC)
+              .addSort(if(pla) "items.pla_customer_price" else "items.customer_price", SortOrder.ASC)
+              .addSort(if(pla) "items.pla_status" else "items.deal_count", SortOrder.DESC)
+              .addSort(if(pla) "items.pla_margin" else "items.margin", SortOrder.DESC)
               .setFrom(0).setSize(1)
               .setFetchSource(Array("*"), Array[String]())
               .setExplain(explain)))
@@ -471,9 +475,10 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
     import searchParams.view._
     import searchParams.filters._
 
-    val sorters = getSort(sort, w, zone_code.split("""\|"""),
+    val sorters = getSort(sort, w,
       category.split("""\|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty),
-      brand.split("""\|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty)
+      brand.split("""\|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty),
+      itemFilter, pla
     )
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
@@ -498,13 +503,25 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
 
 
     if (agg) {
-      if (category == ""||category.contains('|'))
-        search.addAggregation(terms("categories").field("categories.name.agg").size(aggbuckets))
+      if (category == ""||category.contains('|')) {
+        val clevel = Math.min(Math.max(1, cat_level), 3)
+        search.addAggregation(
+          terms("categories").field(s"category_l${clevel.toString}.name.agg").size(aggbuckets).subAggregation(
+            terms("id").field(s"category_l${clevel.toString}.id").size(1)
+          )
+        )
+      }
 
       search.addAggregation(
-        terms("categories_l1").field("category_l1.name.agg").subAggregation(
-          terms("categories_l2").field("category_l2.name.agg").subAggregation(
-            terms("categories_l3").field("category_l3.name.agg")
+        terms("categories_l1").field("category_l1.name.agg").size(aggbuckets).subAggregation(
+          terms("id").field("category_l1.id").size(1)
+        ).subAggregation(
+          terms("categories_l2").field("category_l2.name.agg").size(aggbuckets).subAggregation(
+            terms("id").field("category_l2.id").size(1)
+          ).subAggregation(
+            terms("categories_l3").field("category_l3.name.agg").size(aggbuckets).subAggregation(
+              terms("id").field("category_l3.id").size(1)
+            )
           )
         )
       )
@@ -514,6 +531,10 @@ class GrocerySearchRequestHandler(val parentPath: String, serverContext: SearchC
           nested("items").path("items").subAggregation(
             nested("storefronts").path("items.storefronts").subAggregation(
               terms("ids").field("items.storefronts.id").size(aggbuckets)
+            )
+          ).subAggregation(
+            nested("orders").path("items.orders").subAggregation(
+              terms("status").field("items.orders.status_code").size(aggbuckets)
             )
           )
         )

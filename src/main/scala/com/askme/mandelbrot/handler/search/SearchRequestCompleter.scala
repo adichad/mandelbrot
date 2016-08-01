@@ -24,8 +24,8 @@ class SearchRequestCompleter(val parentPath: String, serverContext: SearchContex
   private val blockedIPs = list[String]("search.block.ip")
   private val blockedPrefixes = list[String]("search.block.ip-prefix")
 
-  if(blockedPrefixes.exists(searchParams.req.trueClient.startsWith(_))
-    || blockedIPs.exists(searchParams.req.trueClient == _)) {
+  if(blockedPrefixes.exists(searchParams.req.trueClient.startsWith)
+    || blockedIPs.contains(searchParams.req.trueClient)) {
     warn("[" + searchParams.req.clip.toString + "]->[" + searchParams.req.httpReq.uri + "] [invalid request source]")
     complete(BadRequest, "invalid request source")
   }

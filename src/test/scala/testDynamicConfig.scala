@@ -1,16 +1,13 @@
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.util.GlobalDynamicConfiguration
 import com.typesafe.config.ConfigFactory
-import org.apache.curator.framework.api.GetDataBuilder
 import org.scalatest.FlatSpec
-import org.easymock.EasyMock._
 
 /**
   * Created by Nihal on 20/07/16.
   */
 
 class testDynamicConfig extends FlatSpec with Configurable{
-  val x = 15
   val parentPath = ""
   val config = configure("test-config.conf")
   GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig(config))
