@@ -81,7 +81,8 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
         val suggestion: JValue = if(doc.is_deleted)
           ("id"->doc.base_product_id) ~
             ("deleted"->1) ~
-            ("groupby" -> doc.base_product_id)
+            ("groupby" -> doc.base_product_id) ~
+            ("targeting" -> List())
         else
           ("id" -> doc.base_product_id) ~
           ("targeting" ->
