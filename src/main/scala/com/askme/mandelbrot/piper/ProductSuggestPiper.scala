@@ -46,7 +46,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def label = (doc \ "name").asInstanceOf[JString].values.trim
 
-    def deleted = 1 - (if (doc.is_deleted) 1 else (doc \ "status").asInstanceOf[JInt].values.toInt)
+    def deleted = 1 - (if (doc.is_deleted) 0 else (doc \ "status").asInstanceOf[JInt].values.toInt)
 
     def base_product_id = (doc \ "base_product_id").asInstanceOf[JInt].values.toString()
 
