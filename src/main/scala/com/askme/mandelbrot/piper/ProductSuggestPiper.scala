@@ -46,7 +46,7 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
 
     def label = (doc \ "name").asInstanceOf[JString].values.trim
 
-    def deleted = 1 - (doc \ "status").asInstanceOf[JInt].values.toInt
+    def deleted = 1 - (if (doc.is_deleted) 1 else (doc \ "status").asInstanceOf[JInt].values.toInt)
 
     def base_product_id = (doc \ "base_product_id").asInstanceOf[JInt].values.toString()
 
@@ -68,6 +68,8 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
       if(img==null||img==JNull)"" else img.asInstanceOf[JString].values
     }
 
+    def is_deleted = (doc\"is_deleted").asInstanceOf[JBool].value
+
   }
 
 
@@ -76,7 +78,11 @@ class ProductSuggestPiper(val config: Config) extends Piper with Logging {
     try {
       val bulkRequest = RootServer.defaultContext.esClient.prepareBulk
       for(doc <- json.children) {
-        val suggestion: JValue =
+        val suggestion: JValue = if(doc.is_deleted)
+          ("id"->doc.base_product_id) ~
+            ("deleted"->1) ~
+            ("groupby" -> doc.base_product_id)
+        else
           ("id" -> doc.base_product_id) ~
           ("targeting" ->
             List(
