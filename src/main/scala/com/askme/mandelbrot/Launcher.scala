@@ -67,6 +67,8 @@ override object Launcher extends App with Logging with Configurable {
         try {
           info("jvm killed")
           closeables.foreach(_.close)
+          info("killing Zookeeper connection")
+          GlobalDynamicConfiguration.stopZookeeper()
         } catch {
           case e: Throwable => error("shutdown hook failure", e)
         }
