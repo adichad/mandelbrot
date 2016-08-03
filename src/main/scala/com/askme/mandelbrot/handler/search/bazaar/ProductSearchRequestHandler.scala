@@ -735,7 +735,20 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
           .subAggregation(
             filter("filters").filter(prefixQuery("attributes.name.agg", "Filter")).subAggregation(
               terms("attributes").field("attributes.name.agg").size(aggbuckets)
-                .subAggregation(terms("vals").field("attributes.value.agg").size(aggbuckets)))))
+                .subAggregation(
+                  terms("vals").field("attributes.value.agg").size(aggbuckets).order(
+                    Terms.Order.compound(
+                      Terms.Order.aggregation("score", false),
+                      Terms.Order.aggregation("rev>order", false),
+                      Terms.Order.count(false)
+                    )
+                  )
+                    .subAggregation(scoreSorter)
+                    .subAggregation(reverseNested("rev").subAggregation(orderSorter))
+                )
+            )
+          )
+      )
 
       search.addAggregation(stats("price_stats").field("min_price"))
     }
