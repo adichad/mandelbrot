@@ -42,7 +42,7 @@ object GlobalDynamicConfiguration extends Logging{
 
   def getDynamicConfig(config: Config):DynamicPropertyFactory = {
     startZookeeper(config)
-    val scheduler = new FixedDelayPollingScheduler(0, 2000, false)
+    val scheduler = new FixedDelayPollingScheduler(0, config getInt "pollerInterval", false)
     val cw = new ConfigWrapper(config)
     val configuration = new DynamicConfiguration(cw, scheduler)
     DynamicPropertyFactory.initWithConfigurationSource(configuration)
