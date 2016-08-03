@@ -65,50 +65,48 @@ object ProductSearchRequestHandler extends Logging {
     }
     else {
       (
-        (if(cities.nonEmpty && !suggest)
+        (if(suggest)
           Some(scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", null), "number").order(SortOrder.DESC))
+        else None)::
+          Some(fieldSort("subscriptions.boost").setNestedPath("subscriptions").order(SortOrder.DESC)
+          .setNestedFilter(subscriptionFilter)
+          .sortMode("max").missing(0)) ::
+          (if (cities.nonEmpty)
+          Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
+            .setNestedFilter(
+              boolQuery()
+                .must(subscriptionFilter)
+                .must(termsQuery("subscriptions.ndd_city.exact", cities: _*))
+            ).sortMode("max").missing(0))
         else
-          Some(scoreSort().order(SortOrder.DESC)))::
+          None
+          ) ::
+          (if (category_id > 0)
+            Some(fieldSort("categories_nested.boost").setNestedPath("categories_nested").order(SortOrder.DESC)
+              .setNestedFilter(termQuery("categories_nested.category_id", category_id))
+              .sortMode("max").missing(0)
+            )
+          else
+            Some(fieldSort("categories.boost").order(SortOrder.DESC)
+              .sortMode("max").missing(0))) ::
           (if (mpdm_store_front_id > 0)
             Some(fieldSort("subscriptions.store_fronts.boost").setNestedPath("subscriptions.store_fronts").order(SortOrder.DESC)
               .setNestedFilter(
                 boolQuery()
                   .must(termQuery("subscriptions.store_fronts.mpdm_id", mpdm_store_front_id))
                   .must(termQuery("subscriptions.store_fronts.mapping_status", 1))
-                  //.must(termQuery("subscriptions.store_fronts.status", 1))
+                //.must(termQuery("subscriptions.store_fronts.status", 1))
               )
-            ) else None) ::
-          (if(category_id>0)
-            Some(fieldSort("categories_nested.boost").setNestedPath("categories_nested").order(SortOrder.DESC)
-              .setNestedFilter(termQuery("categories_nested.category_id", category_id))
-              .sortMode("max").missing(0)
             )
-          else None)::
-          (if(brands.trim.nonEmpty)
+          else None) ::
+          (if (brands.trim.nonEmpty)
             Some(fieldSort("brand_boost").order(SortOrder.DESC).sortMode("max").missing(0))
-          else None)::
-          Some(fieldSort("subscriptions.boost").setNestedPath("subscriptions").order(SortOrder.DESC)
-            .setNestedFilter(subscriptionFilter)
-            .sortMode("max").missing(0))::
-          Some(fieldSort("categories.boost").order(SortOrder.DESC)
-            .sortMode("max").missing(0))::
-          (if (cities.nonEmpty)
-            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(
-                boolQuery()
-                  .must(subscriptionFilter)
-                  .must(termsQuery("subscriptions.ndd_city.exact",cities:_*))
-              ).sortMode("max").missing(0))
-          else
-            Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
-              .setNestedFilter(subscriptionFilter)
-              .sortMode("max").missing(0)
-            )
-            ) ::
-          Some(scoreSort().order(SortOrder.DESC))::
-          Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0))::
-          Some(fieldSort("order_gsv").order(SortOrder.DESC).sortMode("max").missing(0))::
-          Some(fieldSort("product_id").order(SortOrder.DESC))::
+          else None) ::
+          Some(scriptSort(new Script("docscoreexponent", ScriptType.INLINE, "native", null), "number").order(SortOrder.DESC))::
+          Some(fieldSort("order_count").order(SortOrder.DESC).sortMode("max").missing(0)) ::
+          Some(scoreSort().order(SortOrder.DESC)) ::
+          Some(fieldSort("order_gsv").order(SortOrder.DESC).sortMode("max").missing(0)) ::
+          Some(fieldSort("product_id").order(SortOrder.DESC)) ::
           Nil
         ).flatten
     }
