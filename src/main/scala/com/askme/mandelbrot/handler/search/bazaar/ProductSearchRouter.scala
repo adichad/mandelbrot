@@ -55,7 +55,7 @@ case object ProductSearchRouter extends Router {
                 val maxdocspershard = 200000
                 val searchType = "dfs_query_then_fetch"
                 val timeoutms = 1000l
-                val aggbuckets = 10
+                val aggbuckets = 100
                 val source = true
 
                 respondWithMediaType(`application/json`) { ctx =>
