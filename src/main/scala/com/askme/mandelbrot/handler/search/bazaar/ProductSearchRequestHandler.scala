@@ -90,6 +90,8 @@ object ProductSearchRequestHandler extends Logging {
           Some(fieldSort("subscriptions.boost").setNestedPath("subscriptions").order(SortOrder.DESC)
             .setNestedFilter(subscriptionFilter)
             .sortMode("max").missing(0))::
+          Some(fieldSort("categories.boost").order(SortOrder.DESC)
+            .sortMode("max").missing(0))::
           (if (cities.nonEmpty)
             Some(fieldSort("subscriptions.is_ndd").setNestedPath("subscriptions").order(SortOrder.DESC)
               .setNestedFilter(
