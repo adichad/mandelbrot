@@ -1,16 +1,32 @@
 import com.askme.mandelbrot.Configurable
+import com.askme.mandelbrot.server.Server
 import com.askme.mandelbrot.util.GlobalDynamicConfiguration
 import com.typesafe.config.ConfigFactory
-import org.scalatest.FlatSpec
-
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import com.typesafe.config.Config
+import grizzled.slf4j.Logging
 /**
   * Created by Nihal on 20/07/16.
   */
 
-class testDynamicConfig extends FlatSpec with Configurable{
+class testDynamicConfig extends FlatSpec with Configurable with BeforeAndAfterAll with Logging{
   val parentPath = ""
-  val config = configure("test-config.conf")
-  GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig(config))
+  var config:Config = null
+
+  override def beforeAll() = {
+    info("Starting Tests...")
+    super.beforeAll()
+    config = configure("test-config.conf")
+    GlobalDynamicConfiguration.polledConfig = config
+  }
+
+  override def afterAll() =  {
+    info("Tests Finished! Clearing memory...")
+    config = null
+    GlobalDynamicConfiguration.polledConfig = null
+    super.afterAll()
+  }
+
   "Config" should "read basic data types with no []" in {
     assert(int("test-age")==24)
     assert(string("test-name") == "nihal")
@@ -32,9 +48,9 @@ class testDynamicConfig extends FlatSpec with Configurable{
   }
 
   "Config" should "read custom data types " in {
-    //val servers = map[Server]("server").values.toList
-    //assert(servers.size==1)
-    //assert(obj[Server]("server.root").isInstanceOf[Server])
+//    val servers = map[Server]("server").values.toList
+//    assert(servers.size==1)
+//    assert(obj[Server]("server.root").isInstanceOf[Server])
     assert(conf("test-nested[0]").getString("test-name") == "nihal")
     assert(confs("test-nested").get(0).getString("test-name") == "nihal")
     assert(keys("test-nested[0]").size()==7 && keys("test-nested[0]").contains("test-name"))
@@ -46,4 +62,6 @@ class testDynamicConfig extends FlatSpec with Configurable{
     GlobalDynamicConfiguration.polledConfig = ConfigFactory.load(ConfigFactory.parseString("{test-name=nihal2}").withFallback(config))
     assert(string("test-name") == "nihal2")
   }
+
+
 }

@@ -96,7 +96,7 @@ object RootServer extends Logging {
 class RootServer(val parentPath: String) extends Server with Logging {
   private implicit val system = ActorSystem(string("actorSystem.name"), conf("actorSystem"))
   private val serverContext = new RootServer.SearchContext(parentPath)
-  private val topActor = system.actorOf(Props(classOf[MandelbrotHandler], (if (parentPath==null) "" else parentPath + ".") + "handler", serverContext), name = string("handler.name"))
+  private val topActor = system.actorOf(Props(classOf[MandelbrotHandler], parentPath("handler"), serverContext), name = string("handler.name"))
 
   private implicit val timeout = Timeout(int("timeout").seconds)
   private val transport = IO(Http)

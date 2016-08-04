@@ -27,13 +27,13 @@ object GlobalDynamicConfiguration extends Logging{
       zkClient.start()
     } catch {
       case ae: Exception => {
-        error(ae.getMessage)
+        warn(ae.getMessage)
       }
     }
     if(zkClient != null)
       info("Connection to Zookeeper successful!")
     else
-      info("Connection to Zookeeper failed! Will retry in next iteration")
+      warn("Connection to Zookeeper failed! Will retry in next iteration")
   }
 
   def stopZookeeper(): Unit ={

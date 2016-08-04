@@ -29,7 +29,7 @@ class AggregateRequestCompleter(val parentPath: String, serverContext: SearchCon
      complete(BadRequest, "invalid timeout: " + lim.timeoutms)
    }
    else {
-     val target = context.actorOf(Props(classOf[AggregateRequestHandler], parentPath, serverContext))
+     val target = context.actorOf(Props(classOf[AggregateRequestHandler], parentPath(), serverContext))
      context.setReceiveTimeout(Duration(lim.timeoutms * 2, MILLISECONDS))
      target ! aggParams
    }
