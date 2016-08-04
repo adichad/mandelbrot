@@ -53,7 +53,7 @@ object RootServer extends Logging {
         .getAggregations.get(field).asInstanceOf[Terms].getBuckets
         .map(b=>analyze(defaultContext.esClient, index, analysisField, b.getKeyAsString).mkString(sep)).filter(!_.isEmpty).toSet)
   }
-  class SearchContext private[RootServer](val config: Config) extends Configurable {
+  class SearchContext private[RootServer](val parentPath: String) extends Configurable {
     ESLoggerFactory.setDefaultFactory(new Slf4jESLoggerFactory)
 
     private val esNode = NodeBuilder.nodeBuilder.clusterName(string("es.cluster.name")).local(false)
@@ -93,10 +93,10 @@ object RootServer extends Logging {
 
 }
 
-class RootServer(val config: Config) extends Server with Logging {
+class RootServer(val parentPath: String) extends Server with Logging {
   private implicit val system = ActorSystem(string("actorSystem.name"), conf("actorSystem"))
-  private val serverContext = new RootServer.SearchContext(config)
-  private val topActor = system.actorOf(Props(classOf[MandelbrotHandler], conf("handler"), serverContext), name = string("handler.name"))
+  private val serverContext = new RootServer.SearchContext(parentPath)
+  private val topActor = system.actorOf(Props(classOf[MandelbrotHandler], parentPath("handler"), serverContext), name = string("handler.name"))
 
   private implicit val timeout = Timeout(int("timeout").seconds)
   private val transport = IO(Http)

@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 23/02/16.
  */
-class GeoSuggestPiper(val config: Config) extends Piper with Logging {
+class GeoSuggestPiper(val parentPath: String) extends Piper with Logging {
   //val producer = RootServer.defaultContext.kafkaProducer
   private def md5(s: String) =
     MessageDigest.getInstance("MD5").digest(s.getBytes("UTF-8")).map("%02x".format(_)).mkString

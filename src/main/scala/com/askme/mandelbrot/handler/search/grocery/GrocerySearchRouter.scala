@@ -56,7 +56,7 @@ case object GrocerySearchRouter extends Router {
                 val source = true
 
                 respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[GrocerySearchRequestCompleter], config, serverContext, ctx,
+                  context.actorOf(Props(classOf[GrocerySearchRequestCompleter], parentPath, serverContext, ctx,
                     GrocerySearchParams(
                       RequestParams(httpReq, clip, ""),
                       IndexParams(index, "grocery"),

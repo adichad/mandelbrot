@@ -39,7 +39,7 @@ case object GeoSearchRouter extends Router {
               val related_phone_prefix = ""
 
               respondWithMediaType(`application/json`) { ctx =>
-                context.actorOf(Props(classOf[GeoSearchRequestCompleter], config, serverContext, ctx,
+                context.actorOf(Props(classOf[GeoSearchRequestCompleter], parentPath, serverContext, ctx,
                   GeoSearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, "geo"),

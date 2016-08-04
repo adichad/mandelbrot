@@ -40,7 +40,7 @@ case object SuggestRouter extends Router {
 
 
               respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[SuggestRequestCompleter], config, serverContext, ctx, SuggestParams(
+                  context.actorOf(Props(classOf[SuggestRequestCompleter], parentPath, serverContext, ctx, SuggestParams(
                     RequestParams(httpReq, clip, trueClient),
                     IndexParams(index, "suggestion"),
                     TargetingParams(kw, tag, id),

@@ -45,7 +45,7 @@ case object SearchRouter extends Router {
               val source = true
 
               respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[SearchRequestCompleter], config, serverContext, ctx, SearchParams(
+                  context.actorOf(Props(classOf[SearchRequestCompleter], parentPath, serverContext, ctx, SearchParams(
                     RequestParams(httpReq, clip, ""),
                     IndexParams(index, esType),
                     TextParams(kw.nonEmptyOrElse(category), false, fuzzyprefix, fuzzysim),

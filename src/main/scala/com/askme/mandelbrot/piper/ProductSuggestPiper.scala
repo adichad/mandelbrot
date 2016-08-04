@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
 /**
  * Created by adichad on 04/01/16.
  */
-class ProductSuggestPiper(val config: Config) extends Piper with Logging {
+class ProductSuggestPiper(val parentPath: String) extends Piper with Logging {
   //val producer = RootServer.defaultContext.kafkaProducer
   private def md5(s: String) =
     MessageDigest.getInstance("MD5").digest(s.getBytes("UTF-8")).map("%02x".format(_)).mkString

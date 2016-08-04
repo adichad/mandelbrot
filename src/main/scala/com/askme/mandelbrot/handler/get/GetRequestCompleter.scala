@@ -17,10 +17,10 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-class GetRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, getParams: GetParams) extends Actor with Configurable with Json4sSupport with Logging {
+class GetRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, getParams: GetParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
-  val target = context.actorOf (Props (classOf[GetRequestHandler], config, serverContext))
+  val target = context.actorOf (Props (classOf[GetRequestHandler], parentPath, serverContext))
   context.setReceiveTimeout(Duration(500, MILLISECONDS))
   target ! getParams
 

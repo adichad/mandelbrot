@@ -95,7 +95,7 @@ object ListSearchRequestHandler extends Logging {
 
 }
 
-class ListSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class ListSearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import ListSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray

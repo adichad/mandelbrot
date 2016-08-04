@@ -25,7 +25,7 @@ case object GetRouter extends Router {
               respondWithMediaType(`application/json`) { ctx =>
                 context.actorOf(
                   Props(
-                    classOf[GetRequestCompleter], config, serverContext, ctx,
+                    classOf[GetRequestCompleter], parentPath, serverContext, ctx,
                     GetParams(esType, id, select, transform, httpReq, clip, System.currentTimeMillis)
                   )
                 )

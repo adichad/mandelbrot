@@ -305,7 +305,7 @@ object PlaceSearchRequestHandler extends Logging {
 
 }
 
-class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class PlaceSearchRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import PlaceSearchRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var w = emptyStringArray

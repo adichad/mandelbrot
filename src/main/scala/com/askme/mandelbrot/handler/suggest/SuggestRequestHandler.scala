@@ -177,7 +177,7 @@ object SuggestRequestHandler extends Logging {
 
 }
 
-class SuggestRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Configurable with Logging {
+class SuggestRequestHandler(val parentPath: String, serverContext: SearchContext) extends Actor with Configurable with Logging {
   import SuggestRequestHandler._
   private val esClient: Client = serverContext.esClient
   private var areas: String = ""

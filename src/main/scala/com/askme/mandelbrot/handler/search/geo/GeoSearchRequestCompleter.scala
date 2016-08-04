@@ -17,7 +17,7 @@ import spray.routing.RequestContext
 
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
-class GeoSearchRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, searchParams: GeoSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
+class GeoSearchRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, searchParams: GeoSearchParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
 
   private val blockedIPs = list[String]("search.block.ip")
@@ -49,7 +49,7 @@ class GeoSearchRequestCompleter(val config: Config, serverContext: SearchContext
     complete(BadRequest, "invalid kw parameter: " + searchParams.text.kw)
   }
   else {
-    val target = context.actorOf (Props (classOf[GeoSearchRequestHandler], config, serverContext))
+    val target = context.actorOf (Props (classOf[GeoSearchRequestHandler], parentPath, serverContext))
     context.setReceiveTimeout(Duration(searchParams.limits.timeoutms * 5, MILLISECONDS))
     target ! searchParams
   }

@@ -17,7 +17,7 @@ import spray.routing.RequestContext
 import scala.concurrent.duration.{Duration, MILLISECONDS}
 
 
-class AggregateRequestCompleter(val config: Config, serverContext: SearchContext, requestContext: RequestContext, aggParams: AggregateParams) extends Actor with Configurable with Json4sSupport with Logging {
+class AggregateRequestCompleter(val parentPath: String, serverContext: SearchContext, requestContext: RequestContext, aggParams: AggregateParams) extends Actor with Configurable with Json4sSupport with Logging {
   val json4sFormats = DefaultFormats
   import aggParams._
    if(req.trueClient.startsWith("42.120.")) {
@@ -29,7 +29,7 @@ class AggregateRequestCompleter(val config: Config, serverContext: SearchContext
      complete(BadRequest, "invalid timeout: " + lim.timeoutms)
    }
    else {
-     val target = context.actorOf(Props(classOf[AggregateRequestHandler], config, serverContext))
+     val target = context.actorOf(Props(classOf[AggregateRequestHandler], parentPath(), serverContext))
      context.setReceiveTimeout(Duration(lim.timeoutms * 2, MILLISECONDS))
      target ! aggParams
    }

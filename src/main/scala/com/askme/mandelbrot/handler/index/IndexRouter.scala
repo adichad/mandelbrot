@@ -15,7 +15,7 @@ import org.mozilla.universalchardet.UniversalDetector
 /**
  * Created by adichad on 31/03/15.
  */
-case class IndexRouter(config: Config) extends Router with Configurable {
+case class IndexRouter(val parentPath:String) extends Router with Configurable {
 
   private def detectCharsetTika(bytes: Array[Byte]) = {
     val detector = new CharsetDetector
@@ -41,7 +41,7 @@ case class IndexRouter(config: Config) extends Router with Configurable {
             if (boolean("enabled")) {
               entity(as[String]) { data =>
                 respondWithMediaType(`application/json`) {
-                  ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.config, serverContext, ctx,
+                  ctx => context.actorOf(Props(classOf[IndexRequestCompleter], service.parentPath, serverContext, ctx,
                     IndexingParams(
                       RequestParams(httpReq, clip, clip.toString),
                       IndexParams(index, esType),

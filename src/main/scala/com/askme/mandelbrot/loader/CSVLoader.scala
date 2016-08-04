@@ -70,7 +70,7 @@ object CSVLoader {
 
 }
 
-class CSVLoader(val config: Config, index: String, esType: String,
+class CSVLoader(val parentPath: String, index: String, esType: String,
                 searchContext: SearchContext)
   extends Actor with Logging with Configurable {
 

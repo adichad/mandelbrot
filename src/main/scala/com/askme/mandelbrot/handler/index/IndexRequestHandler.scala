@@ -17,7 +17,7 @@ import spray.json._
 /**
  * Created by adichad on 19/03/15.
  */
-class IndexRequestHandler(val config: Config, serverContext: SearchContext) extends Actor with Logging with Configurable {
+class IndexRequestHandler(val parentPath:String, serverContext: SearchContext) extends Actor with Logging with Configurable {
 
   private val esClient = serverContext.esClient
 

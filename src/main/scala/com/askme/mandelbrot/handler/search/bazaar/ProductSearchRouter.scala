@@ -59,7 +59,7 @@ case object ProductSearchRouter extends Router {
                 val source = true
 
                 respondWithMediaType(`application/json`) { ctx =>
-                  context.actorOf(Props(classOf[ProductSearchRequestCompleter], config, serverContext, ctx,
+                  context.actorOf(Props(classOf[ProductSearchRequestCompleter], parentPath, serverContext, ctx,
                     ProductSearchParams(
                       RequestParams(httpReq, clip, ""),
                       IndexParams(index, "product"),
