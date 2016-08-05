@@ -10,24 +10,25 @@ import grizzled.slf4j.Logging
   * Created by Nihal on 19/07/16.
   */
 class ConfigWrapper(val configuration:Config) extends TypesafeConfigurationSource with Logging {
-  protected[this] var configrtn: Config = null
-  protected[this] var confString = ""
+
 
   override protected def config(): Config = {
-    val CONFIG_ROOT_PATH = configuration getString "zkRootPath"
+    val confString =
+      if (GlobalDynamicConfiguration.zkClient != null)
+        new String(GlobalDynamicConfiguration.zkClient.getData.forPath(configuration getString "zkRootPath"))
+      else {
+        ""
+      }
 
-    if (GlobalDynamicConfiguration.zkClient != null)
-      confString = new String(GlobalDynamicConfiguration.zkClient.getData.forPath(CONFIG_ROOT_PATH))
-    else {
-      confString = "{}"
-      info("No configuration received from zookeeper, Re-trying to connect to Zookeeper")
-      GlobalDynamicConfiguration.startZookeeper(configuration)
+    if (confString.isEmpty) {
+      warn("No configuration received from zookeeper, Re-trying to connect to Zookeeper")
+      GlobalDynamicConfiguration.startPolling()
     }
-    configrtn = ConfigFactory.load(ConfigFactory.parseString(confString).withFallback(configuration))
-    this.synchronized {
-      GlobalDynamicConfiguration.polledConfig = configrtn
+
+    synchronized {
+      GlobalDynamicConfiguration.config = ConfigFactory.load(ConfigFactory.parseString(confString).withFallback(configuration))
     }
-    return configrtn
+    GlobalDynamicConfiguration.config
   }
 }
 

@@ -17,13 +17,13 @@ class testDynamicConfig extends FlatSpec with Configurable with BeforeAndAfterAl
     info("Starting Tests...")
     super.beforeAll()
     config = configure("test-config.conf")
-    GlobalDynamicConfiguration.polledConfig = config
+    GlobalDynamicConfiguration.config = config
   }
 
   override def afterAll() =  {
     info("Tests Finished! Clearing memory...")
     config = null
-    GlobalDynamicConfiguration.polledConfig = null
+    GlobalDynamicConfiguration.config = null
     super.afterAll()
   }
 
@@ -57,9 +57,9 @@ class testDynamicConfig extends FlatSpec with Configurable with BeforeAndAfterAl
     assert(vals("test-nested[0]").size()==7 && vals("test-nested[0]").contains("nihal"))
   }
   "Config" should "obviously get updated configuration" in {
-    GlobalDynamicConfiguration.polledConfig = ConfigFactory.load(ConfigFactory.parseString("{}").withFallback(config))
+    GlobalDynamicConfiguration.config = ConfigFactory.load(ConfigFactory.parseString("{}").withFallback(config))
     assert(string("test-name") == "nihal")
-    GlobalDynamicConfiguration.polledConfig = ConfigFactory.load(ConfigFactory.parseString("{test-name=nihal2}").withFallback(config))
+    GlobalDynamicConfiguration.config = ConfigFactory.load(ConfigFactory.parseString("{test-name=nihal2}").withFallback(config))
     assert(string("test-name") == "nihal2")
   }
 

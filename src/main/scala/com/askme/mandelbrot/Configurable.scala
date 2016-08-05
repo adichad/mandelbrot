@@ -21,9 +21,9 @@ trait Configurable extends Logging {
     val index = getIndex(part)._1
     val partMod = getIndex(part)._2
     if (index == Int.MinValue)
-      GlobalDynamicConfiguration.polledConfig.getConfig(parentPath(part))
+      GlobalDynamicConfiguration.config.getConfig(parentPath(part))
     else {
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index)
     }
   }
 
@@ -33,18 +33,18 @@ trait Configurable extends Logging {
     val index = getIndex(part)._1
     val partMod = getIndex(part)._2
     if (index == Int.MinValue)
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(part))
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(part))
     else{
-      GlobalDynamicConfiguration.polledConfig.getList(parentPath(partMod))(index).asInstanceOf[java.util.List[_ <: Config]]
+      GlobalDynamicConfiguration.config.getList(parentPath(partMod))(index).asInstanceOf[java.util.List[_ <: Config]]
     }
   }
 
 
   protected[this] def map[T](part: String)(implicit t: ClassTag[T])= {
     if (classOf[Configurable] isAssignableFrom t.runtimeClass)
-      GlobalDynamicConfiguration.polledConfig.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, obj( if (part == "") "" else part+ "."  + x._1).asInstanceOf[T]))
+      GlobalDynamicConfiguration.config.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Map[String, AnyRef]]].map(x ⇒ (x._1, obj( if (part == "") "" else part+ "."  + x._1).asInstanceOf[T]))
     else
-      mapAsScalaMap(GlobalDynamicConfiguration.polledConfig.getAnyRef(parentPath(part)).asInstanceOf[Map[String, T]])
+      mapAsScalaMap(GlobalDynamicConfiguration.config.getAnyRef(parentPath(part)).asInstanceOf[Map[String, T]])
   }
 
   protected[this] def list[T](part: String)(implicit t: ClassTag[T]):scala.collection.immutable.List[T] = {
@@ -62,10 +62,10 @@ trait Configurable extends Logging {
       val partMod = getIndex(part)._2
       val variable = part.substring(part.indexOf("]")+2)
       if (index == Int.MinValue) {
-        GlobalDynamicConfiguration.polledConfig.getAnyRef(parentPath(part)).asInstanceOf[List[T]].toList
+        GlobalDynamicConfiguration.config.getAnyRef(parentPath(part)).asInstanceOf[List[T]].toList
       }
       else{
-        GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getStringList(variable).asInstanceOf[List[T]].toList
+        GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getStringList(variable).asInstanceOf[List[T]].toList
       }
     }
   }
@@ -76,10 +76,10 @@ trait Configurable extends Logging {
     val index = getIndex(part)._1
     val partMod = getIndex(part)._2
     if (index == Int.MinValue) {
-      Class.forName(GlobalDynamicConfiguration.polledConfig.getString(parentPath(part) + ".type")).getConstructor(classOf[String]).newInstance(parentPath(part)).asInstanceOf[T]
+      Class.forName(GlobalDynamicConfiguration.config.getString(parentPath(part) + ".type")).getConstructor(classOf[String]).newInstance(parentPath(part)).asInstanceOf[T]
     }
     else{
-      Class.forName(GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getString("type")).getConstructor(classOf[String]).newInstance(parentPath(partMod)+"[" +index.toString +"]").asInstanceOf[T]
+      Class.forName(GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getString("type")).getConstructor(classOf[String]).newInstance(parentPath(partMod)+"[" +index.toString +"]").asInstanceOf[T]
     }
   }
   protected[this] def objs[T <: Configurable](part: String): scala.collection.immutable.List[T] = {
@@ -100,20 +100,20 @@ trait Configurable extends Logging {
     val index = getIndex(part)._1
     val partMod = getIndex(part)._2
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Any]].keySet
+      GlobalDynamicConfiguration.config.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Any]].keySet
     }
     else{
-      GlobalDynamicConfiguration.polledConfig.getAnyRefList(parentPath(partMod))(index).asInstanceOf[Map[String, Any]].keySet
+      GlobalDynamicConfiguration.config.getAnyRefList(parentPath(partMod))(index).asInstanceOf[Map[String, Any]].keySet
     }
   }
   protected[this] def vals[T](part: String) :java.util.Collection[_ <: Any]= {
     val index = getIndex(part)._1
     val partMod = getIndex(part)._2
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Any]].values
+      GlobalDynamicConfiguration.config.getAnyRef(parentPath(part)).asInstanceOf[Map[String, Any]].values
     }
     else{
-      GlobalDynamicConfiguration.polledConfig.getAnyRefList(parentPath(partMod))(index).asInstanceOf[Map[String, Any]].values
+      GlobalDynamicConfiguration.config.getAnyRefList(parentPath(partMod))(index).asInstanceOf[Map[String, Any]].values
     }
   }
 
@@ -122,10 +122,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]")+2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getBytes(parentPath(part))
+      GlobalDynamicConfiguration.config.getBytes(parentPath(part))
     }
     else{
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getBytes(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getBytes(variable)
     }
   }
   protected[this] def boolean(part: String): Boolean = {
@@ -133,10 +133,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]")+2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getBoolean(parentPath(part))
+      GlobalDynamicConfiguration.config.getBoolean(parentPath(part))
     }
     else{
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getBoolean(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getBoolean(variable)
     }
   }
   protected[this] def int(part: String) = {
@@ -144,10 +144,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]") + 2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getInt(parentPath(part))
+      GlobalDynamicConfiguration.config.getInt(parentPath(part))
     }
     else {
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getInt(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getInt(variable)
     }
   }
   protected[this] def long(part: String) = {
@@ -155,10 +155,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]") + 2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getLong(parentPath(part))
+      GlobalDynamicConfiguration.config.getLong(parentPath(part))
     }
     else {
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getLong(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getLong(variable)
     }
   }
   protected[this] def double(part: String) = {
@@ -166,10 +166,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]") + 2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getDouble(parentPath(part))
+      GlobalDynamicConfiguration.config.getDouble(parentPath(part))
     }
     else {
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getDouble(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getDouble(variable)
     }
   }
   protected[this] def string(part: String) = {
@@ -177,10 +177,10 @@ trait Configurable extends Logging {
     val partMod = getIndex(part)._2
     val variable = part.substring(part.indexOf("]") + 2)
     if (index == Int.MinValue) {
-      GlobalDynamicConfiguration.polledConfig.getString(parentPath(part))
+      GlobalDynamicConfiguration.config.getString(parentPath(part))
     }
     else {
-      GlobalDynamicConfiguration.polledConfig.getConfigList(parentPath(partMod))(index).getString(variable)
+      GlobalDynamicConfiguration.config.getConfigList(parentPath(partMod))(index).getString(variable)
     }
   }//config getString part
 
