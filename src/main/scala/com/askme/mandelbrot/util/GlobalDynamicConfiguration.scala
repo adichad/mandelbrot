@@ -9,20 +9,12 @@ import org.apache.curator.retry.ExponentialBackoffRetry
   * Created by Nihal on 25/07/16.
   */
 object GlobalDynamicConfiguration extends Logging{
-  def intializeDefaultConfig(config: Config) = {
+  def setConfig(config: Config) = {
     this.config = config
   }
 
-  var dynamicProps:DynamicPropertyFactory=null
-  var config:Config = null
+  var config: Config = null
   var zkClient:CuratorFramework = null
-  def setDynamicProps(dp:DynamicPropertyFactory){
-    dynamicProps = dp
-  }
-
-  def getDynamicProps:DynamicPropertyFactory={
-    dynamicProps
-  }
 
   def startPolling() = {
     try {
@@ -44,13 +36,13 @@ object GlobalDynamicConfiguration extends Logging{
     zkClient.close()
   }
 
-  def getDynamicConfig: DynamicPropertyFactory = {
-    startPolling
+  def init() {
+    startPolling()
     val scheduler = new FixedDelayPollingScheduler(0, config getInt "pollerInterval", false)
-    val cw = new ConfigWrapper(config)
-    val configuration = new DynamicConfiguration(cw, scheduler)
+    ConfigWrapper.init(config)
+
+    val configuration = new DynamicConfiguration(ConfigWrapper, scheduler)
     DynamicPropertyFactory.initWithConfigurationSource(configuration)
-    DynamicPropertyFactory.getInstance()
   }
 
 }

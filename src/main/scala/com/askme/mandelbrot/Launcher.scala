@@ -12,13 +12,13 @@ object Launcher extends App with Logging with Configurable {
   protected[this]  val parentPath = ""
   protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
 
-  GlobalDynamicConfiguration.intializeDefaultConfig(config)
+  GlobalDynamicConfiguration.setConfig(config)
   try {
     // hack to make configuration parameters available in logback.xml
     backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
 
     //Get Dynamic Configuration initialized
-    GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig)
+    GlobalDynamicConfiguration.init
 
     info(string("component.name"))
     info("Log path: " + string("log.path.current"))

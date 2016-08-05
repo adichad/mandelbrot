@@ -9,8 +9,12 @@ import grizzled.slf4j.Logging
 /**
   * Created by Nihal on 19/07/16.
   */
-class ConfigWrapper(val configuration:Config) extends TypesafeConfigurationSource with Logging {
+object ConfigWrapper extends TypesafeConfigurationSource with Logging {
 
+  var configuration: Config = _
+  def init(configuration:Config): Unit = {
+    this.configuration = configuration
+  }
 
   override protected def config(): Config = {
     val confString =
@@ -24,6 +28,7 @@ class ConfigWrapper(val configuration:Config) extends TypesafeConfigurationSourc
       warn("No configuration received from zookeeper, Re-trying to connect to Zookeeper")
       GlobalDynamicConfiguration.startPolling()
     }
+    debug("dynamic configuration: "+confString)
 
     synchronized {
       GlobalDynamicConfiguration.config = ConfigFactory.load(ConfigFactory.parseString(confString).withFallback(configuration))
