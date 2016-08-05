@@ -7,17 +7,19 @@ import com.askme.mandelbrot.server.Server
 import com.askme.mandelbrot.util.GlobalDynamicConfiguration
 import grizzled.slf4j.Logging
 
-override object Launcher extends App with Logging with Configurable {
+object Launcher extends App with Logging with Configurable {
 
 
   protected[this] val config = configure("environment", "application", "environment_defaults", "application_defaults")
   protected[this]  val parentPath = ""
-  //Get Dynamic Configuration initialized
-  GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig(config))
 
   try {
     // hack to make configuration parameters available in logback.xml
     backFillSystemProperties("component.name", "log.path.current", "log.path.archive", "log.level")
+
+    //Get Dynamic Configuration initialized
+    GlobalDynamicConfiguration.setDynamicProps(GlobalDynamicConfiguration.getDynamicConfig(config))
+
     info(string("component.name"))
     info("Log path: " + string("log.path.current"))
 
@@ -67,8 +69,6 @@ override object Launcher extends App with Logging with Configurable {
         try {
           info("jvm killed")
           closeables.foreach(_.close)
-          info("killing Zookeeper connection")
-          GlobalDynamicConfiguration.stopZookeeper()
         } catch {
           case e: Throwable => error("shutdown hook failure", e)
         }
