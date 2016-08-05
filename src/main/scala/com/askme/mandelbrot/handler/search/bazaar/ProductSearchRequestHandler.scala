@@ -404,7 +404,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
       )
     }
 
-    if(subscribed_id.nonEmpty ) {
+    if(subscribed_id.nonEmpty || base_id > 0) {
       val q = boolQuery().shouldAll(subscribed_id.map(termQuery("subscriptions.subscribed_product_id", _)))
       subscriptionFilter.must(q)
       this.subscriptionFilter.must(q)

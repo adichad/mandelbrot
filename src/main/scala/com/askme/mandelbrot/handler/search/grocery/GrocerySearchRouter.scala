@@ -48,6 +48,7 @@ case object GrocerySearchRouter extends Router {
                 val pla = params.getOrElse("pla", "false").toBoolean
                 val city_id = params.getOrElse("city_id", "0").toInt
                 val cat_level = params.getOrElse("cat_level", "2").toInt
+                val brands_exclude = params.getOrElse("brands_exclude", "")
 
                 val maxdocspershard = 10000
                 val searchType = "dfs_query_then_fetch"
@@ -62,7 +63,7 @@ case object GrocerySearchRouter extends Router {
                       IndexParams(index, "grocery"),
                       TextParams(kw, suggest),
                       FilterParams(category, variant_id, product_id, item_id, storefront_id, geo_id, zone_code, brand,
-                        order_user_id, order_id, parent_order_id, order_status, order_updated_since, order_geo_id,
+                        brands_exclude, order_user_id, order_id, parent_order_id, order_status, order_updated_since, order_geo_id,
                         include_inactive_items, pla, city_id, cat_level),
                       PageParams(sort, size, offset),
                       ViewParams(source, agg, aggbuckets, extended_agg, explain, select, searchType, 1),

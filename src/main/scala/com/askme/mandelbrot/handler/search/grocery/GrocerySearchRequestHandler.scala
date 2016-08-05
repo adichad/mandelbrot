@@ -465,6 +465,15 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
         finalFilter.must(b)
     }
 
+    if (brands_exclude !="") {
+      val b = boolQuery()
+      brands_exclude.split("""\|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { brand_exclude =>
+        b.mustNot(termQuery("brand_name.exact", brand_exclude))
+      }
+      if(b.hasClauses)
+        finalFilter.must(b)
+    }
+
     finalFilter
   }
 
