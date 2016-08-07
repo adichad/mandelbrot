@@ -388,8 +388,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           .headOption
           .fold((searchParams.geo.lat, searchParams.geo.lon)) { hit =>
             val lon_lat = hit.getSource.get("center").asInstanceOf[util.ArrayList[Double]]
-            info(s"geo hit: ${lon_lat(1)}, ${lon_lat(0)}")
-
             (lon_lat(1), lon_lat(0))
           }
       }
