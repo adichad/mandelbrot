@@ -676,7 +676,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         val timeTaken = endTime - startTime
         val parsedResult = parse(result.toString)
         info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
-        context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult, 0d, 0d)
+        context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult, lat, lon)
       } catch {
         case e: Throwable =>
           val timeTaken = System.currentTimeMillis - startTime
