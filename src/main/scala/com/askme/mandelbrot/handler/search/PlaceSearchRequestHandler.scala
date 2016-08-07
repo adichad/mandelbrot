@@ -2,6 +2,7 @@ package com.askme.mandelbrot.handler.search
 
 import java.net.URLEncoder
 import java.util
+import java.util.concurrent.TimeUnit
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
@@ -16,15 +17,14 @@ import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeReq
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.ParseFieldMatcher
-import org.elasticsearch.common.geo.GeoDistance
+import org.elasticsearch.common.geo.GeoPoint
 import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.index.query._
 import org.elasticsearch.script.ScriptService.ScriptType
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder
 import org.elasticsearch.search.aggregations.AggregationBuilders._
-import org.elasticsearch.search.aggregations.bucket.nested.Nested
-import org.elasticsearch.search.aggregations.bucket.terms.{TermsBuilder, Terms}
+import org.elasticsearch.search.aggregations.bucket.terms.{Terms, TermsBuilder}
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHitsBuilder
 import org.elasticsearch.script._
 import org.elasticsearch.search.sort._
@@ -314,7 +314,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
 
   private def buildFilter(searchParams: SearchParams): BoolQueryBuilder = {
     import searchParams.filters._
-    import searchParams.geo._
+    import searchParams.geo.{area, city, pin}
     import searchParams.idx._
 
 
@@ -360,9 +360,37 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       else
         Array[String]()
 
-    if (areas.nonEmpty) {
+    val (lat, lon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
-    }
+      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
+        val latLongQuery = boolQuery().filter(
+          boolQuery()
+            .must(termQuery("types", "area"))
+            .must(termQuery("name.exact", areas.head))
+            .must(
+              nestedQuery("containers_dag",
+                boolQuery()
+                  .must(termQuery("containers_dag.types", "city"))
+                  .must(
+                    boolQuery()
+                      .should(termQuery("containers_dag.name.exact", cities.head))
+                      .should(termQuery("containers_dag.synonyms.exact", cities.head))
+                  )
+              )
+            )
+        )
+        esClient.prepareSearch("geo").setTypes("geo").setFrom(0).setSize(1).addField("center")
+          .setQuery(latLongQuery).execute().get(100, TimeUnit.MILLISECONDS).getHits.hits()
+          .headOption
+          .fold((searchParams.geo.lat, searchParams.geo.lon))(hit=>
+            (hit.field("center").getValue[GeoPoint].getLat, hit.field("center").getValue[GeoPoint].getLon)
+          )
+      }
+      else
+        (searchParams.geo.lat, searchParams.geo.lon)
+    } else
+      (searchParams.geo.lat, searchParams.geo.lon)
+
     if (lat != 0.0d || lon != 0.0d) {
       val locFilter = boolQuery.should(geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
       if (areas.nonEmpty) {
