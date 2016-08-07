@@ -361,6 +361,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       else
         Array[String]()
 
+    info(s"areas: $areas, cities: $cities")
     val (myLat, myLon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
       if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
