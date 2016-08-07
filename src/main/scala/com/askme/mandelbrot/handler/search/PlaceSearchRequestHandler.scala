@@ -383,13 +383,14 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
               )
             )
         )
-        esClient.prepareSearch("geo").setTypes("geo").setFrom(0).setSize(1).addField("center")
+        esClient.prepareSearch("geo").setTypes("geo").setFrom(0).setSize(1).setFetchSource("center",null)
           .setQuery(latLongQuery).execute().get(100, TimeUnit.MILLISECONDS).getHits.hits()
           .headOption
           .fold((searchParams.geo.lat, searchParams.geo.lon)) { hit =>
-            info(s"geo hit: ${hit.getFields.get("center").getValues}")
+            val lon_lat = hit.getSource.get("center").asInstanceOf[Array[Double]]
+            info(s"geo hit: ${lon_lat(1)}, ${lon_lat(0)}")
 
-            (hit.field("center").getValue[GeoPoint].getLat, hit.field("center").getValue[GeoPoint].getLon)
+            (lon_lat(1), lon_lat(0))
           }
       }
       else
