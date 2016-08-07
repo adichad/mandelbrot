@@ -1,21 +1,22 @@
 package com.askme.mandelbrot.handler.search
 
 import java.util
+import java.util.concurrent.TimeUnit
 
 import akka.actor.Actor
 import com.askme.mandelbrot.Configurable
 import com.askme.mandelbrot.handler.EmptyResponse
 import com.askme.mandelbrot.handler.message.ErrorResponse
-import com.askme.mandelbrot.handler.search.message.{SearchResult, DealSearchParams}
+import com.askme.mandelbrot.handler.search.message.{DealSearchParams, SearchResult}
 import com.askme.mandelbrot.server.RootServer.SearchContext
 import com.typesafe.config.Config
 import grizzled.slf4j.Logging
 import org.elasticsearch.action.ActionListener
 import org.elasticsearch.action.admin.indices.analyze.{AnalyzeAction, AnalyzeRequestBuilder}
-import org.elasticsearch.action.search.{SearchType, SearchRequestBuilder, SearchResponse}
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.ParseFieldMatcher
-import org.elasticsearch.common.unit.{TimeValue, Fuzziness}
+import org.elasticsearch.common.unit.{Fuzziness, TimeValue}
 import org.elasticsearch.index.query._
 import org.elasticsearch.index.query.QueryBuilders._
 import org.elasticsearch.script.Script
@@ -25,6 +26,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.sort._
 import org.elasticsearch.search.sort.SortBuilders._
 import org.json4s.jackson.JsonMethods._
+
 import scala.collection.JavaConversions._
 
 /**
@@ -35,10 +37,20 @@ object DealSearchRequestHandler extends Logging {
 
   val pat = """(?U)[^\p{alnum}]+"""
 
-  private def getSort(sort: String) = {
+  private def getSort(sort: String, lat: Double, lon: Double, areaSlugs: String) = {
     val parts = for (x <- sort.split(",")) yield x.trim
     parts.map {
       case "_pay" => scriptSort(new Script("dealpaysort", ScriptType.INLINE, "native", null), "number").order(SortOrder.ASC)
+      case "_distance" =>
+        val geoParams = new util.HashMap[String, AnyRef]
+        geoParams.put("lat", double2Double(lat))
+        geoParams.put("lon", double2Double(lon))
+        geoParams.put("areaSlugs", areaSlugs)
+        geoParams.put("areafield", "Locations.Area")
+        geoParams.put("synfield", "Locations.AreaSynonyms")
+        geoParams.put("skufield", "Locations.AreaSynonyms")
+        geoParams.put("coordfield", "Locations.LatLong")
+        scriptSort(new Script("geobucket", ScriptType.INLINE, "native", geoParams), "number").order(SortOrder.ASC)
       case "_featured" => new FieldSortBuilder("IsFeatured").order(SortOrder.DESC)
       case "_home" => new FieldSortBuilder("ShowOnHomePage").order(SortOrder.DESC)
       case "_score" => new ScoreSortBuilder().order(SortOrder.DESC)
@@ -249,6 +261,9 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
   private val esClient: Client = serverContext.esClient
   private var kwids: Array[String] = emptyStringArray
   private var w = emptyStringArray
+  private var lat: Double = 0d
+  private var lon: Double = 0d
+  private var areaSlugs = ""
 
 
   def buildSuggestQuery(kw: String, w: Array[String]) = {
@@ -401,7 +416,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
   private def buildFilter(searchParams: DealSearchParams): BoolQueryBuilder = {
     import searchParams.filters._
-    import searchParams.geo._
+    import searchParams.geo.{area, city}
     import searchParams.idx._
 
     val finalFilter = boolQuery
@@ -410,6 +425,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       finalFilter.must(idsQuery(esType).addIds(kwids: _*))
     }
     finalFilter.must(termQuery("Published", 1l))
+    finalFilter.must(termQuery("Active", 1l))
 
     finalFilter.must(rangeQuery("EndDate").gt("now-1d")).must(rangeQuery("StartDate").lte("now"))
     finalFilter.must(rangeQuery("Offers.EndDate").gt("now-1d"))
@@ -426,16 +442,6 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     if(gll_outlet_id!=0) {
       finalFilter.must(termQuery("Locations.Oltp_Location_ID", gll_outlet_id))
     }
-    // Add area filters
-    val locFilter = boolQuery
-    if (area != "") {
-      val areas: Array[String] = area.split( """,""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
-      areas.map(fuzzyOrTermQuery("Locations.Area.AreaExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("Locations.AreaSynonyms.AreaSynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("Locations.City.CityExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      areas.map(fuzzyOrTermQuery("Locations.CitySynonyms.CitySynonymsExact", _, 1f, 1, fuzzy = true)).foreach(a => locFilter should a)
-      finalFilter.should(locFilter)
-    }
 
     if (category != "") {
       val catFilter = boolQuery
@@ -444,18 +450,90 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       finalFilter.must(catFilter)
     }
 
-    finalFilter.must(termQuery("Active", 1l))
-    if (city != "") {
-      val cityFilter = boolQuery
-      city.split( """,""").map(analyze(esClient, index, "VisiblePlaces.City", _).mkString(" ")).filter(!_.isEmpty).foreach { c =>
-        cityFilter.should(termQuery("VisiblePlaces.City", c))
-        cityFilter.should(termQuery("VisiblePlaces.CitySynonyms", c))
-        cityFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
-      }
 
-      if (cityFilter.hasClauses)
-        finalFilter.must(cityFilter)
+    val cities: Array[String] =
+      if(city!="")
+        city.split( """,""").map(analyze(esClient, index, "Locations.City.CityExact", _).mkString(" ")).filter(!_.isEmpty)
+      else
+        Array[String]()
+
+    val areas: Array[String] =
+      if(area!="")
+        area.split(""",""").map(analyze(esClient, index, "Locations.Area.AreaExact", _).mkString(" ")).filter(!_.isEmpty)
+      else
+        Array[String]()
+
+
+
+    val (myLat, myLon) = if (areas.nonEmpty) {
+      areaSlugs = areas.mkString("#")
+      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 2) {
+        val latLongQuery = boolQuery().filter(
+          boolQuery()
+            .must(termQuery("types", "area"))
+            .must(
+              boolQuery()
+                .should(termQuery("name.exact", areas.head))
+                .should(termQuery("synonyms.exact", areas.head)))
+            .must(
+              nestedQuery("containers_dag",
+                boolQuery()
+                  .must(termQuery("containers_dag.types", "city"))
+                  .must(
+                    boolQuery()
+                      .should(termQuery("containers_dag.name.exact", cities.head))
+                      .should(termQuery("containers_dag.synonyms.exact", cities.head))
+                  )
+              )
+            )
+        )
+        esClient.prepareSearch("geo").setTypes("geo").setFrom(0).setSize(1).setFetchSource("center",null)
+          .setQuery(latLongQuery).execute().get(100, TimeUnit.MILLISECONDS).getHits.hits()
+          .headOption
+          .fold((searchParams.geo.lat, searchParams.geo.lon)) { hit =>
+            val lon_lat = hit.getSource.get("center").asInstanceOf[util.ArrayList[Double]]
+            (lon_lat(1), lon_lat(0))
+          }
+      }
+      else
+        (searchParams.geo.lat, searchParams.geo.lon)
+    } else
+      (searchParams.geo.lat, searchParams.geo.lon)
+    lat = myLat
+    lon = myLon
+
+    if (lat != 0.0d || lon != 0.0d) {
+      val locFilter = boolQuery.should(geoHashCellQuery("Locations.LatLong").point(lat, lon).precision("6km").neighbors(true))
+      if (areas.nonEmpty) {
+        areas.map(termQuery("Locations.Area.AreaExact", _)).foreach(a => locFilter should a)
+        areas.map(termQuery("Locations.AreaSynonyms.AreaSynonymsExact", _)).foreach(a => locFilter should a)
+        areas.map(termQuery("Locations.City.CityExact", _)).foreach(a => locFilter should a)
+        areas.map(termQuery("Locations.CitySynonyms.CitySynonymsExact", _)).foreach(a => locFilter should a)
+      }
+      if (cities.nonEmpty) {
+        cities.map(termQuery("VisiblePlaces.City.CityExact", _)).foreach(locFilter.should)
+        cities.map(termQuery("VisiblePlaces.CitySynonyms.CitySynonymsExact", _)).foreach(locFilter.should)
+        cities.map(termQuery("Locations.City.CityExact", _)).foreach(locFilter.should)
+        cities.map(termQuery("Locations.CitySynonyms.CitySynonymsExact", _)).foreach(locFilter.should)
+        locFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
+      }
+      finalFilter.must(locFilter)
+    } else {
+      if (cities.nonEmpty) {
+        val cityFilter = boolQuery
+        cities.foreach { c =>
+          cityFilter.should(termQuery("VisiblePlaces.City.CityExact", c))
+          cityFilter.should(termQuery("VisiblePlaces.CitySynonyms.CitySynonymsExact", c))
+          cityFilter.should(termQuery("Locations.City.CityExact", c))
+          cityFilter.should(termQuery("Locations.CitySynonyms.CitySynonymsExact", c))
+        }
+        cityFilter.should(termQuery("DealDetail.VisibleToAllCities", true))
+
+        if (cityFilter.hasClauses)
+          finalFilter.must(cityFilter)
+      }
     }
+
     if (featured) {
       finalFilter.must(termQuery("IsFeatured", 1l))
     }
@@ -474,9 +552,9 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
     import searchParams.text._
 
 
-    val sort = if(pay_type==0) "_score,_featured,_home,_base,_channel" else "_score,_featured,_pay,_home,_base,_channel"
+    val sort = if(pay_type==0) "_distance,_score,_featured,_home,_base,_channel" else "_distance,_score,_featured,_pay,_home,_base,_channel"
 
-    val sorters = getSort(sort)
+    val sorters = getSort(sort, lat, lon, areaSlugs)
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
       .setTypes(esType.split(","): _*)
       .setTrackScores(true)
@@ -510,14 +588,16 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       import searchParams.filters._
       import searchParams.startTime
       import searchParams.req._
-      import searchParams.geo._
+      import searchParams.geo.{area, city}
       try {
+        val finalFilter = buildFilter(searchParams)
+
         kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 20) w = emptyStringArray
         w = w.take(8)
         if (w.isEmpty && kwids.isEmpty && category == "" && area == "" &&
-            city == "" && applicableTo == "" && !featured && dealsource == "" && pay_merchant_id == "") {
+            city == "" && applicableTo == "" && !featured && dealsource == "" && pay_merchant_id == "" && lat == 0d && lon == 0d) {
           context.parent ! EmptyResponse("empty search criteria")
         }
         val query = if(suggest) buildSuggestQuery(kw, w) else {
@@ -526,7 +606,6 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
         }
         val leastCount = qDefs.head._2
         val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
-        val finalFilter = buildFilter(searchParams)
         val search = buildSearch(searchParams)
         val me = context.self
         search.setQuery(boolQuery.must(query).filter(finalFilter))

@@ -2,9 +2,12 @@ package com.askme.mandelbrot.scripts
 
 import java.util
 
+import org.elasticsearch.common.geo.GeoDistance
+import org.elasticsearch.common.unit.DistanceUnit
 import org.elasticsearch.index.fielddata.ScriptDocValues
 import org.elasticsearch.index.fielddata.ScriptDocValues.Strings
 import org.elasticsearch.script.{AbstractLongSearchScript, ExecutableScript, NativeScriptFactory}
+
 import scala.collection.JavaConversions._
 
 /**
@@ -32,8 +35,18 @@ class GeoBucket extends NativeScriptFactory {
 object GeoBucketScript {
   val empty = new util.ArrayList[String]
 }
+
+
 class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: String, areafield: String, synfield: String, skufield: String, buckets: Array[Double]) extends AbstractLongSearchScript {
   import GeoBucketScript._
+
+  private implicit class GeoDistances(val points: ScriptDocValues.GeoPoints) {
+    def minDistanceInKmWithDefault(lat: Double, lon: Double, default: Double): Double = {
+      points.foldLeft(default)((d, point)=>
+        Math.min(d, GeoDistance.PLANE.calculate(point.lat(), point.lon(), lat, lon, DistanceUnit.KILOMETERS))
+      )
+    }
+  }
   override def runAsLong: Long = {
     val mdoc = doc.asInstanceOf[util.Map[String, util.AbstractList[String]]]
     if(mdoc.getOrDefault(areafield, empty).asInstanceOf[Strings].getValues.exists(areas.contains))
@@ -45,7 +58,7 @@ class GeoBucketScript(lat: Double, lon: Double, areas: Set[String], coordfield: 
     else {
       val distance =
         if (lat != 0 || lon != 0)
-          doc.get(coordfield).asInstanceOf[ScriptDocValues.GeoPoints].distanceInKmWithDefault(lat, lon, 100d)
+          doc.get(coordfield).asInstanceOf[ScriptDocValues.GeoPoints].minDistanceInKmWithDefault(lat, lon, 100d)
         else
           100d
       buckets.indexWhere(distance <= _)

@@ -22,9 +22,10 @@ case object DealSearchRouter extends Router {
             'select ? "", 'pay_merchant_id ? "", 'edms_outlet_id.as[Int]? 0,
             'gll_outlet_id.as[Int]? 0,
             'category ? "", 'featured ? false, 'dealsource ? "", 'pay_type.as[Int]?0, "explain".as[Boolean]?false,
-            'client?"askme")
+            'client?"askme", 'lat.as[Double]?0d, 'lon.as[Double]?0d)
           { (kw, suggest, city, area, id, applicableTo, agg, size, offset, select,
-             pay_merchant_id, edms_outlet_id, gll_outlet_id, category, featured, dealsource, pay_type, explain, client) =>
+             pay_merchant_id, edms_outlet_id, gll_outlet_id, category, featured, dealsource, pay_type, explain, client,
+             lat, lon) =>
             val source = true
             val version = 1
             val fuzzyprefix = 2
@@ -40,7 +41,7 @@ case object DealSearchRouter extends Router {
                 req = RequestParams(httpReq, clip, clip.toString()),
                 idx = IndexParams("askmedeal", "deal"),
                 text = TextParams(kw, suggest, fuzzyprefix, fuzzysim),
-                geo = GeoParams(city, area, "", 0.0d, 0.0d),
+                geo = GeoParams(city, area, "", lat, lon),
                 filters = DealFilterParams(id, applicableTo, category, featured, dealsource, pay_merchant_id, edms_outlet_id, gll_outlet_id, pay_type, client),
                 page = PageParams(size, offset),
                 view = ViewParams(source, agg, aggbuckets, explain, select, unselect, searchType, collapse = false, goldcollapse = false, randomize=false, version),
