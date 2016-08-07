@@ -387,7 +387,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           .setQuery(latLongQuery).execute().get(100, TimeUnit.MILLISECONDS).getHits.hits()
           .headOption
           .fold((searchParams.geo.lat, searchParams.geo.lon)) { hit =>
-            val lon_lat = hit.getSource.get("center").asInstanceOf[Array[Double]]
+            val lon_lat = hit.getSource.get("center").asInstanceOf[util.ArrayList[Double]]
             info(s"geo hit: ${lon_lat(1)}, ${lon_lat(0)}")
 
             (lon_lat(1), lon_lat(0))
