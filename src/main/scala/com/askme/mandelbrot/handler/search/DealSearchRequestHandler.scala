@@ -590,9 +590,9 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
       import searchParams.req._
       import searchParams.geo.{area, city}
       try {
+        kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         val finalFilter = buildFilter(searchParams)
 
-        kwids = id.split(",").map(_.trim.toUpperCase).filter(_.nonEmpty)
         w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "Title", kw)
         if (w.length > 20) w = emptyStringArray
         w = w.take(8)
