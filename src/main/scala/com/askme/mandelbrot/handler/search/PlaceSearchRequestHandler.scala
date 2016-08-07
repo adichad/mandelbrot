@@ -1,6 +1,5 @@
 package com.askme.mandelbrot.handler.search
 
-import java.net.URLEncoder
 import java.util
 import java.util.concurrent.TimeUnit
 
@@ -311,6 +310,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
   private var w = emptyStringArray
   private var kwids: Array[String] = emptyStringArray
   private var areaSlugs: String = ""
+  private var lat: Double = 0d
+  private var lon: Double = 0d
 
   private def buildFilter(searchParams: SearchParams): BoolQueryBuilder = {
     import searchParams.filters._
@@ -360,7 +361,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       else
         Array[String]()
 
-    val (lat, lon) = if (areas.nonEmpty) {
+    val (myLat, myLon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
       if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
         val latLongQuery = boolQuery().filter(
@@ -390,6 +391,8 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         (searchParams.geo.lat, searchParams.geo.lon)
     } else
       (searchParams.geo.lat, searchParams.geo.lon)
+    this.lat = myLat
+    this.lon = myLon
 
     if (lat != 0.0d || lon != 0.0d) {
       val locFilter = boolQuery.should(geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
@@ -436,7 +439,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
   }
 
   private def buildSearch(searchParams: SearchParams): SearchRequestBuilder = {
-    import searchParams.geo._
+    import searchParams.geo.{area, city}
     import searchParams.idx._
     import searchParams.limits._
     import searchParams.page._
@@ -600,17 +603,22 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         try {
           import searchParams.text._
           import searchParams.idx._
-          import searchParams.filters._
           import searchParams.startTime
           import searchParams.req._
-          import searchParams.geo._
+          import searchParams.filters._
+          import searchParams.geo.{area, city, pin}
 
           kwids = idregex.findAllIn(kw).toArray.map(_.trim.toUpperCase)
           w = if (kwids.length > 0) emptyStringArray else analyze(esClient, index, "CompanyName", kw)
           if (w.length>20) w = emptyStringArray
           w = w.take(8)
 
-          if (bannedPhrase(w) || (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 && locid == "" && lat==0.0d && lon ==0.0d && pay_type<1)) {
+          // filters
+          val finalFilter = buildFilter(searchParams)
+
+          if (bannedPhrase(w) ||
+            (w.isEmpty && kwids.isEmpty && category.trim == "" && id == "" && userid == 0 &&
+              locid == "" && area == "" && city == "" && pin == "" && lat==0.0d && lon ==0.0d && pay_type<1)) {
             context.parent ! EmptyResponse("empty search criteria")
           }
           else {
@@ -619,9 +627,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
               else matchAllQuery()
             val leastCount = qDefs.head._2
             val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
-
-            // filters
-            val finalFilter = buildFilter(searchParams)
 
             val search = buildSearch(searchParams)
 
