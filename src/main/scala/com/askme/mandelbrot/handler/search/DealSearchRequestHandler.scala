@@ -467,7 +467,7 @@ class DealSearchRequestHandler(val config: Config, serverContext: SearchContext)
 
     val (myLat, myLon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
-      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 2) {
+      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
         val latLongQuery = boolQuery().filter(
           boolQuery()
             .must(termQuery("types", "area"))
