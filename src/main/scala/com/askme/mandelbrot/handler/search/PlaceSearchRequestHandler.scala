@@ -361,7 +361,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       else
         Array[String]()
 
-    info(s"areas: $areas, cities: $cities")
+    info(s"areas: ${areas.toList}, cities: ${cities.toList}")
     val (myLat, myLon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
       if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
@@ -369,7 +369,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         val latLongQuery = boolQuery().filter(
           boolQuery()
             .must(termQuery("types", "area"))
-            .must(termQuery("name.exact", areas.head))
+            .must(
+              boolQuery()
+                .should(termQuery("name.exact", areas.head))
+                .should(termQuery("synonyms.exact", areas.head)))
             .must(
               nestedQuery("containers_dag",
                 boolQuery()
