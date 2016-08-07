@@ -361,11 +361,9 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       else
         Array[String]()
 
-    info(s"areas: ${areas.toList}, cities: ${cities.toList}")
     val (myLat, myLon) = if (areas.nonEmpty) {
       areaSlugs = areas.mkString("#")
-      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 1) {
-        info("looking up lat-longs")
+      if(searchParams.geo.lat == 0d && searchParams.geo.lon == 0d && areas.length==1 && cities.length == 2) {
         val latLongQuery = boolQuery().filter(
           boolQuery()
             .must(termQuery("types", "area"))
@@ -398,9 +396,6 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
       (searchParams.geo.lat, searchParams.geo.lon)
     lat = myLat
     lon = myLon
-
-    info(s"looked-up lat-longs ($lat, $lon)")
-
 
     if (lat != 0.0d || lon != 0.0d) {
       val locFilter = boolQuery.should(geoHashCellQuery("LatLong").point(lat, lon).precision("6km").neighbors(true))
