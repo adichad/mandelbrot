@@ -699,7 +699,7 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
           val timeTaken = endTime - startTime
 
           info("[" + result.getTookInMillis + "/" + timeTaken + (if (result.isTimedOut) " timeout" else "") + "] [q" + relaxLevel + "] [" + result.getHits.hits.length + "/" + result.getHits.getTotalHits + (if (result.isTerminatedEarly) " termearly (" + Math.min(maxdocspershard, int("max-docs-per-shard")) + ")" else "") + "] [" + clip.toString + "]->[" + httpReq.uri + "]")
-          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult)
+          context.parent ! SearchResult(result.getHits.hits.length, timeTaken, relaxLevel, parsedResult, lat, lon)
         } catch {
           case e: Throwable =>
             context.parent ! ErrorResponse(e.getMessage, e)
