@@ -386,9 +386,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
         esClient.prepareSearch("geo").setTypes("geo").setFrom(0).setSize(1).addField("center")
           .setQuery(latLongQuery).execute().get(100, TimeUnit.MILLISECONDS).getHits.hits()
           .headOption
-          .fold((searchParams.geo.lat, searchParams.geo.lon))(hit=>
+          .fold((searchParams.geo.lat, searchParams.geo.lon)) { hit =>
+            info(s"geo hit: $hit")
             (hit.field("center").getValue[GeoPoint].getLat, hit.field("center").getValue[GeoPoint].getLon)
-          )
+          }
       }
       else
         (searchParams.geo.lat, searchParams.geo.lon)
