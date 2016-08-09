@@ -178,7 +178,7 @@ object PlaceSearchRequestHandler extends Logging {
 
   val forceFuzzy = Set("LocationName","LocationNameExact")
   val forceSpan = Map("LocationNameExact"->"LocationName", "CompanyAliasesExact"->"CompanyAliases",
-    "product_l3categoryexact"->"product_l3category", "product_brandexact"->"product_brand",
+    "product_brandexact"->"product_brand",
     "product_stringattribute_answerexact"->"product_stringattribute_answer") 
 
   private def currQuery(tokenFields: Map[String, Float],
