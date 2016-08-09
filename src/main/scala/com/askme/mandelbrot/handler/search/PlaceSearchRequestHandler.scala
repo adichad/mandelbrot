@@ -38,7 +38,7 @@ import scala.collection.JavaConversions._
  * Created by adichad on 08/01/15.
  */
 object PlaceSearchRequestHandler extends Logging {
-
+  val pat = """(?U)[^\p{alnum}]+"""
   val idregex = """[uU]\d+[lL]\d+""".r
 
   private val randomParams = new util.HashMap[String, AnyRef]
@@ -214,6 +214,32 @@ object PlaceSearchRequestHandler extends Logging {
       boolQuery
   }
 
+
+
+  def currQuerySuggest(tokenFields: Map[String, Float],
+                       w: Array[String], fuzzy: Boolean = false, sloppy: Boolean = false, tokenRelax: Int = 0) = {
+
+    disMaxQuery.addAll(tokenFields.map(field => shingleSpan(field._1, field._2, w, 1, w.length, math.max(w.length-tokenRelax, 1), sloppy, fuzzy)))
+  }
+
+  def shinglePartitionSuggest(tokenFields: Map[String, Float], w: Array[String],
+                              maxShingle: Int, minShingle: Int = 1, fuzzy: Boolean = false, sloppy: Boolean = false,
+                              tokenRelax: Int = 0): BoolQueryBuilder = {
+
+    if(w.length>0)
+      boolQuery.minimumNumberShouldMatch(1).shouldAll(
+        (math.max(1, math.min(minShingle, w.length)) to math.min(maxShingle, w.length)).map(len=>(w.slice(0, len), w.slice(len, w.length))).map { x =>
+          if (x._2.length > 0)
+            shinglePartitionSuggest(tokenFields, x._2, maxShingle, minShingle, fuzzy, sloppy, tokenRelax)
+              .must(currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax))
+          else
+            currQuerySuggest(tokenFields, x._1, fuzzy, sloppy, tokenRelax)
+        }
+      )
+    else
+      boolQuery
+  }
+
   private def fuzzyOrTermQuery(field: String, word: String, exactBoost: Float, fuzzyPrefix: Int, fuzzy: Boolean = true) = {
       if(word.length > 4 && fuzzy)
         fuzzyQuery(field, word).prefixLength(fuzzyPrefix)
@@ -241,7 +267,7 @@ object PlaceSearchRequestHandler extends Logging {
     "CuratedTags"-> 10000f,
     "product_categorykeywords" -> 10000000f,
     "product_parkedkeywords" -> 10000000f,
-    "product_stringattribute_answer" -> 100f,
+    //"product_stringattribute_answer" -> 100f,
     "tags" -> 100f,
     "Area"->10f, "AreaSynonyms"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"Address"->1f,
@@ -262,7 +288,7 @@ object PlaceSearchRequestHandler extends Logging {
     "CuratedTagsExact"-> 10000f,
     "product_categorykeywordsexact"->10000000000f,
     "product_parkedkeywordsexact"->10000000000f,
-    "product_stringattribute_answerexact"->100000f,
+    //"product_stringattribute_answerexact"->100000f,
     "tags.exact"->100000f,
     "AreaExact"->10f, "AreaSynonymsExact"->10f,
     "City"->1f, "CitySynonyms"->1f,"PinCodeExact"->1f,"AddressExact"->1f,
@@ -439,6 +465,154 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     }
 
     finalFilter
+  }
+
+  def buildSuggestQuery(kw: String, w: Array[String]) = {
+    val query =
+      if(kw.endsWith(" ")) {
+        if (w.nonEmpty) {
+          disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map(
+                "LocationName" -> 1e12f,
+                "CompanyAliases"->1e11f,
+                "product_l3category" -> 1e11f,
+                "product_categorykeywords" -> 1e11f,
+                "tags" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          )/*.add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "product_l3category" -> 1e5f/*,
+                "attributes_value" -> 1e5f*/),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          )*/.add(
+            shinglePartitionSuggest(
+              Map("LocationName.token_edge_ngram" -> 1e2f,
+                "CompanyAliases.token_edge_ngram" -> 1e1f,
+                "product_l3category.token_edge_ngram" -> 1e1f,
+                "product_categorykeywords.token_edge_ngram" -> 1e2f,
+                "tags.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("LocationName.shingle_nospace_edge_ngram" -> 1e2f,
+                "CompanyAliases.shingle_nospace_edge_ngram" -> 1e1f,
+                "product_l3category.shingle_nospace_edge_ngram" -> 1e1f,
+                "product_categorykeywords.shingle_nospace_edge_ngram" -> 1e2f,
+                "tags.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+        }
+        else
+          matchAllQuery
+      } else {
+        if (w.nonEmpty) {
+          val front = w.take(w.length - 1)
+          val last_raw = kw.split(pat).last.toLowerCase.trim
+
+          val q = disMaxQuery.add(
+            shinglePartitionSuggest(
+              Map("LocationName" -> 1e12f,
+                "CompanyAliases" -> 1e11f,
+                "product_l3category" -> 1e11f,
+                "product_categorykeywords" -> 1e11f,
+                "tags" -> 1e11f),
+              w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+            )
+          )/*.add(
+            shinglePartitionSuggest(
+              Map("name" -> 1e6f,
+                "product_l3category" -> 1e5f/*,
+                "product_categorykeywords" -> 1e5f*/),
+              w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+            )
+          )*/.add(
+            shinglePartitionSuggest(
+              Map("LocationName.token_edge_ngram" -> 1e2f,
+                "CompanyAliases.token_edge_ngram" -> 1e1f,
+                "product_l3category.token_edge_ngram" -> 1e1f,
+                "product_categorykeywords.token_edge_ngram" -> 1e2f,
+                "tags.token_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          ).add(
+            shinglePartitionSuggest(
+              Map("LocationName.shingle_nospace_edge_ngram" -> 1e2f,
+                "CompanyAliases.shingle_nospace_edge_ngram" -> 1e1f,
+                "product_l3category.shingle_nospace_edge_ngram" -> 1e1f,
+                "product_categorykeywords.shingle_nospace_edge_ngram" -> 1e2f,
+                "tags.shingle_nospace_edge_ngram" -> 1e2f),
+              w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+            )
+          )
+
+          val q2 = boolQuery
+          if (front.nonEmpty) {
+            q2.must(
+              disMaxQuery.add(
+                shinglePartitionSuggest(
+                  Map("LocationName" -> 1e12f,
+                    "CompanyAliases" -> 1e11f,
+                    "product_l3category" -> 1e11f,
+                    "product_categorykeywords" -> 1e11f,
+                    "tags" -> 1e11f),
+                  front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
+                )
+              )/*.add(
+                shinglePartitionSuggest(
+                  Map("name" -> 1e6f,
+                    "product_l3category" -> 1e5f/*,
+                    "attributes_value" -> 1e5f*/),
+                  front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
+                )
+              )*/.add(
+                shinglePartitionSuggest(
+                  Map("LocationName.token_edge_ngram" -> 1e2f,
+                    "CompanyAliases.token_edge_ngram" -> 1e1f,
+                    "product_l3category.token_edge_ngram" -> 1e1f,
+                    "product_categorykeywords.token_edge_ngram" -> 1e2f,
+                    "tags.token_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              ).add(
+                shinglePartitionSuggest(
+                  Map("LocationName.shingle_nospace_edge_ngram" -> 1e2f,
+                    "CompanyAliases.shingle_nospace_edge_ngram" -> 1e1f,
+                    "product_l3category.shingle_nospace_edge_ngram" -> 1e1f,
+                    "product_categorykeywords.shingle_nospace_edge_ngram" -> 1e2f,
+                    "tags.shingle_nospace_edge_ngram" -> 1e2f),
+                  front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
+                )
+              )
+            )
+          }
+
+          val q3 = disMaxQuery
+            .add(fuzzyOrTermQuery("LocationName.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
+          //.add(fuzzyOrTermQuery("LocationName.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = true))
+
+          q3.add(fuzzyOrTermQuery("CompanyAliases.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("CompanyAliases.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("product_l3category.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("product_l3category.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("product_categorykeywords.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("product_categorykeywords.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q3.add(fuzzyOrTermQuery("tags.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          //.add(fuzzyOrTermQuery("tags.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+
+          q.add(if (q2.hasClauses) q2.must(q3) else q3)
+        } else
+          matchAllQuery
+      }
+    query
   }
 
   private def buildSearch(searchParams: SearchParams): SearchRequestBuilder = {
@@ -625,9 +799,10 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
             context.parent ! EmptyResponse("empty search criteria")
           }
           else {
-            val query =
+            val query = if(suggest) buildSuggestQuery(kw, w) else {
               if (w.length > 0) qDefs.head._1(w, w.length)
               else matchAllQuery()
+            }
             val leastCount = qDefs.head._2
             val isMatchAll = query.isInstanceOf[MatchAllQueryBuilder]
 
