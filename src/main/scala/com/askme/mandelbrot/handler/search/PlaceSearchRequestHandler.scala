@@ -621,12 +621,12 @@ class PlaceSearchRequestHandler(val config: Config, serverContext: SearchContext
     import searchParams.limits._
     import searchParams.page._
     import searchParams.view._
-
+    
     //val sort = if(lat != 0.0d || lon !=0.0d) "_name,_distance,_ct,_mc,_score" else "_ct,_name,_mc,_score"
     val sort =
       (if(lat != 0.0d || lon !=0.0d || areaSlugs.nonEmpty) "_distance," else "") +
-        (if(!goldcollapse)"_ct," else "") +
-        "_name,_tags,"+"_mc," + "_score"
+        (if(!goldcollapse)"_ct," else "") + "_name,_tags,"+
+        "_score,_mc"
     val sorters = getSort(sort, lat, lon, areaSlugs, w)
 
     val search: SearchRequestBuilder = esClient.prepareSearch(index.split(","): _*)
