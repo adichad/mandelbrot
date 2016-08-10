@@ -216,7 +216,9 @@ object GrocerySearchRequestHandler extends Logging {
 
   val forceFuzzy = Set()
   val forceSpan = Map("variant_title.exact"->"variant_title", "variant_title_head.exact"->"variant_title_head", "brand_name.exact"->"brand_name",
-    "categories.name.exact"->"categories.name")
+    "category_l1.name.exact"->"category_l1.name", "category_l1.name.exact"->"category_l1.name",
+    "category_l2.name.exact"->"category_l2.name", "category_l3.name.exact"->"category_l3.name",
+    "category_l4.name.exact"->"category_l4.name", "category_l5.name.exact"->"category_l5.name")
 
   private def currQuery(tokenFields: Map[String, Float],
                 recomFields: Map[String, Float],
@@ -295,13 +297,21 @@ object GrocerySearchRequestHandler extends Logging {
     "variant_title_head" -> 1e12f,
     "variant_title" -> 1e8f,
     "brand_name" -> 1e2f,
-    "categories.name" -> 1e5f)
+    "category_l1.name" -> 1e5f,
+    "category_l2.name" -> 1e6f,
+    "category_l3.name" -> 1e6f,
+    "category_l4.name" -> 1e7f,
+    "category_l5.name" -> 1e7f)
 
   private val fullFields2 = Map(
     "variant_title_head.exact" -> 1e12f,
     "variant_title.exact"->1e10f,
     "brand_name.exact" -> 1e2f,
-    "categories.name.exact"->1e6f)
+    "category_l1.name.exact"->1e6f,
+    "category_l2.name.exact"->1e7f,
+    "category_l3.name.exact"->1e7f,
+    "category_l4.name.exact"->1e8f,
+    "category_l5.name.exact"->1e8f)
 
 
   private val emptyStringArray = new Array[String](0)
@@ -361,6 +371,8 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
       .must(termQuery("product_status", 0))
       .must(termQuery("categories.status", 1))
       .must(termQuery("brand_status", 1))
+      .mustNot(nestedQuery("category_hierarchy", termQuery("category_hierarchy.status", 0)))
+
     if(storefront_id ==0 )
       finalFilter.must(termQuery("categories.status", 1))
 
@@ -449,7 +461,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
 
     if (category != "") {
       val b = boolQuery
-      category.split("""\|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
+      category.split("""\|""").map(analyze(esClient, index, "category_l1.name.exact", _).mkString(" ")).filter(!_.isEmpty).foreach { cat =>
         b.should(termQuery("category_hierarchy.name.exact", cat))
       }
       if(b.hasClauses)
@@ -485,7 +497,7 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
     import searchParams.filters._
 
     val sorters = getSort(sort, w,
-      category.split("""\|""").map(analyze(esClient, index, "categories.name.exact", _).mkString(" ")).filter(!_.isEmpty),
+      category.split("""\|""").map(analyze(esClient, index, "category_l1.name.exact", _).mkString(" ")).filter(!_.isEmpty),
       brand.split("""\|""").map(analyze(esClient, index, "brand_name.exact", _).mkString(" ")).filter(!_.isEmpty),
       itemFilter, pla
     )
@@ -582,7 +594,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head" -> 1e14f,
                 "variant_title" -> 1e12f,
-                "categories.name" -> 1e9f,
+                "category_l1.name" -> 1e9f,
+                "category_l2.name" -> 1e9f,
+                "category_l3.name" -> 1e10f,
+                "category_l4.name" -> 1e10f,
+                "category_l5.name" -> 1e10f,
                 "brand_name" -> 1e11f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
@@ -591,7 +607,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head" -> 1e8f,
                 "variant_title" -> 1e6f,
-                "categories.name" -> 1e4f,
+                "category_l1.name" -> 1e4f,
+                "category_l2.name" -> 1e4f,
+                "category_l3.name" -> 1e5f,
+                "category_l4.name" -> 1e5f,
+                "category_l5.name" -> 1e5f,
                 "brand_name" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
@@ -600,7 +620,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head.token_edge_ngram" -> 1e4f,
                 "variant_title.token_edge_ngram" -> 1e2f,
-                "categories.name.token_edge_ngram" -> 1e1f,
+                "category_l1.name.token_edge_ngram" -> 1e1f,
+                "category_l2.name.token_edge_ngram" -> 1e1f,
+                "category_l3.name.token_edge_ngram" -> 1e2f,
+                "category_l4.name.token_edge_ngram" -> 1e2f,
+                "category_l5.name.token_edge_ngram" -> 1e2f,
                 "brand_name.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
@@ -609,7 +633,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
                 "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
-                "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l1.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l2.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l3.name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category_l4.name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category_l5.name.shingle_nospace_edge_ngram" -> 1e2f,
                 "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
@@ -627,7 +655,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head" -> 1e14f,
                 "variant_title" -> 1e12f,
-                "categories.name" -> 1e9f,
+                "category_l1.name" -> 1e9f,
+                "category_l2.name" -> 1e9f,
+                "category_l3.name" -> 1e10f,
+                "category_l4.name" -> 1e10f,
+                "category_l5.name" -> 1e10f,
                 "brand_name" -> 1e11f),
               w, w.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
             )
@@ -636,7 +668,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head" -> 1e8f,
                 "variant_title" -> 1e6f,
-                "categories.name" -> 1e3f,
+                "category_l1.name" -> 1e3f,
+                "category_l2.name" -> 1e3f,
+                "category_l3.name" -> 1e4f,
+                "category_l4.name" -> 1e4f,
+                "category_l5.name" -> 1e4f,
                 "brand_name" -> 1e5f),
               w, w.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
             )
@@ -645,7 +681,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head.token_edge_ngram" -> 1e4f,
                 "variant_title.token_edge_ngram" -> 1e2f,
-                "categories.name.token_edge_ngram" -> 1e1f,
+                "category_l1.name.token_edge_ngram" -> 1e1f,
+                "category_l2.name.token_edge_ngram" -> 1e1f,
+                "category_l3.name.token_edge_ngram" -> 1e2f,
+                "category_l4.name.token_edge_ngram" -> 1e2f,
+                "category_l5.name.token_edge_ngram" -> 1e2f,
                 "brand_name.token_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
@@ -654,7 +694,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
               Map(
                 "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
                 "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
-                "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l1.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l2.name.shingle_nospace_edge_ngram" -> 1e1f,
+                "category_l3.name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category_l4.name.shingle_nospace_edge_ngram" -> 1e2f,
+                "category_l5.name.shingle_nospace_edge_ngram" -> 1e2f,
                 "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
               w, w.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
             )
@@ -668,7 +712,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
                   Map(
                     "variant_title_head" -> 1e14f,
                     "variant_title" -> 1e12f,
-                    "categories.name" -> 1e9f,
+                    "category_l1.name" -> 1e9f,
+                    "category_l2.name" -> 1e9f,
+                    "category_l3.name" -> 1e10f,
+                    "category_l4.name" -> 1e10f,
+                    "category_l5.name" -> 1e10f,
                     "brand_name" -> 1e11f),
                   front, front.length, 1, fuzzy = false, sloppy = false, tokenRelax = 0
                 )
@@ -677,7 +725,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
                   Map(
                     "variant_title_head" -> 1e8f,
                     "variant_title" -> 1e6f,
-                    "categories.name" -> 1e3f,
+                    "category_l1.name" -> 1e3f,
+                    "category_l2.name" -> 1e3f,
+                    "category_l3.name" -> 1e4f,
+                    "category_l4.name" -> 1e4f,
+                    "category_l5.name" -> 1e4f,
                     "brand_name" -> 1e5f),
                   front, front.length, 1, fuzzy = true, sloppy = true, tokenRelax = 0
                 )
@@ -686,7 +738,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
                   Map(
                     "variant_title_head.token_edge_ngram" -> 1e4f,
                     "variant_title.token_edge_ngram" -> 1e2f,
-                    "categories.name.token_edge_ngram" -> 1e1f,
+                    "category_l1.name.token_edge_ngram" -> 1e1f,
+                    "category_l2.name.token_edge_ngram" -> 1e1f,
+                    "category_l3.name.token_edge_ngram" -> 1e2f,
+                    "category_l4.name.token_edge_ngram" -> 1e2f,
+                    "category_l5.name.token_edge_ngram" -> 1e2f,
                     "brand_name.token_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
@@ -695,7 +751,11 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
                   Map(
                     "variant_title_head.shingle_nospace_edge_ngram" -> 1e4f,
                     "variant_title.shingle_nospace_edge_ngram" -> 1e2f,
-                    "categories.name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "category_l1.name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "category_l2.name.shingle_nospace_edge_ngram" -> 1e1f,
+                    "category_l3.name.shingle_nospace_edge_ngram" -> 1e2f,
+                    "category_l4.name.shingle_nospace_edge_ngram" -> 1e2f,
+                    "category_l5.name.shingle_nospace_edge_ngram" -> 1e2f,
                     "brand_name.shingle_nospace_edge_ngram" -> 1e2f),
                   front, front.length, 1, fuzzy = false, sloppy = true, tokenRelax = 0
                 )
@@ -710,10 +770,18 @@ class GrocerySearchRequestHandler(val config: Config, serverContext: SearchConte
           q3.add(fuzzyOrTermQuery("variant_title.token_edge_ngram", last_raw, 1e19f, 1, fuzzy = true))
             .add(fuzzyOrTermQuery("variant_title.shingle_nospace_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
 
-          q3.add(fuzzyOrTermQuery("categories.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
-            .add(fuzzyOrTermQuery("categories.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("category_l1.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category_l1.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("category_l2.name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category_l2.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("category_l3.name.token_edge_ngram", last_raw, 1e18f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category_l3.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("category_l4.name.token_edge_ngram", last_raw, 1e18f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category_l4.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("category_l5.name.token_edge_ngram", last_raw, 1e18f, 1, fuzzy = false))
+            .add(fuzzyOrTermQuery("category_l5.name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
 
-          q3.add(fuzzyOrTermQuery("brand_name.token_edge_ngram", last_raw, 1e17f, 1, fuzzy = false))
+          q3.add(fuzzyOrTermQuery("brand_name.token_edge_ngram", last_raw, 1e18f, 1, fuzzy = false))
             .add(fuzzyOrTermQuery("brand_name.shingle_nospace_edge_ngram", last_raw, 1e15f, 1, fuzzy = false))
 
 
