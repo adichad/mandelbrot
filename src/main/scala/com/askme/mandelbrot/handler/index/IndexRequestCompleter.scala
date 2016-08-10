@@ -57,7 +57,7 @@ class IndexRequestCompleter(val config: Config, serverContext: SearchContext, re
                 || d.getIndices.getMerge.getCurrent >= 3l
                 || d.getIndices.getMerge.getCurrentSize.mb() * d.getIndices.getMerge.getCurrent >= 10000l
                 || d.getIndices.getSearch.getOpenContexts >= 12l
-                || d.getOs.getLoadAverage>=9.0d
+                || d.getOs.getLoadAverage>=13.0d
             )
             if (wobblyDataNodes.length==0) {
               val target = context.actorOf(Props(classOf[IndexRequestHandler], config, serverContext))
