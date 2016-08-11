@@ -549,6 +549,7 @@ class ProductSearchRequestHandler(val config: Config, serverContext: SearchConte
         nestedQuery("subscriptions", subscriptionFilter)
           .innerHit(
             new QueryInnerHitBuilder().setName("best_subscription")
+              .addSort("subscriptions.status", SortOrder.DESC)
               .addSort("subscriptions.min_price", SortOrder.ASC)
               .addSort("subscriptions.is_ndd", SortOrder.DESC)
               .addSort("subscriptions.boost", SortOrder.DESC)
